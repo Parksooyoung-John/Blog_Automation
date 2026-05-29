@@ -1,0 +1,7 @@
+.env
+.env.txt
+_workspace/
+thumb_*.png
+debug_*.png
+__pycache__/
+*.pyc

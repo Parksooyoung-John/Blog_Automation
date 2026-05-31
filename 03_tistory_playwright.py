@@ -35,6 +35,17 @@ NOTION_HEADERS = {
     "Content-Type": "application/json",
 }
 
+# ── Notion 카테고리명 → Tistory 카테고리명 매핑 ──────────
+# Notion select는 쉼표 불허 → 04_notion_upload.py가 쉼표 없는 이름으로 저장
+# 실제 Tistory 카테고리명은 이 맵에서 변환
+TISTORY_CATEGORY_MAP = {
+    "절세연금":      "절세, 연금",
+    "대출금리":      "대출, 금리",
+    "주식ETF":       "주식, ETF",
+    "AI부업수익화":  "AI 부업, 수익화",
+    # 쉼표 없는 카테고리는 그대로 통과 (key 없으면 원본 반환)
+}
+
 # ── 쿠팡 파트너스 키워드 맵 ────────────────────────────
 COUPANG_KEYWORD_MAP = {
     "심리학": "https://link.coupang.com/re/AFFILCODE?itemId=ITEM1",
@@ -547,7 +558,8 @@ def process_all():
             title_list = props.get("이름", {}).get("title", [])
             title = title_list[0].get("text", {}).get("content", "제목없음") if title_list else "제목없음"
             tags  = [t["name"] for t in props.get("태그", {}).get("multi_select", [])]
-            category = (props.get("카테고리", {}).get("select", {}) or {}).get("name", "")
+            notion_cat = (props.get("카테고리", {}).get("select", {}) or {}).get("name", "")
+            category = TISTORY_CATEGORY_MAP.get(notion_cat, notion_cat)  # Notion명 → Tistory명
 
             print(f"\n[{title}] 처리 시작...")
 

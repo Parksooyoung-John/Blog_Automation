@@ -356,8 +356,27 @@ def post_to_tistory(page: Page, title: str, html_content: str,
 
     page.wait_for_timeout(1000)
 
+    # ── 태그 입력 (에디터 하단, 완료 클릭 전) ─────────────
+    if tags:
+        try:
+            tag_input = page.query_selector(
+                'input[name="tag"], input[id*="tag"], '
+                'input[placeholder*="태그입력"], input[placeholder*="태그"]'
+            )
+            if tag_input:
+                for tag in tags:
+                    tag_input.click()
+                    tag_input.fill(tag)
+                    page.keyboard.press("Enter")
+                    page.wait_for_timeout(300)
+                print(f"  🏷️  태그 입력 완료: {', '.join(tags)}")
+            else:
+                print("  ⚠️  태그 입력창 없음 (스킵)")
+        except Exception as e:
+            print(f"  ⚠️  태그 입력 스킵: {e}")
+
     # ── 발행 패널 열기 ("완료" 버튼 클릭) ──────────────────
-    page.wait_for_timeout(2000)
+    page.wait_for_timeout(1500)
     page.screenshot(path=os.path.join(os.path.dirname(__file__), "debug_before_publish.png"))
 
     publish_clicked = page.evaluate("""
@@ -386,29 +405,55 @@ def post_to_tistory(page: Page, title: str, html_content: str,
     page.wait_for_timeout(2500)
     page.screenshot(path=os.path.join(os.path.dirname(__file__), "debug_panel.png"))
 
-    # ── 발행 패널: 카테고리 선택 ───────────────────────────
+    # ── 발행 패널: 카테고리(홈주제) 선택 ──────────────────
+    # Tistory 새 에디터는 native select 없음 — "선택 안 함" 텍스트를 클릭해 드롭다운 열기
     if category_name:
         try:
-            page.select_option('select#category', label=category_name, timeout=3000)
-            print(f"  📁 카테고리: {category_name}")
+            opened = page.evaluate("""
+                () => {
+                    for (const el of document.querySelectorAll('*')) {
+                        if (!el.children.length && el.textContent.trim() === '선택 안 함') {
+                            el.click();
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            """)
+            if opened:
+                page.wait_for_timeout(600)
+                clicked = page.evaluate(f"""
+                    () => {{
+                        for (const el of document.querySelectorAll('[role="option"], li, button')) {{
+                            if (el.textContent.trim() === '{category_name}') {{
+                                el.click();
+                                return true;
+                            }}
+                        }}
+                        return false;
+                    }}
+                """)
+                print(f"  📁 카테고리: {category_name}" if clicked else f"  ⚠️  카테고리 옵션 '{category_name}' 없음")
+            else:
+                print("  ⚠️  카테고리 드롭다운 없음")
         except Exception as e:
             print(f"  ⚠️  카테고리 선택 스킵: {e}")
 
-    # ── 발행 패널: 태그 입력 ─────────────────────────────
-    if tags:
-        try:
-            tag_input = page.query_selector('input[placeholder*="태그입력"], input[placeholder*="태그"], input#tag')
-            if tag_input:
-                for tag in tags:
-                    tag_input.click()
-                    tag_input.fill(tag)
-                    page.keyboard.press("Enter")
-                    page.wait_for_timeout(400)
-                print(f"  🏷️  태그 입력 완료: {', '.join(tags)}")
-            else:
-                print("  ⚠️  태그 입력창 없음 (스킵)")
-        except Exception as e:
-            print(f"  ⚠️  태그 입력 스킵: {e}")
+    # ── 발행 패널에서 URL 미리 추출 ───────────────────────
+    panel_url = page.evaluate("""
+        () => {
+            for (const dt of document.querySelectorAll('dt')) {
+                if (dt.textContent.trim() === 'URL') {
+                    const dd = dt.nextElementSibling;
+                    const text = dd ? dd.textContent.trim() : '';
+                    return text.includes('tistory.com') ? text : null;
+                }
+            }
+            return null;
+        }
+    """)
+    if panel_url:
+        print(f"  🔗 발행 URL: {panel_url}")
 
     # ── 발행 패널: 공개 설정 → 최종 발행 ──────────────────
     radio_clicked = page.evaluate("""
@@ -455,11 +500,11 @@ def post_to_tistory(page: Page, title: str, html_content: str,
     else:
         print(f"  ⚠️  최종 버튼 상태: {final_clicked}")
 
-    # ── 발행된 URL 추출 ────────────────────────────────
+    # ── 발행된 URL 반환 (패널 URL 우선, 폴백: 현재 탭 URL) ─
     page.wait_for_timeout(2000)
-    current_url = page.url
-    print(f"  ✅ 발행 완료: {current_url}")
-    return current_url
+    final_url = panel_url or page.url
+    print(f"  ✅ 발행 완료: {final_url}")
+    return final_url
 
 
 # ═══════════════════════════════════════════════════════

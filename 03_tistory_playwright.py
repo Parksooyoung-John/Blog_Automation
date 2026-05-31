@@ -357,21 +357,19 @@ def post_to_tistory(page: Page, title: str, html_content: str,
     page.wait_for_timeout(1000)
 
     # ── 태그 입력 (에디터 하단, 완료 클릭 전) ─────────────
+    # locator 사용: DOM 재렌더링 후에도 lazy-evaluate로 안전하게 동작
     if tags:
         try:
-            tag_input = page.query_selector(
-                'input[name="tag"], input[id*="tag"], '
-                'input[placeholder*="태그입력"], input[placeholder*="태그"]'
-            )
-            if tag_input:
-                for tag in tags:
-                    tag_input.click()
-                    tag_input.fill(tag)
-                    page.keyboard.press("Enter")
-                    page.wait_for_timeout(300)
-                print(f"  🏷️  태그 입력 완료: {', '.join(tags)}")
-            else:
-                print("  ⚠️  태그 입력창 없음 (스킵)")
+            tag_loc = page.locator(
+                'input[name="tag"], input[placeholder*="태그입력"], input[placeholder*="태그"]'
+            ).first
+            tag_loc.wait_for(state="visible", timeout=5000)
+            for tag in tags:
+                tag_loc.click()
+                page.keyboard.type(tag)
+                page.keyboard.press("Enter")
+                page.wait_for_timeout(300)
+            print(f"  🏷️  태그 입력 완료: {', '.join(tags)}")
         except Exception as e:
             print(f"  ⚠️  태그 입력 스킵: {e}")
 
@@ -379,126 +377,78 @@ def post_to_tistory(page: Page, title: str, html_content: str,
     page.wait_for_timeout(1500)
     page.screenshot(path=os.path.join(os.path.dirname(__file__), "debug_before_publish.png"))
 
-    publish_clicked = page.evaluate("""
-        () => {
-            const keywords = ['완료', '발행', '공개발행'];
-            const buttons = Array.from(document.querySelectorAll('button'));
-            for (const btn of buttons) {
-                const text = (btn.innerText || '').trim();
-                if (keywords.some(k => text === k)) {
-                    btn.click();
-                    return text;
-                }
-            }
-            return null;
-        }
-    """)
-
-    if not publish_clicked:
-        page.screenshot(path=os.path.join(os.path.dirname(__file__), "debug_error.png"))
-        all_buttons = page.evaluate("""
-            () => Array.from(document.querySelectorAll('button')).map(b => b.innerText.trim()).filter(t => t)
-        """)
-        raise Exception(f"발행 버튼을 찾을 수 없습니다. 버튼목록: {all_buttons}")
-
-    print(f"  🚀 '{publish_clicked}' 클릭 → 발행 패널 대기...")
+    try:
+        page.get_by_role("button", name="완료").click()
+    except Exception:
+        # fallback: 텍스트로 버튼 탐색
+        page.locator("button", has_text="완료").first.click()
+    print(f"  🚀 '완료' 클릭 → 발행 패널 대기...")
     page.wait_for_timeout(2500)
     page.screenshot(path=os.path.join(os.path.dirname(__file__), "debug_panel.png"))
 
     # ── 발행 패널: 카테고리(홈주제) 선택 ──────────────────
-    # Tistory 새 에디터는 native select 없음 — "선택 안 함" 텍스트를 클릭해 드롭다운 열기
     if category_name:
         try:
-            opened = page.evaluate("""
-                () => {
-                    for (const el of document.querySelectorAll('*')) {
-                        if (!el.children.length && el.textContent.trim() === '선택 안 함') {
-                            el.click();
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-            """)
-            if opened:
-                page.wait_for_timeout(600)
-                clicked = page.evaluate(f"""
-                    () => {{
-                        for (const el of document.querySelectorAll('[role="option"], li, button')) {{
-                            if (el.textContent.trim() === '{category_name}') {{
-                                el.click();
-                                return true;
-                            }}
-                        }}
-                        return false;
-                    }}
-                """)
-                print(f"  📁 카테고리: {category_name}" if clicked else f"  ⚠️  카테고리 옵션 '{category_name}' 없음")
-            else:
-                print("  ⚠️  카테고리 드롭다운 없음")
+            # "홈주제" 행의 "선택 안 함" 클릭 → 드롭다운 열기
+            page.locator("text=선택 안 함").first.click()
+            page.wait_for_timeout(600)
+            # 드롭다운 옵션에서 카테고리 선택
+            page.locator(f"text={category_name}").first.click()
+            print(f"  📁 카테고리: {category_name}")
         except Exception as e:
             print(f"  ⚠️  카테고리 선택 스킵: {e}")
+        page.wait_for_timeout(500)
 
-    # ── 발행 패널에서 URL 미리 추출 ───────────────────────
+    # ── 발행 패널에서 URL 추출 ────────────────────────────
     panel_url = page.evaluate("""
         () => {
+            // dt>dd 구조
             for (const dt of document.querySelectorAll('dt')) {
                 if (dt.textContent.trim() === 'URL') {
                     const dd = dt.nextElementSibling;
                     const text = dd ? dd.textContent.trim() : '';
-                    return text.includes('tistory.com') ? text : null;
+                    if (text.includes('tistory.com/entry/')) return text;
                 }
             }
-            return null;
+            // 전체 텍스트에서 URL 패턴 추출
+            const m = document.body.innerText.match(
+                /https?:\/\/[a-z0-9-]+\\.tistory\\.com\\/entry\\/[^\\s\\n]+/
+            );
+            return m ? m[0] : null;
         }
     """)
     if panel_url:
         print(f"  🔗 발행 URL: {panel_url}")
 
-    # ── 발행 패널: 공개 설정 → 최종 발행 ──────────────────
-    radio_clicked = page.evaluate("""
-        () => {
-            const labels = Array.from(document.querySelectorAll('label'));
-            for (const label of labels) {
-                if (label.innerText.trim() === '공개') {
-                    label.click();
-                    return '공개 label 클릭';
-                }
-            }
-            const radios = Array.from(document.querySelectorAll('input[type="radio"]'));
-            for (const r of radios) {
-                if (r.value === '0' || r.value === 'public' || r.value === '3') {
-                    r.click();
-                    return `radio value=${r.value} 클릭`;
-                }
-            }
-            return null;
-        }
-    """)
-    print(f"  🔘 공개 설정: {radio_clicked}")
+    # ── 발행 패널: 공개 라디오 (Playwright locator → React 이벤트 정상 트리거) ──
+    try:
+        page.get_by_role("radio", name="공개").check()
+        print("  🔘 공개 설정: radio check")
+    except Exception:
+        try:
+            # 커스텀 React 라디오: label 텍스트로 클릭
+            page.locator("label", has_text="공개").filter(
+                has_not_text=re.compile(r"보호|비공개")
+            ).first.click()
+            print("  🔘 공개 설정: label click")
+        except Exception as e:
+            print(f"  ⚠️  공개 설정 실패: {e}")
+
     page.wait_for_timeout(800)
 
-    final_clicked = page.evaluate("""
-        () => {
-            const priority = ['공개 발행', '발행', '공개발행', '공개 저장', '저장'];
-            const buttons = Array.from(document.querySelectorAll('button'));
-            for (const keyword of priority) {
-                for (const btn of buttons) {
-                    const text = (btn.innerText || '').trim();
-                    if (text === keyword) {
-                        btn.click();
-                        return text;
-                    }
-                }
-            }
-            return '실패:' + buttons.map(b => b.innerText.trim()).filter(t=>t).join(',');
-        }
-    """)
-    if final_clicked and not final_clicked.startswith('실패'):
-        print(f"  ✅ 최종 발행: '{final_clicked}' 클릭")
+    # ── 최종 발행 버튼 (공개 라디오 클릭 후 버튼 텍스트가 바뀜) ──
+    try:
+        page.get_by_role("button", name="공개 발행").click()
+        print("  ✅ 최종 발행: '공개 발행' 클릭")
         page.wait_for_timeout(4000)
-    else:
-        print(f"  ⚠️  최종 버튼 상태: {final_clicked}")
+    except Exception:
+        try:
+            page.locator("button", has_text="공개 발행").first.click()
+            print("  ✅ 최종 발행: '공개 발행' 클릭 (locator)")
+            page.wait_for_timeout(4000)
+        except Exception as e:
+            all_btns = page.locator("button").all_inner_texts()
+            print(f"  ⚠️  발행 버튼 실패: {e} | 버튼목록: {all_btns}")
 
     # ── 발행된 URL 반환 (패널 URL 우선, 폴백: 현재 탭 URL) ─
     page.wait_for_timeout(2000)

@@ -131,6 +131,38 @@ def get_notion_page_blocks(page_id: str) -> str:
     return "\n".join(texts)
 
 
+def _strip_base64_images(html: str) -> str:
+    """<figure> 블록 내 base64 data URI 이미지 제거.
+    6MB+ base64는 Tistory 제출 크기 한도를 초과해 publish가 실패함.
+    Pexels URL 이미지는 짧으므로 보존됨.
+    """
+    FIGURE_START = '<figure'
+    FIGURE_END = '</figure>'
+    DATA_URI = 'data:image/'
+    parts: list[str] = []
+    pos = 0
+    while True:
+        fig_s = html.find(FIGURE_START, pos)
+        if fig_s == -1:
+            parts.append(html[pos:])
+            break
+        fig_e = html.find(FIGURE_END, fig_s)
+        if fig_e == -1:
+            parts.append(html[pos:])
+            break
+        fig_block = html[fig_s: fig_e + len(FIGURE_END)]
+        if DATA_URI in fig_block:
+            parts.append(html[pos:fig_s])       # base64 figure 제거
+        else:
+            parts.append(html[pos:fig_e + len(FIGURE_END)])  # URL 이미지 유지
+        pos = fig_e + len(FIGURE_END)
+    result = ''.join(parts)
+    if len(result) < len(html):
+        removed = len(html) - len(result)
+        print(f"  ℹ️  base64 이미지 제거: {removed // 1024}KB 감소")
+    return result
+
+
 def get_script_content(page: dict) -> tuple:
     """스크립트 내용 추출 후 (제목, HTML본문) 반환
 
@@ -158,7 +190,7 @@ def get_script_content(page: dict) -> tuple:
     # 04_notion_upload.py가 저장한 HTML: 이름 프로퍼티에 제목이 이미 있으므로 GPT 생성 스킵
     stripped = raw_text.strip()
     if stripped.startswith('<'):
-        return "", stripped
+        return "", _strip_base64_images(stripped)
 
     # ─── 제목 생성 (Make.com 원문 텍스트 경로) ───────────────
     auto_title = _generate_title_with_gpt(raw_text[:800])
@@ -299,20 +331,7 @@ def post_to_tistory(page: Page, title: str, html_content: str,
     page.fill(title_selector, title)
     print(f"  📝 제목 입력: {title}")
 
-    # ── 썸네일 업로드 (파일이 있는 경우) ──────────────────
-    if thumb_path and os.path.exists(thumb_path):
-        try:
-            # 대표 이미지 업로드 버튼 찾기
-            thumb_btn = page.query_selector('button[data-feature="coverImage"], .btn_cover, [title*="대표"]')
-            if thumb_btn:
-                with page.expect_file_chooser() as fc_info:
-                    thumb_btn.click()
-                file_chooser = fc_info.value
-                file_chooser.set_files(thumb_path)
-                page.wait_for_timeout(2000)
-                print("  🖼️  썸네일 업로드 완료")
-        except Exception as e:
-            print(f"  ⚠️  썸네일 업로드 스킵: {e}")
+    # 대표이미지는 발행 패널 안에 있음 → 패널 오픈 후 업로드
 
     # ── 본문 입력 (TinyMCE 에디터) ────────────────────────
     page.wait_for_timeout(2000)
@@ -386,69 +405,88 @@ def post_to_tistory(page: Page, title: str, html_content: str,
     page.wait_for_timeout(2500)
     page.screenshot(path=os.path.join(os.path.dirname(__file__), "debug_panel.png"))
 
+    # ── 발행 패널: 대표이미지 업로드 ──────────────────────
+    if thumb_path and os.path.exists(thumb_path):
+        try:
+            with page.expect_file_chooser(timeout=5000) as fc_info:
+                page.locator("text=대표이미지 추가").click(timeout=3000)
+            fc_info.value.set_files(thumb_path)
+            page.wait_for_timeout(2000)
+            print("  🖼️  대표이미지 업로드 완료")
+        except Exception as e:
+            print(f"  ⚠️  대표이미지 업로드 스킵: {e}")
+
     # ── 발행 패널: 카테고리(홈주제) 선택 ──────────────────
+    # TinyMCE의 disabled "선택 안 함" 버튼과 구분: not([disabled]) 필터 적용
     if category_name:
         try:
-            # "홈주제" 행의 "선택 안 함" 클릭 → 드롭다운 열기
-            page.locator("text=선택 안 함").first.click()
+            page.locator("button:not([disabled])").filter(
+                has_text="선택 안 함"
+            ).first.click(timeout=3000)
             page.wait_for_timeout(600)
-            # 드롭다운 옵션에서 카테고리 선택
-            page.locator(f"text={category_name}").first.click()
+            try:
+                page.get_by_role("button", name=category_name).click(timeout=3000)
+            except Exception:
+                page.locator(f"text={category_name}").first.click(timeout=3000)
             print(f"  📁 카테고리: {category_name}")
         except Exception as e:
             print(f"  ⚠️  카테고리 선택 스킵: {e}")
         page.wait_for_timeout(500)
 
     # ── 발행 패널에서 URL 추출 ────────────────────────────
+    # URL 필드 = dt>dd (prefix 텍스트) + dd>input.value (editable slug)
     panel_url = page.evaluate("""
         () => {
-            // dt>dd 구조
             for (const dt of document.querySelectorAll('dt')) {
                 if (dt.textContent.trim() === 'URL') {
                     const dd = dt.nextElementSibling;
-                    const text = dd ? dd.textContent.trim() : '';
-                    if (text.includes('tistory.com/entry/')) return text;
+                    if (!dd) return null;
+                    const prefix = dd.textContent.trim();
+                    const inp = dd.querySelector('input[type="text"]');
+                    const slug = inp ? inp.value.trim() : '';
+                    return slug ? prefix.replace(/\\/$/, '') + '/' + slug : prefix;
                 }
             }
-            // 전체 텍스트에서 URL 패턴 추출
-            const m = document.body.innerText.match(
-                /https?:\/\/[a-z0-9-]+\\.tistory\\.com\\/entry\\/[^\\s\\n]+/
-            );
-            return m ? m[0] : null;
+            return null;
         }
     """)
-    if panel_url:
+    if panel_url and 'tistory.com' in (panel_url or ''):
         print(f"  🔗 발행 URL: {panel_url}")
+    else:
+        panel_url = None
 
-    # ── 발행 패널: 공개 라디오 (Playwright locator → React 이벤트 정상 트리거) ──
+    # ── 발행 패널: 공개 라디오 ─────────────────────────────
+    # React 커스텀 라디오: visible 텍스트 노드 "공개"의 부모 요소를 클릭
+    clicked_el = page.evaluate("""
+        () => {
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            let node;
+            while (node = walker.nextNode()) {
+                if (node.textContent.trim() === '공개') {
+                    const el = node.parentElement;
+                    if (el && el.offsetParent !== null) {
+                        el.click();
+                        return el.tagName + ':' + el.className;
+                    }
+                }
+            }
+            return null;
+        }
+    """)
+    print(f"  🔘 공개 설정: {clicked_el or '실패'}")
+    page.wait_for_timeout(1000)
+
+    # ── 최종 발행 (공개 클릭 후 버튼이 "공개 발행"으로 변경됨) ──
     try:
-        page.get_by_role("radio", name="공개").check()
-        print("  🔘 공개 설정: radio check")
-    except Exception:
-        try:
-            # 커스텀 React 라디오: label 텍스트로 클릭
-            page.locator("label", has_text="공개").filter(
-                has_not_text=re.compile(r"보호|비공개")
-            ).first.click()
-            print("  🔘 공개 설정: label click")
-        except Exception as e:
-            print(f"  ⚠️  공개 설정 실패: {e}")
-
-    page.wait_for_timeout(800)
-
-    # ── 최종 발행 버튼 (공개 라디오 클릭 후 버튼 텍스트가 바뀜) ──
-    try:
-        page.get_by_role("button", name="공개 발행").click()
+        page.get_by_role("button", name="공개 발행").click(timeout=5000)
         print("  ✅ 최종 발행: '공개 발행' 클릭")
-        page.wait_for_timeout(4000)
-    except Exception:
-        try:
-            page.locator("button", has_text="공개 발행").first.click()
-            print("  ✅ 최종 발행: '공개 발행' 클릭 (locator)")
-            page.wait_for_timeout(4000)
-        except Exception as e:
-            all_btns = page.locator("button").all_inner_texts()
-            print(f"  ⚠️  발행 버튼 실패: {e} | 버튼목록: {all_btns}")
+    except Exception as e:
+        all_btns = page.locator("button").all_inner_texts()
+        print(f"  ⚠️  발행 버튼 실패 — 버튼목록: {all_btns}")
+        raise Exception(f"공개 발행 버튼 없음: {e}")
+
+    page.wait_for_timeout(4000)
+    page.screenshot(path=os.path.join(os.path.dirname(__file__), "debug_after_publish.png"))
 
     # ── 발행된 URL 반환 (패널 URL 우선, 폴백: 현재 탭 URL) ─
     page.wait_for_timeout(2000)

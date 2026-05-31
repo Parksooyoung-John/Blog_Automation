@@ -106,22 +106,28 @@ def _generate_title_with_gpt(text: str) -> str:
 
 
 def get_notion_page_blocks(page_id: str) -> str:
-    """Notion 페이지 블록에서 전체 텍스트 추출 (2000자 제한 없음)
-    Make.com이 페이지 body에 내용을 저장하는 경우 사용
-    """
-    url = f"https://api.notion.com/v1/blocks/{page_id}/children?page_size=100"
-    res = requests.get(url, headers=NOTION_HEADERS)
-    if res.status_code != 200:
-        return ""
-    blocks = res.json().get("results", [])
+    """Notion 페이지 블록에서 전체 텍스트 추출 — 페이지네이션으로 전체 블록 수집"""
     texts = []
-    for block in blocks:
-        btype = block.get("type", "")
-        data  = block.get(btype, {})
-        rich  = data.get("rich_text", [])
-        text  = "".join(rt.get("plain_text", "") for rt in rich)
-        if text.strip():
-            texts.append(text.strip())
+    url = f"https://api.notion.com/v1/blocks/{page_id}/children?page_size=100"
+    while url:
+        res = requests.get(url, headers=NOTION_HEADERS)
+        if res.status_code != 200:
+            break
+        data = res.json()
+        for block in data.get("results", []):
+            btype = block.get("type", "")
+            bdata = block.get(btype, {})
+            rich  = bdata.get("rich_text", [])
+            text  = "".join(rt.get("plain_text", "") for rt in rich)
+            if text.strip():
+                texts.append(text.strip())
+        if data.get("has_more") and data.get("next_cursor"):
+            url = (
+                f"https://api.notion.com/v1/blocks/{page_id}/children"
+                f"?page_size=100&start_cursor={data['next_cursor']}"
+            )
+        else:
+            url = None
     return "\n".join(texts)
 
 
@@ -149,7 +155,12 @@ def get_script_content(page: dict) -> tuple:
     if not raw_text:
         return "제목없음", "<p>내용 없음</p>"
 
-    # ─── 제목 생성 ────────────────────────────────────────
+    # 04_notion_upload.py가 저장한 HTML: 이름 프로퍼티에 제목이 이미 있으므로 GPT 생성 스킵
+    stripped = raw_text.strip()
+    if stripped.startswith('<'):
+        return "", stripped
+
+    # ─── 제목 생성 (Make.com 원문 텍스트 경로) ───────────────
     auto_title = _generate_title_with_gpt(raw_text[:800])
     if not auto_title:
         # fallback: 인사말·짧은 문장 건너뛰고 핵심 주제 문장 추출
@@ -166,12 +177,6 @@ def get_script_content(page: dict) -> tuple:
         if auto_title == "제목없음" and len(raw_text) > 0:
             # 최후 fallback: 전체 텍스트 중간에서 키워드 찾기
             auto_title = raw_text.replace('\n', ' ').strip()[:20]
-
-    # ─── 본문 HTML 변환 ───────────────────────────────────
-    # 04_notion_upload.py가 저장한 HTML은 이미 변환된 상태 — 래핑 스킵
-    stripped = raw_text.strip()
-    if stripped.startswith('<'):
-        return auto_title, stripped
 
     # Make.com 원문 텍스트: 문단 간격 CSS 포함, 빈줄은 <br> 처리
     html_parts = ['<div style="line-height:1.9; font-size:16px;">']
@@ -351,43 +356,10 @@ def post_to_tistory(page: Page, title: str, html_content: str,
 
     page.wait_for_timeout(1000)
 
-    # ── 카테고리 선택 ──────────────────────────────────
-    if category_name:
-        try:
-            cat_selector = page.query_selector('select#category, .btn_category, [data-feature="category"]')
-            if cat_selector:
-                # select 태그인 경우
-                page.select_option('select#category', label=category_name)
-                print(f"  📁 카테고리: {category_name}")
-        except Exception as e:
-            print(f"  ⚠️  카테고리 선택 스킵: {e}")
-
-    # ── 태그 입력 (#태그입력 placeholder 기준) ────────────
-    if tags:
-        try:
-            tag_input = page.query_selector('input[placeholder*="태그입력"], input[placeholder*="태그"], input#tag')
-            if tag_input:
-                for tag in tags:
-                    tag_input.click()
-                    tag_input.fill(tag)
-                    page.keyboard.press("Enter")
-                    page.wait_for_timeout(400)
-                print(f"  🏷️  태그 입력 완료: {', '.join(tags)}")
-            else:
-                print("  ⚠️  태그 입력창 없음 (스킵)")
-        except Exception as e:
-            print(f"  ⚠️  태그 입력 스킵: {e}")
-
-    # ── 발행 버튼 클릭 ──────────────────────────────────
+    # ── 발행 패널 열기 ("완료" 버튼 클릭) ──────────────────
     page.wait_for_timeout(2000)
+    page.screenshot(path=os.path.join(os.path.dirname(__file__), "debug_before_publish.png"))
 
-    # 스크린샷 저장 (디버깅용)
-    screenshot_path = os.path.join(os.path.dirname(__file__), "debug_before_publish.png")
-    page.screenshot(path=screenshot_path)
-    print(f"  📷 스크린샷 저장: {screenshot_path}")
-
-    # 티스토리 에디터의 발행 버튼 = "완료" (우측 하단)
-    # 1단계: "완료" 버튼 클릭
     publish_clicked = page.evaluate("""
         () => {
             const keywords = ['완료', '발행', '공개발행'];
@@ -403,73 +375,85 @@ def post_to_tistory(page: Page, title: str, html_content: str,
         }
     """)
 
-    if publish_clicked:
-        print(f"  🚀 '{publish_clicked}' 클릭...")
-        page.wait_for_timeout(2500)
-
-        # 스크린샷으로 패널 확인
-        panel_shot = os.path.join(os.path.dirname(__file__), "debug_panel.png")
-        page.screenshot(path=panel_shot)
-        print(f"  📷 패널 스크린샷: {panel_shot}")
-
-        # 2단계: 발행 패널에서 "공개" 라디오버튼 클릭
-        # 방법1: label 텍스트가 정확히 "공개"인 것 클릭
-        radio_clicked = page.evaluate("""
-            () => {
-                // label 텍스트 기준으로 '공개' 선택 (비공개/공개(보호) 제외)
-                const labels = Array.from(document.querySelectorAll('label'));
-                for (const label of labels) {
-                    const text = label.innerText.trim();
-                    if (text === '공개') {
-                        label.click();
-                        return '공개 label 클릭';
-                    }
-                }
-                // fallback: radio value 기준
-                const radios = Array.from(document.querySelectorAll('input[type="radio"]'));
-                for (const r of radios) {
-                    if (r.value === '0' || r.value === 'public' || r.value === '3') {
-                        r.click();
-                        return `radio value=${r.value} 클릭`;
-                    }
-                }
-                return null;
-            }
-        """)
-        print(f"  🔘 공개 설정: {radio_clicked}")
-        page.wait_for_timeout(800)
-
-        # 최종 발행 버튼 클릭 ("발행" / "공개 저장" / "저장")
-        final_clicked = page.evaluate("""
-            () => {
-                const priority = ['공개 발행', '발행', '공개발행', '공개 저장', '저장'];
-                const buttons = Array.from(document.querySelectorAll('button'));
-                for (const keyword of priority) {
-                    for (const btn of buttons) {
-                        const text = (btn.innerText || '').trim();
-                        if (text === keyword) {
-                            btn.click();
-                            return text;
-                        }
-                    }
-                }
-                // 못 찾으면 전체 목록 반환
-                return '실패:' + buttons.map(b => b.innerText.trim()).filter(t=>t).join(',');
-            }
-        """)
-        if final_clicked and not final_clicked.startswith('실패'):
-            print(f"  ✅ 최종 발행: '{final_clicked}' 클릭")
-            page.wait_for_timeout(4000)
-        else:
-            print(f"  ⚠️  최종 버튼 상태: {final_clicked}")
-    else:
-        screenshot_path2 = os.path.join(os.path.dirname(__file__), "debug_error.png")
-        page.screenshot(path=screenshot_path2)
+    if not publish_clicked:
+        page.screenshot(path=os.path.join(os.path.dirname(__file__), "debug_error.png"))
         all_buttons = page.evaluate("""
             () => Array.from(document.querySelectorAll('button')).map(b => b.innerText.trim()).filter(t => t)
         """)
-        print(f"  🔍 페이지 내 버튼 목록: {all_buttons}")
         raise Exception(f"발행 버튼을 찾을 수 없습니다. 버튼목록: {all_buttons}")
+
+    print(f"  🚀 '{publish_clicked}' 클릭 → 발행 패널 대기...")
+    page.wait_for_timeout(2500)
+    page.screenshot(path=os.path.join(os.path.dirname(__file__), "debug_panel.png"))
+
+    # ── 발행 패널: 카테고리 선택 ───────────────────────────
+    if category_name:
+        try:
+            page.select_option('select#category', label=category_name, timeout=3000)
+            print(f"  📁 카테고리: {category_name}")
+        except Exception as e:
+            print(f"  ⚠️  카테고리 선택 스킵: {e}")
+
+    # ── 발행 패널: 태그 입력 ─────────────────────────────
+    if tags:
+        try:
+            tag_input = page.query_selector('input[placeholder*="태그입력"], input[placeholder*="태그"], input#tag')
+            if tag_input:
+                for tag in tags:
+                    tag_input.click()
+                    tag_input.fill(tag)
+                    page.keyboard.press("Enter")
+                    page.wait_for_timeout(400)
+                print(f"  🏷️  태그 입력 완료: {', '.join(tags)}")
+            else:
+                print("  ⚠️  태그 입력창 없음 (스킵)")
+        except Exception as e:
+            print(f"  ⚠️  태그 입력 스킵: {e}")
+
+    # ── 발행 패널: 공개 설정 → 최종 발행 ──────────────────
+    radio_clicked = page.evaluate("""
+        () => {
+            const labels = Array.from(document.querySelectorAll('label'));
+            for (const label of labels) {
+                if (label.innerText.trim() === '공개') {
+                    label.click();
+                    return '공개 label 클릭';
+                }
+            }
+            const radios = Array.from(document.querySelectorAll('input[type="radio"]'));
+            for (const r of radios) {
+                if (r.value === '0' || r.value === 'public' || r.value === '3') {
+                    r.click();
+                    return `radio value=${r.value} 클릭`;
+                }
+            }
+            return null;
+        }
+    """)
+    print(f"  🔘 공개 설정: {radio_clicked}")
+    page.wait_for_timeout(800)
+
+    final_clicked = page.evaluate("""
+        () => {
+            const priority = ['공개 발행', '발행', '공개발행', '공개 저장', '저장'];
+            const buttons = Array.from(document.querySelectorAll('button'));
+            for (const keyword of priority) {
+                for (const btn of buttons) {
+                    const text = (btn.innerText || '').trim();
+                    if (text === keyword) {
+                        btn.click();
+                        return text;
+                    }
+                }
+            }
+            return '실패:' + buttons.map(b => b.innerText.trim()).filter(t=>t).join(',');
+        }
+    """)
+    if final_clicked and not final_clicked.startswith('실패'):
+        print(f"  ✅ 최종 발행: '{final_clicked}' 클릭")
+        page.wait_for_timeout(4000)
+    else:
+        print(f"  ⚠️  최종 버튼 상태: {final_clicked}")
 
     # ── 발행된 URL 추출 ────────────────────────────────
     page.wait_for_timeout(2000)

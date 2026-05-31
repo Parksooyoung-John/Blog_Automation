@@ -38,6 +38,21 @@ NOTION_HEADERS = {
 
 BLOG_POST_PATH = Path(__file__).parent / "_workspace" / "02_blog_post.md"
 CHUNK_SIZE = 1900  # Notion rich_text 블록당 최대 2000자, 여유분 포함
+INPUT_PATH = Path(__file__).parent / "_workspace" / "00_input.md"
+
+# 블로그 카테고리 자동 분류 규칙 (Tistory 카테고리명과 정확히 일치해야 함)
+CATEGORY_RULES = [
+    (["ISA", "IRP", "연금", "절세", "세금우대", "소득공제"],            "절세, 연금"),
+    (["보험", "실손", "생명보험"],                                       "보험비교"),
+    (["대출", "주택담보", "전세자금", "금리", "이자율"],                 "대출, 금리"),
+    (["주식", "ETF", "펀드", "투자", "코스피", "나스닥"],                "주식, ETF"),
+    (["청년", "정부지원", "지원금", "보조금"],                           "정부지원금"),
+    (["신용카드", "카드혜택", "캐시백"],                                 "신용카드"),
+    (["ChatGPT", "Claude", "Gemini", "Copilot", "소프트웨어 비교"],     "소프트웨어 비교"),
+    (["자동화", "파이썬", "Python", "노코드", "Make.com"],              "업무자동화"),
+    (["AI 도구", "AI 활용", "프롬프트", "챗봇"],                        "AI 도구활용"),
+    (["부업", "수익화", "프리랜서", "N잡"],                              "AI 부업, 수익화"),
+]
 
 # blog-writer가 출력하는 이미지 플레이스홀더 패턴
 # 예: [이미지 위치: 인지편향 다이어그램 — alt: "인지편향 소비 패턴"]
@@ -123,6 +138,53 @@ def replace_image_placeholders(html: str) -> str:
     return IMAGE_PATTERN.sub(replacer, html)
 
 
+def detect_category(title: str) -> str:
+    """제목 키워드로 Tistory 카테고리 자동 분류"""
+    for keyword_list, category in CATEGORY_RULES:
+        for kw in keyword_list:
+            if kw in title:
+                return category
+    return ""
+
+
+def extract_tags(title: str) -> list[str]:
+    """00_input.md 키워드 + 제목 단어로 태그 생성 (최대 15개)"""
+    tags: list[str] = []
+    if INPUT_PATH.exists():
+        text = INPUT_PATH.read_text(encoding="utf-8")
+        m = re.search(r'^## 키워드\s*\n(.+)$', text, re.MULTILINE)
+        if m:
+            for kw in m.group(1).split(","):
+                kw = kw.strip()
+                if kw and kw not in tags:
+                    tags.append(kw)
+    for word in re.split(r'[\s·—\-\[\]().,]', title):
+        word = word.strip()
+        if len(word) >= 2 and word not in tags:
+            tags.append(word)
+    return tags[:15]
+
+
+def ensure_db_properties():
+    """Notion DB에 카테고리/태그 프로퍼티가 없으면 자동 추가"""
+    res = requests.get(f"https://api.notion.com/v1/databases/{NOTION_DB_ID}", headers=NOTION_HEADERS)
+    if res.status_code != 200:
+        return
+    existing = set(res.json().get("properties", {}).keys())
+    updates: dict = {}
+    if "카테고리" not in existing:
+        updates["카테고리"] = {"select": {}}
+    if "태그" not in existing:
+        updates["태그"] = {"multi_select": {}}
+    if updates:
+        requests.patch(
+            f"https://api.notion.com/v1/databases/{NOTION_DB_ID}",
+            headers=NOTION_HEADERS,
+            json={"properties": updates},
+        )
+        print(f"  Notion DB 프로퍼티 추가: {list(updates.keys())}")
+
+
 # ═══════════════════════════════════════════════════════
 # 마크다운 파싱
 # ═══════════════════════════════════════════════════════
@@ -167,18 +229,24 @@ def make_paragraph_blocks(html: str) -> list:
     return blocks
 
 
-def create_notion_page(title: str, html: str) -> str:
+def create_notion_page(title: str, html: str, category: str = "", tags: list | None = None) -> str:
     """Notion DB에 '발행대기' 페이지 생성, 생성된 page_id 반환"""
     blocks = make_paragraph_blocks(html)
     first_batch, rest = blocks[:100], blocks[100:]
 
+    properties: dict = {
+        TITLE_PROPERTY: {"title": [{"type": "text", "text": {"content": title}}]},
+        "상태": {"select": {"name": "발행대기"}},
+        "날짜": {"date": {"start": date.today().isoformat()}},
+    }
+    if category:
+        properties["카테고리"] = {"select": {"name": category}}
+    if tags:
+        properties["태그"] = {"multi_select": [{"name": t} for t in tags]}
+
     payload = {
         "parent": {"database_id": NOTION_DB_ID},
-        "properties": {
-            TITLE_PROPERTY: {"title": [{"type": "text", "text": {"content": title}}]},
-            "상태": {"select": {"name": "발행대기"}},
-            "날짜": {"date": {"start": date.today().isoformat()}},
-        },
+        "properties": properties,
         "children": first_batch,
     }
 
@@ -207,14 +275,20 @@ def main():
     print(f"이미지 소스: Pexels({pexels_status}) → DALL-E 폴백")
     print(f"읽는 중: {BLOG_POST_PATH}")
 
+    ensure_db_properties()
     title, html = parse_blog_post(BLOG_POST_PATH)
+    category = detect_category(title)
+    tags = extract_tags(title)
+
     print(f"제목: {title}")
+    print(f"카테고리: {category or '(미분류)'}")
+    print(f"태그 ({len(tags)}개): {', '.join(tags)}")
     print(f"HTML 길이: {len(html)}자 → {math.ceil(len(html)/CHUNK_SIZE)}개 블록")
 
-    page_id = create_notion_page(title, html)
+    page_id = create_notion_page(title, html, category, tags)
     print(f"\nNotion 업로드 완료! (상태: 발행대기)")
     print(f"  Page ID: {page_id}")
-    print(f"\n다음 단계: python 03_tistory_playwright.py")
+    print(f"\n다음 단계: python -X utf8 03_tistory_playwright.py")
 
 
 if __name__ == "__main__":

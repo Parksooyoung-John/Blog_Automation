@@ -406,23 +406,22 @@ def post_to_tistory(page: Page, title: str, html_content: str,
     page.screenshot(path=os.path.join(os.path.dirname(__file__), "debug_panel.png"))
 
     # ── 발행 패널: 대표이미지 업로드 ──────────────────────
+    # "대표이미지 추가" span 밑에 input[type=file]이 직접 존재 → set_input_files로 업로드
     if thumb_path and os.path.exists(thumb_path):
         try:
-            with page.expect_file_chooser(timeout=5000) as fc_info:
-                page.locator("text=대표이미지 추가").click(timeout=3000)
-            fc_info.value.set_files(thumb_path)
+            page.locator('input[type="file"][accept="image/*"]').first.set_input_files(
+                thumb_path, timeout=5000
+            )
             page.wait_for_timeout(2000)
             print("  🖼️  대표이미지 업로드 완료")
         except Exception as e:
             print(f"  ⚠️  대표이미지 업로드 스킵: {e}")
 
     # ── 발행 패널: 카테고리(홈주제) 선택 ──────────────────
-    # TinyMCE의 disabled "선택 안 함" 버튼과 구분: not([disabled]) 필터 적용
+    # TinyMCE disabled 버튼이 첫 번째로 잡힘 → .last로 패널 버튼 타깃
     if category_name:
         try:
-            page.locator("button:not([disabled])").filter(
-                has_text="선택 안 함"
-            ).first.click(timeout=3000)
+            page.get_by_role("button", name="선택 안 함").last.click(timeout=3000)
             page.wait_for_timeout(600)
             try:
                 page.get_by_role("button", name=category_name).click(timeout=3000)

@@ -376,19 +376,21 @@ def post_to_tistory(page: Page, title: str, html_content: str,
     page.wait_for_timeout(1000)
 
     # ── 태그 입력 (에디터 하단, 완료 클릭 전) ─────────────
-    # locator 사용: DOM 재렌더링 후에도 lazy-evaluate로 안전하게 동작
+    # Playwright locator가 tagText input을 못 찾음 → JS focus 후 keyboard 입력으로 우회
     if tags:
         try:
-            tag_loc = page.locator(
-                'input[name="tag"], input[placeholder*="태그입력"], input[placeholder*="태그"]'
-            ).first
-            tag_loc.wait_for(state="visible", timeout=5000)
-            for tag in tags:
-                tag_loc.click()
-                page.keyboard.type(tag)
-                page.keyboard.press("Enter")
-                page.wait_for_timeout(300)
-            print(f"  🏷️  태그 입력 완료: {', '.join(tags)}")
+            focused = page.evaluate(
+                "() => { const el = document.querySelector('input[name=\"tagText\"]'); "
+                "if (!el) return false; el.focus(); return true; }"
+            )
+            if focused:
+                for tag in tags:
+                    page.keyboard.type(tag)
+                    page.keyboard.press("Enter")
+                    page.wait_for_timeout(300)
+                print(f"  🏷️  태그 입력 완료: {', '.join(tags)}")
+            else:
+                print("  ⚠️  태그 input[name=tagText] 없음")
         except Exception as e:
             print(f"  ⚠️  태그 입력 스킵: {e}")
 
@@ -418,16 +420,31 @@ def post_to_tistory(page: Page, title: str, html_content: str,
             print(f"  ⚠️  대표이미지 업로드 스킵: {e}")
 
     # ── 발행 패널: 카테고리(홈주제) 선택 ──────────────────
-    # TinyMCE disabled 버튼이 첫 번째로 잡힘 → .last로 패널 버튼 타깃
+    # category-btn: ReactModal__Overlay가 pointer event를 가로막음 → JS evaluate로 직접 클릭
     if category_name:
         try:
-            page.get_by_role("button", name="선택 안 함").last.click(timeout=3000)
-            page.wait_for_timeout(600)
-            try:
-                page.get_by_role("button", name=category_name).click(timeout=3000)
-            except Exception:
-                page.locator(f"text={category_name}").first.click(timeout=3000)
-            print(f"  📁 카테고리: {category_name}")
+            # combobox 열기 (JS click — React synthetic event 호환)
+            opened = page.evaluate("""
+                () => {
+                    const btn = document.getElementById('category-btn');
+                    if (!btn) return false;
+                    btn.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
+                    return true;
+                }
+            """)
+            page.wait_for_timeout(800)
+            if opened:
+                # 드롭다운 옵션 선택 (li[role=option] 또는 text 매칭)
+                try:
+                    page.get_by_role("option", name=category_name).click(timeout=3000)
+                except Exception:
+                    try:
+                        page.locator(f"#category-list li", has_text=category_name).first.click(timeout=3000)
+                    except Exception:
+                        page.locator(f"[role='listbox'] [role='option']", has_text=category_name).first.click(timeout=3000)
+                print(f"  📁 카테고리: {category_name}")
+            else:
+                print("  ⚠️  카테고리 버튼(#category-btn) 없음")
         except Exception as e:
             print(f"  ⚠️  카테고리 선택 스킵: {e}")
         page.wait_for_timeout(500)

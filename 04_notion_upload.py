@@ -68,28 +68,29 @@ def _fetch_pexels(query: str) -> str | None:
 
 
 def _generate_dalle(description: str) -> str | None:
-    """DALL-E 3로 이미지 생성 후 URL 반환"""
+    """gpt-image-1로 이미지 생성 후 data URI 반환"""
     if not OPENAI_KEY:
         return None
     try:
+        import base64
         res = requests.post(
             "https://api.openai.com/v1/images/generations",
             headers={"Authorization": f"Bearer {OPENAI_KEY}", "Content-Type": "application/json"},
             json={
-                "model": "dall-e-3",
+                "model": "gpt-image-1",
                 "prompt": (
                     f"블로그 본문 이미지, 주제: '{description}'. "
                     "전문적이고 깔끔한 일러스트, 텍스트 없음, 16:9 비율, 한국 블로그 스타일"
                 ),
                 "n": 1,
-                "size": "1792x1024",
-                "response_format": "url",
+                "size": "1536x1024",
             },
             timeout=60,
         )
         if res.status_code != 200:
             return None
-        return res.json()["data"][0]["url"]
+        b64 = res.json()["data"][0]["b64_json"]
+        return f"data:image/png;base64,{b64}"
     except Exception:
         return None
 

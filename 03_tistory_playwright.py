@@ -215,11 +215,10 @@ def generate_thumbnail_base64(title: str) -> str:
     )
     headers = {"Authorization": f"Bearer {OPENAI_KEY}", "Content-Type": "application/json"}
     payload = {
-        "model": "dall-e-3",
+        "model": "gpt-image-1",
         "prompt": prompt,
         "n": 1,
-        "size": "1792x1024",
-        "response_format": "b64_json",
+        "size": "1536x1024",
     }
     res = requests.post("https://api.openai.com/v1/images/generations",
                         headers=headers, json=payload)

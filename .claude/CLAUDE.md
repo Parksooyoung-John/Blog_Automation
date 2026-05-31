@@ -198,19 +198,34 @@ if stripped.startswith('<'):
 
 ---
 
-### [04_notion_upload.py] 카테고리 자동 분류
+### [04_notion_upload.py] 카테고리 자동 분류 + Notion select 쉼표 제한
 
-`CATEGORY_RULES` 키워드 매칭으로 Tistory 카테고리를 자동 지정. Tistory 카테고리명과 **정확히 일치**해야 함(대소문자, 공백 포함):
+**제약**: Notion select 옵션명에 쉼표(`,`) 사용 불가 — API가 `validation_error` 반환.
+
+**구조**: Notion 저장명(쉼표 없음) / Tistory 표시명(쉼표 허용)을 분리:
 
 ```python
+# 04_notion_upload.py: CATEGORY_RULES — Notion 저장명 (쉼표 없음)
 CATEGORY_RULES = [
-    (["ChatGPT", "Claude", "Gemini", "Copilot", "소프트웨어 비교"], "소프트웨어 비교"),
-    (["자동화", "파이썬", "Python", "노코드", "Make.com"],          "업무자동화"),
-    # ... 추가 규칙
+    (["ISA", "IRP", "연금", "절세"], "절세연금"),       # ← Notion에 저장되는 이름
+    (["대출", "금리"],               "대출금리"),
+    (["주식", "ETF"],                "주식ETF"),
+    (["ChatGPT", "Claude"],          "소프트웨어 비교"), # 원래 쉼표 없음 → 그대로
+    ...
 ]
+
+# 03_tistory_playwright.py: TISTORY_CATEGORY_MAP — 실제 Tistory 카테고리명으로 변환
+TISTORY_CATEGORY_MAP = {
+    "절세연금":     "절세, 연금",
+    "대출금리":     "대출, 금리",
+    "주식ETF":      "주식, ETF",
+    "AI부업수익화": "AI 부업, 수익화",
+}
 ```
 
-Tistory 카테고리 추가/변경 시 이 리스트도 동기화할 것.
+**사용 흐름**: `CATEGORY_RULES`로 Notion 저장 → `TISTORY_CATEGORY_MAP.get(notion_cat, notion_cat)`로 Tistory 카테고리명 변환.
+
+Tistory 카테고리 추가/변경 시 두 파일 모두 동기화할 것.
 
 ---
 

@@ -48,6 +48,13 @@
 - desc: 연봉 3,000만~1억 원 구간별 세액공제 환급액 계산표. 납입액별 시뮬레이션과 최적 전략까지.
 - keywords: 세액공제계산, 연봉별환급액, 연말정산, 연금저축IRP, 세금환급
 
+### HUG·HF·SGI 전세보증 차이 완전 비교 — 내 상황에 맞는 선택법
+- url: https://j2gblog.tistory.com/entry/HUG·HF·SGI-전세보증-차이-완전-비교-—-내-상황에-맞는-선택법
+- category: 대출, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fd89SRN%2FdJMcacceI8L%2FAAAAAAAAAAAAAAAAAAAAAL3MJo-VPBPywsT7QfebRV3yT62rIPjCtMQ9CeCzAKZk%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D5yyeLvnShEhrGJ9ffF8eXOB55%252Bg%253D
+- desc: HUG·HF·SGI 보증금 한도·보증료·임대인 동의 조건을 한눈에 비교. 상황별 4가지 시나리오로 내 보증기관을 바로 선택하세요.
+- keywords: HUG보증, HF보증, SGI보증, 전세보증차이, 전세보증선택, 전세보증보험비교, 전세대출보증, 보증료비교
+
 ### 청년 전세대출 신청 서류 체크리스트 — 은행 방문 전 준비할 것
 - url: https://j2gblog.tistory.com/entry/청년-전세대출-신청-서류-체크리스트-—-은행-방문-전-준비할-것
 - category: 대출, 금리

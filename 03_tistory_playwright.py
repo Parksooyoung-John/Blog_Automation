@@ -345,40 +345,39 @@ def post_to_tistory(page: Page, title: str, html_content: str,
     # 대표이미지는 발행 패널 안에 있음 → 패널 오픈 후 업로드
 
     # ── 본문 입력 (TinyMCE 에디터) ────────────────────────
+    # HTML을 JS 인자로 전달 — f-string/템플릿 리터럴 특수문자 충돌 방지
     page.wait_for_timeout(2000)
     try:
-        # TinyMCE API로 직접 내용 삽입 + change 이벤트 발생
-        escaped = html_content.replace("\\", "\\\\").replace("`", "\\`")
-        inserted = page.evaluate(f"""
-            () => {{
+        inserted = page.evaluate("""
+            (html) => {
                 // TinyMCE 방식
-                if (typeof tinymce !== 'undefined' && tinymce.activeEditor) {{
-                    tinymce.activeEditor.setContent(`{escaped}`);
-                    tinymce.activeEditor.fire('change');  // 변경사항 강제 등록
-                    tinymce.activeEditor.save();          // 원본 textarea에 동기화
+                if (typeof tinymce !== 'undefined' && tinymce.activeEditor) {
+                    tinymce.activeEditor.setContent(html);
+                    tinymce.activeEditor.fire('change');
+                    tinymce.activeEditor.save();
                     return 'tinymce';
-                }}
+                }
                 // iframe 내부 직접 접근
                 const iframe = document.querySelector('iframe.tox-edit-area__iframe');
-                if (iframe) {{
+                if (iframe) {
                     const doc = iframe.contentDocument || iframe.contentWindow.document;
                     const body = doc.querySelector('body');
-                    if (body) {{
-                        body.innerHTML = `{escaped}`;
-                        body.dispatchEvent(new Event('input', {{bubbles: true}}));
+                    if (body) {
+                        body.innerHTML = html;
+                        body.dispatchEvent(new Event('input', {bubbles: true}));
                         return 'iframe';
-                    }}
-                }}
+                    }
+                }
                 // contenteditable fallback
                 const editable = document.querySelector('[contenteditable="true"]');
-                if (editable) {{
-                    editable.innerHTML = `{escaped}`;
-                    editable.dispatchEvent(new Event('input', {{bubbles: true}}));
+                if (editable) {
+                    editable.innerHTML = html;
+                    editable.dispatchEvent(new Event('input', {bubbles: true}));
                     return 'contenteditable';
-                }}
+                }
                 return null;
-            }}
-        """)
+            }
+        """, html_content)
         page.wait_for_timeout(1500)  # 내용 반영 대기
         print(f"  📝 본문 입력 완료 (방식: {inserted})")
     except Exception as e:
@@ -512,7 +511,28 @@ def post_to_tistory(page: Page, title: str, html_content: str,
         print(f"  ⚠️  발행 버튼 실패 — 버튼목록: {all_btns}")
         raise Exception(f"공개 발행 버튼 없음: {e}")
 
-    page.wait_for_timeout(4000)
+    # ── 발행 결과 확인 (최대 10초 대기) ─────────────────────
+    # 발행 성공 시 Tistory는 manage/newpost URL에서 벗어나거나 패널이 닫힘
+    for _ in range(10):
+        page.wait_for_timeout(1000)
+        cur_url = page.url
+        # 패널이 사라졌거나 URL이 변경되면 성공으로 간주
+        panel_gone = not page.locator("button:has-text('공개 발행')").is_visible()
+        if panel_gone or 'newpost' not in cur_url:
+            print(f"  ✅ 발행 확인: 패널 닫힘 또는 URL 변경 ({cur_url[:60]})")
+            break
+    else:
+        # 10초 후에도 패널이 열려있으면 JS로 재시도
+        print("  ⚠️  패널 미닫힘 — JS click으로 재시도")
+        page.evaluate("""
+            () => {
+                const btns = [...document.querySelectorAll('button')];
+                const btn = btns.find(b => b.textContent.trim() === '공개 발행');
+                if (btn) btn.click();
+            }
+        """)
+        page.wait_for_timeout(5000)
+
     page.screenshot(path=os.path.join(os.path.dirname(__file__), "debug_after_publish.png"))
 
     # ── 발행된 URL 반환 (패널 URL 우선, 폴백: 현재 탭 URL) ─

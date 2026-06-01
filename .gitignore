@@ -2,6 +2,7 @@
 .env.txt
 _workspace/
 thumb_*.png
+_thumbs/
 debug_*.png
 __pycache__/
 *.pyc

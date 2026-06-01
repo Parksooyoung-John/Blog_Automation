@@ -312,6 +312,47 @@ Tistory 카테고리 추가/변경 시 두 파일 모두 동기화할 것.
 
 ---
 
+### [Tistory] TinyMCE setContent — f-string embed 금지
+
+**문제**: HTML을 Python f-string으로 JavaScript 템플릿 리터럴에 직접 embed하면 HTML 내 `${}`, `{`, `}`, 백틱 등 특수문자 충돌로 `setContent`가 부분 삽입되거나 무시됨. 발행 패널 "공개 발행" 클릭 후 패널이 닫히지 않고 포스트가 저장되지 않는 무증상 실패 발생.
+
+**잘못된 코드**:
+```python
+escaped = html_content.replace("\\", "\\\\").replace("`", "\\`")
+page.evaluate(f'() => {{ tinymce.activeEditor.setContent(`{escaped}`) }}')
+```
+
+**올바른 코드** — HTML을 JS 인자로 전달:
+```python
+page.evaluate("(html) => { tinymce.activeEditor.setContent(html); }", html_content)
+```
+
+**증상 패턴**: `✅ 본문 입력 완료 (방식: tinymce)` + `✅ 발행 완료` 로그가 정상 출력되지만, 실제 Tistory URL이 404를 반환함. `debug_after_publish.png`에 발행 패널이 열린 채로 남아있음.
+
+---
+
+### [Tistory] 대표이미지 — 재발행 시 재생성 금지
+
+**문제**: `03_tistory_playwright.py`가 매 실행마다 DALL-E로 새 썸네일을 생성함. 재발행/재시도 시 불필요한 API 비용 발생 + 포스트마다 썸네일이 달라짐.
+
+**해결**: `page_id` 기반 파일명으로 `_thumbs/` 디렉토리에 캐싱:
+```python
+# 캐시 확인
+thumb_path = get_cached_thumbnail(page_id)  # _thumbs/thumb_{page_id[:16]}.png
+if thumb_path:
+    print("기존 썸네일 재사용")
+elif OPENAI_KEY:
+    b64 = generate_thumbnail_base64(title)
+    thumb_path = save_thumbnail_temp(b64, page_id)  # page_id로 저장
+```
+
+**규칙**:
+- 발행 성공/실패 여부와 무관하게 `_thumbs/` 파일은 삭제하지 않음
+- 동일 Notion page_id로 재발행 시 자동으로 기존 썸네일 사용
+- `_thumbs/` 디렉토리를 `.gitignore`에 추가할 것 (바이너리 파일)
+
+---
+
 ### [공통] 환경변수 (.env)
 
 | 변수명 | 용도 |

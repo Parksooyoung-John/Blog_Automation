@@ -274,13 +274,23 @@ def generate_thumbnail_base64(title: str) -> str:
     return res.json()["data"][0]["b64_json"]
 
 
-def save_thumbnail_temp(b64_data: str, title: str) -> str:
-    """base64 이미지를 임시 파일로 저장 후 경로 반환"""
-    filename = f"thumb_{int(time.time())}.png"
-    filepath = os.path.join(os.path.dirname(__file__), filename)
+def save_thumbnail_temp(b64_data: str, page_id: str) -> str:
+    """base64 이미지를 page_id 기반 파일로 저장 후 경로 반환.
+    동일 page_id로 재발행 시 기존 파일을 재사용한다."""
+    safe_id = page_id.replace("-", "")[:16]
+    filename = f"thumb_{safe_id}.png"
+    filepath = os.path.join(os.path.dirname(__file__), "_thumbs", filename)
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, "wb") as f:
         f.write(base64.b64decode(b64_data))
     return filepath
+
+
+def get_cached_thumbnail(page_id: str) -> str:
+    """기존 생성된 썸네일이 있으면 경로 반환, 없으면 빈 문자열 반환"""
+    safe_id = page_id.replace("-", "")[:16]
+    filepath = os.path.join(os.path.dirname(__file__), "_thumbs", f"thumb_{safe_id}.png")
+    return filepath if os.path.exists(filepath) else ""
 
 
 def insert_coupang_links(html: str) -> str:
@@ -594,13 +604,15 @@ def process_all():
                     title = auto_title
                     print(f"  🏷️  제목 자동 추출: {title}")
 
-                # 2. 썸네일 생성
-                thumb_path = ""
-                if OPENAI_KEY:
+                # 2. 썸네일 — 캐시 우선, 없으면 DALL-E 신규 생성
+                thumb_path = get_cached_thumbnail(page_id)
+                if thumb_path:
+                    print(f"  🖼️  기존 썸네일 재사용: {os.path.basename(thumb_path)}")
+                elif OPENAI_KEY:
                     print("  📸 썸네일 생성중 (DALL-E)...")
                     try:
                         b64 = generate_thumbnail_base64(title)
-                        thumb_path = save_thumbnail_temp(b64, title)
+                        thumb_path = save_thumbnail_temp(b64, page_id)
                     except Exception as e:
                         print(f"  ⚠️  썸네일 생성 실패 (스킵): {e}")
 
@@ -620,9 +632,7 @@ def process_all():
                 # 5. Notion 상태 → 발행완료
                 update_notion_status(page_id, "발행완료", post_url)
 
-                # 임시 썸네일 파일 삭제
-                if thumb_path and os.path.exists(thumb_path):
-                    os.remove(thumb_path)
+                # 썸네일 파일은 _thumbs/ 에 영구 보관 (재발행 시 재사용)
 
                 print(f"  ✅ [{title}] 완료")
                 time.sleep(3)  # 연속 발행 시 딜레이

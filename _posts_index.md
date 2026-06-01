@@ -65,21 +65,21 @@
 ### 버팀목 청년전용 전세대출 신청 순서와 자주 탈락하는 이유
 - url: https://j2gblog.tistory.com/entry/버팀목-청년전용-전세대출-신청-순서와-자주-탈락하는-이유
 - category: 대출, 금리
-- thumb: pending
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fk5TD7%2FdJMcaayLemz%2FAAAAAAAAAAAAAAAAAAAAABihoaw99r8FYsxsH8JErwb9Byra8ULo9vnolGMXKh-f%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DirvEPtSOM%252B1Zg3LRAgbxzxG5ZnM%253D
 - desc: 버팀목 청년전용 전세대출 6단계 신청 순서와 소득초과·보증금초과·서류미비 등 5가지 탈락 원인 정리.
 - keywords: 버팀목전세대출신청, 청년전세대출신청순서, 버팀목탈락이유, 전세대출조건, 버팀목신청방법
 
 ### 자동차보험 갱신 체크리스트 — 만기 전에 확인할 항목
 - url: https://j2gblog.tistory.com/entry/자동차보험-갱신-체크리스트-—-만기-전에-확인할-항목
 - category: 보험비교
-- thumb: pending
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fpy86h%2FdJMcabYJ5qx%2FAAAAAAAAAAAAAAAAAAAAAJjkHiwOUbB2hASO1MedTK-1LERHJNmL9urHIbntTNeg%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DAdGVHqv9C5AAJBKqklmVTvQpII8%253D
 - desc: 자동차보험 만기 30일 전 확인할 8가지 체크리스트. 할인 특약 놓침·담보 과잉·무사고 경력 이전까지.
 - keywords: 자동차보험갱신, 자동차보험체크리스트, 자동차보험만기, 자동차보험비교, 보험다모아
 
 ### ISA 만기 후 연금저축·IRP로 이전하는 방법 — 60일 안에 최대 49만 원 환급
 - url: https://j2gblog.tistory.com/entry/ISA-만기-후-연금저축·IRP로-이전하는-방법-—-60일-안에-최대-49만-원-환급
 - category: 절세, 연금
-- thumb: pending
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbF9Tf1%2FdJMcaciX5Nz%2FAAAAAAAAAAAAAAAAAAAAALADzl8W27iaNQpSaTx8ldQsii4k9he3vD6Cki43R2XY%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DSoEs5Q6ew%252FSMmgHxjvtJfCGwEcE%253D
 - desc: ISA 만기 후 60일 이내 IRP·연금저축 이전 시 추가 세액공제 최대 300만 원. 5단계 실행 방법과 계산 예시.
 - keywords: ISA만기이전, ISA이전특례, 연금저축IRP이전, ISA만기후, 300만원세액공제
 

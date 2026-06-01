@@ -55,6 +55,34 @@
 - desc: HUG·HF·SGI 보증금 한도·보증료·임대인 동의 조건을 한눈에 비교. 상황별 4가지 시나리오로 내 보증기관을 바로 선택하세요.
 - keywords: HUG보증, HF보증, SGI보증, 전세보증차이, 전세보증선택, 전세보증보험비교, 전세대출보증, 보증료비교
 
+### 실손보험 가입 전 확인할 보장 항목 체크리스트
+- url: https://j2gblog.tistory.com/entry/실손보험-가입-전-확인할-보장-항목-체크리스트
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FFlyO5%2FdJMcajoOhe2%2FAAAAAAAAAAAAAAAAAAAAAGvg79aVE0ToRU0ecEmAiNJamrM11Lc8vPUxjD9pPhbN%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DY1sqnlcyNqPXWPA9swFZdb27rCs%253D
+- desc: 실손보험 가입 전 꼭 확인해야 할 비급여 보장 범위·자기부담금·갱신 주기·특약을 체크리스트로 정리했습니다.
+- keywords: 실손보험, 실손보험가입, 실손보험보장항목, 비급여보장, 실손보험체크리스트, 실손보험비교
+
+### 갱신형 vs 비갱신형 보험 차이 — 보험료만 보면 안 되는 이유
+- url: https://j2gblog.tistory.com/entry/갱신형-vs-비갱신형-보험-차이-—-보험료만-보면-안-되는-이유
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2F9Nz5T%2FdJMcageD8pt%2FAAAAAAAAAAAAAAAAAAAAAHrsVi9yhErutjXOXg9wyJ_BBMtBUtlPLmDqNVaNza0e%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DGOddr3%252FmFXgFqW44oIh7CIvio5U%253D
+- desc: 갱신형과 비갱신형 보험의 보험료 구조·장단점·장기 비용 차이를 비교합니다. 초기 보험료만 보면 손해 보는 이유.
+- keywords: 갱신형보험, 비갱신형보험, 갱신형vs비갱신형, 보험료비교, 보험선택, 보험리모델링
+
+### 자동차보험 갱신 전 확인할 할인 특약 10가지
+- url: https://j2gblog.tistory.com/entry/자동차보험-갱신-전-확인할-할인-특약-10가지
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FKwovs%2FdJMcagZYkzS%2FAAAAAAAAAAAAAAAAAAAAAFrFVPnmvzRcM7FvdRt2hLt6NaaoniLSS-oX_srMwJHu%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DeXmK%252BPxnUfiyW%252BIQWxBenWafUwM%253D
+- desc: 자동차보험 갱신 시즌에 놓치기 쉬운 마일리지·블랙박스·안전운전 등 10가지 할인 특약을 정리했습니다.
+- keywords: 자동차보험할인, 자동차보험특약, 자동차보험갱신, 마일리지할인, 블랙박스할인, 자동차보험절약
+
+### 보험 리모델링 전에 해지하면 안 되는 이유
+- url: https://j2gblog.tistory.com/entry/보험-리모델링-전에-해지하면-안-되는-이유
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FegUkN7%2FdJMcadoBRft%2FAAAAAAAAAAAAAAAAAAAAAB7Yr7sAXfTCBGPagGV-zHze8TF9jZ3JkPN8Y2aDd_o_%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DPJqqqvYaaO2B6xOrSkkZ0yIvEcs%253D
+- desc: 보험 리모델링 시 기존 계약을 먼저 해지하면 재가입 거절·보험료 인상 위험이 있습니다. 올바른 순서와 주의사항 정리.
+- keywords: 보험리모델링, 보험해지, 보험재가입, 보험갱신, 보험정리, 보험점검
+
 ### 청년 전세대출 신청 서류 체크리스트 — 은행 방문 전 준비할 것
 - url: https://j2gblog.tistory.com/entry/청년-전세대출-신청-서류-체크리스트-—-은행-방문-전-준비할-것
 - category: 대출, 금리

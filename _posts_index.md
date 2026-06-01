@@ -55,6 +55,34 @@
 - desc: HUG·HF·SGI 보증금 한도·보증료·임대인 동의 조건을 한눈에 비교. 상황별 4가지 시나리오로 내 보증기관을 바로 선택하세요.
 - keywords: HUG보증, HF보증, SGI보증, 전세보증차이, 전세보증선택, 전세보증보험비교, 전세대출보증, 보증료비교
 
+### 보험료를 줄이고 싶을 때 먼저 확인할 7가지
+- url: https://j2gblog.tistory.com/entry/보험료를-줄이고-싶을-때-먼저-확인할-7가지
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FqVUs6%2FdJMcabqTxZm%2FAAAAAAAAAAAAAAAAAAAAAIhqOJUvZQSyqKZ0L73TbgrqsZQaTKYoA9Y5UNzJNoEb%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DFek%252BYkGBarcJLu2zrgHhskWRsnA%253D
+- desc: 중복 실손 조회부터 감액납입·연납 전환까지 보험료를 실질적으로 줄이는 7가지 체크리스트.
+- keywords: 보험료절감, 보험료줄이기, 중복실손보험, 비급여특약, 감액납입, 보험리모델링
+
+### 버팀목 청년전용 전세대출 신청 순서와 자주 탈락하는 이유
+- url: https://j2gblog.tistory.com/entry/버팀목-청년전용-전세대출-신청-순서와-자주-탈락하는-이유
+- category: 대출, 금리
+- thumb: pending
+- desc: 버팀목 청년전용 전세대출 6단계 신청 순서와 소득초과·보증금초과·서류미비 등 5가지 탈락 원인 정리.
+- keywords: 버팀목전세대출신청, 청년전세대출신청순서, 버팀목탈락이유, 전세대출조건, 버팀목신청방법
+
+### 자동차보험 갱신 체크리스트 — 만기 전에 확인할 항목
+- url: https://j2gblog.tistory.com/entry/자동차보험-갱신-체크리스트-—-만기-전에-확인할-항목
+- category: 보험비교
+- thumb: pending
+- desc: 자동차보험 만기 30일 전 확인할 8가지 체크리스트. 할인 특약 놓침·담보 과잉·무사고 경력 이전까지.
+- keywords: 자동차보험갱신, 자동차보험체크리스트, 자동차보험만기, 자동차보험비교, 보험다모아
+
+### ISA 만기 후 연금저축·IRP로 이전하는 방법 — 60일 안에 최대 49만 원 환급
+- url: https://j2gblog.tistory.com/entry/ISA-만기-후-연금저축·IRP로-이전하는-방법-—-60일-안에-최대-49만-원-환급
+- category: 절세, 연금
+- thumb: pending
+- desc: ISA 만기 후 60일 이내 IRP·연금저축 이전 시 추가 세액공제 최대 300만 원. 5단계 실행 방법과 계산 예시.
+- keywords: ISA만기이전, ISA이전특례, 연금저축IRP이전, ISA만기후, 300만원세액공제
+
 ### 실손보험 가입 전 확인할 보장 항목 체크리스트
 - url: https://j2gblog.tistory.com/entry/실손보험-가입-전-확인할-보장-항목-체크리스트
 - category: 보험비교

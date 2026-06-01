@@ -54,14 +54,20 @@
 2. 현재 포스트와 같은 카테고리 또는 키워드가 겹치는 기발행 포스트 최대 3개 선택
 3. 본문 마지막(공식 출처 표 위)에 삽입
 
-### 필수 출력 형식
-```
+### 필수 출력 형식 (HTML 카드)
+```html
 ---
 
 ## 함께 읽으면 좋은 글
 
-- [[포스트 제목]](https://j2gblog.tistory.com/숫자)
-- [[포스트 제목]](https://j2gblog.tistory.com/숫자)
+<div style="border:1px solid #e8e8e8;border-radius:12px;overflow:hidden;margin:16px 0;max-width:640px;">
+<a href="URL" target="_blank" rel="noopener" style="display:flex;text-decoration:none;color:inherit;">
+<div style="width:160px;min-width:160px;overflow:hidden;"><img src="THUMB" style="width:100%;height:105px;object-fit:cover;display:block;" /></div>
+<div style="padding:14px 18px;flex:1;">
+<div style="font-weight:700;font-size:15px;color:#333;margin-bottom:6px;">제목</div>
+<div style="font-size:13px;color:#666;">설명</div>
+<div style="font-size:12px;color:#aaa;margin-top:10px;">j2gblog.tistory.com</div>
+</div></a></div>
 ```
 
 ### 인덱스 업데이트 규칙

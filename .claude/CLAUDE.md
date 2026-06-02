@@ -312,6 +312,31 @@ Tistory 카테고리 추가/변경 시 두 파일 모두 동기화할 것.
 
 ---
 
+### [비용 정책] DALL-E 이미지 생성 최소화
+
+**원칙**: gpt-image-1 API는 대표이미지(썸네일) 1장만 생성한다. 본문 이미지는 Pexels 무료 API만 사용하고, Pexels 키가 없거나 검색 실패 시 이미지를 생략한다.
+
+**글 1개당 API 호출 횟수**:
+- `04_notion_upload.py`: Pexels 키 있으면 최대 2회(무료), 없으면 0회
+- `03_tistory_playwright.py`: 대표이미지 1회 (신규 발행 시만, 재발행 시 캐시 재사용)
+
+**DALL-E 본문 이미지 비활성화** (`04_notion_upload.py`):
+```python
+# replace_image_placeholders() — DALL-E 폴백 제거
+url = _fetch_pexels(description)   # Pexels만 시도
+if url:
+    return <img 태그>
+return ""  # Pexels 없으면 플레이스홀더 제거 (DALL-E 호출 없음)
+```
+
+**대표이미지 캐싱** (`03_tistory_playwright.py`):
+- `_thumbs/thumb_{page_id[:16]}.png` 에 저장
+- 동일 page_id 재발행 시 기존 파일 재사용 (DALL-E 호출 없음)
+
+**비용 확인**: https://platform.openai.com/usage
+
+---
+
 ### [Tistory] TinyMCE setContent — f-string embed 금지
 
 **문제**: HTML을 Python f-string으로 JavaScript 템플릿 리터럴에 직접 embed하면 HTML 내 `${}`, `{`, `}`, 백틱 등 특수문자 충돌로 `setContent`가 부분 삽입되거나 무시됨. 발행 패널 "공개 발행" 클릭 후 패널이 닫히지 않고 포스트가 저장되지 않는 무증상 실패 발생.

@@ -113,28 +113,23 @@ def _generate_dalle(description: str) -> str | None:
 
 
 def replace_image_placeholders(html: str) -> str:
-    """[이미지 위치: desc — alt: "alt"] 패턴을 실제 <img> 태그로 교체
-    Pexels 우선 → DALL-E 폴백 → 실패 시 플레이스홀더 제거
+    """[이미지 위치: desc — alt: "alt"] 패턴 처리.
+    비용 정책: Pexels(무료) 우선 → Pexels 없으면 플레이스홀더 제거.
+    DALL-E 본문 이미지 생성 비활성화 (대표이미지 1장만 03_tistory_playwright.py에서 생성).
     """
     def replacer(m: re.Match) -> str:
         description, alt = m.group(1).strip(), m.group(2).strip()
-        print(f"  이미지 처리: {description[:45]}")
 
         url = _fetch_pexels(description)
         if url:
-            source = "Pexels"
-        else:
-            url = _generate_dalle(description)
-            source = "DALL-E" if url else None
-
-        if url:
-            print(f"    → {source} 이미지 획득")
+            print(f"  이미지 처리: {description[:45]} → Pexels")
             return (
                 f'<figure style="margin:24px 0;">'
                 f'<img src="{url}" alt="{alt}" style="max-width:100%;border-radius:8px;">'
                 f'</figure>'
             )
-        print("    → 이미지 없음 (플레이스홀더 제거)")
+        # Pexels 없으면 플레이스홀더 제거 (DALL-E 비용 절감)
+        print(f"  이미지 건너뜀: {description[:45]}")
         return ""
 
     return IMAGE_PATTERN.sub(replacer, html)
@@ -274,7 +269,7 @@ def main():
         raise SystemExit(f"파일이 없습니다: {BLOG_POST_PATH}\n/content-repurposer 실행 후 재시도하세요.")
 
     pexels_status = "사용 가능" if PEXELS_KEY else "키 없음 (DALL-E 폴백)"
-    print(f"이미지 소스: Pexels({pexels_status}) → DALL-E 폴백")
+    print(f"이미지 소스: Pexels({pexels_status}) [DALL-E 본문 이미지 비활성화 — 비용 절감]")
     print(f"읽는 중: {BLOG_POST_PATH}")
 
     ensure_db_properties()

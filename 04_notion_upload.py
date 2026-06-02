@@ -198,6 +198,10 @@ def parse_blog_post(path: Path) -> tuple[str, str]:
     body = re.sub(r'^# .+\n', '', text, count=1, flags=re.MULTILINE)
     body = re.sub(r'^>.*\n?', '', body, flags=re.MULTILINE).strip()
 
+    # blog-writer가 추가하는 메타 블록 제거 (본문에 노출되면 안 되는 내용)
+    body = re.sub(r'\[THUMBNAIL_PROMPT\].*?\[/THUMBNAIL_PROMPT\]', '', body, flags=re.DOTALL)
+    body = body.strip()
+
     # 마크다운 → HTML
     html = md_lib.markdown(body, extensions=["tables", "fenced_code", "nl2br"])
 

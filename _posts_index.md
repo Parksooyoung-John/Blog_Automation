@@ -55,6 +55,27 @@
 - desc: HUG·HF·SGI 보증금 한도·보증료·임대인 동의 조건을 한눈에 비교. 상황별 4가지 시나리오로 내 보증기관을 바로 선택하세요.
 - keywords: HUG보증, HF보증, SGI보증, 전세보증차이, 전세보증선택, 전세보증보험비교, 전세대출보증, 보증료비교
 
+### 실손보험 1세대·2세대·3세대·4세대 차이 — 내 보험은 몇 세대일까?
+- url: https://j2gblog.tistory.com/entry/실손보험-1세대·2세대·3세대·4세대-차이-—-내-보험은-몇-세대일까?
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbYEob1%2FdJMcafNDoZ5%2FAAAAAAAAAAAAAAAAAAAAAFQXju8WPJVvMnvFzSjQFygY9APwc8wvU7ooiCl8eK0T%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DB98JVCiMETOAE176eFq%252FLqcmAEM%253D
+- desc: 실손보험 1~4세대 가입 시기별 자기부담금·갱신 구조 차이. 해지 전 반드시 확인해야 할 사항 포함.
+- keywords: 실손보험세대, 실손보험1세대, 실손보험4세대, 실손보험세대비교, 실손보험자기부담금, 실손보험갱신구조
+
+### 전세대출 금리 비교 전에 확인할 7가지 — 최저금리만 보면 안 되는 이유
+- url: https://j2gblog.tistory.com/entry/전세대출-금리-비교-전에-확인할-7가지-—-최저금리만-보면-안-되는-이유
+- category: 대출, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FvRpEQ%2FdJMcahEAypm%2FAAAAAAAAAAAAAAAAAAAAAF-WZ8q5B3SVKj94ZMzj9Gj4Z8VHWxpntfWpSp5-c1hy%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DPzm%252FyVXDdZQk9Vlyf%252FIiZl%252BniWg%253D
+- desc: 기준금리·가산금리·우대금리·보증료·중도상환수수료까지 전세대출 금리 비교 시 확인할 7가지.
+- keywords: 전세대출금리비교, 전세대출우대금리, 전세대출보증료, 중도상환수수료, 변동금리고정금리, 정책대출금리
+
+### AI 구독료를 줄이는 방법 — ChatGPT·Claude 유료 결제 전에 확인할 체크리스트
+- url: https://j2gblog.tistory.com/entry/AI-구독료를-줄이는-방법-—-ChatGPT·Claude-유료-결제-전에-확인할-체크리스트
+- category: AI 도구활용
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2F3itjV%2FdJMcadIT4Px%2FAAAAAAAAAAAAAAAAAAAAAG_y9jviYvkpz4MpqdQ2kYn7JpYsuTTgdiEKOHQ5Feg5%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DT%252BdIfG5bAQ%252BF%252BE657RAr1lJ6wMg%253D
+- desc: ChatGPT·Claude 유료 플랜이 필요한지 확인하는 방법. 무료 플랜 사용 사례, 중복 결제 방지, 팀 요금제 혼동 주의.
+- keywords: ChatGPT유료플랜, Claude유료플랜, AI구독료절감, AI구독체크리스트, ChatGPTPlus, ClaudePro
+
 ### 보험료를 줄이고 싶을 때 먼저 확인할 7가지
 - url: https://j2gblog.tistory.com/entry/보험료를-줄이고-싶을-때-먼저-확인할-7가지
 - category: 보험비교

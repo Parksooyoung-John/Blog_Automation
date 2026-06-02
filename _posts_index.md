@@ -55,6 +55,41 @@
 - desc: HUG·HF·SGI 보증금 한도·보증료·임대인 동의 조건을 한눈에 비교. 상황별 4가지 시나리오로 내 보증기관을 바로 선택하세요.
 - keywords: HUG보증, HF보증, SGI보증, 전세보증차이, 전세보증선택, 전세보증보험비교, 전세대출보증, 보증료비교
 
+### 업무별 ChatGPT·Claude 선택 기준 — 어떤 AI가 내 일에 더 맞을까?
+- url: https://j2gblog.tistory.com/entry/업무별-ChatGPT·Claude-선택-기준-—-어떤-AI가-내-일에-더-맞을까?
+- category: AI 도구활용
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcCy30Z%2FdJMcadoC1VM%2FAAAAAAAAAAAAAAAAAAAAAKBqsIWnMux7GlkAfHMyx3zcEtu86bd0wFmtJS_NZn39%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D8JtDIIw4Kfax8%252Fm8jYrRuBcMjwE%253D
+- desc: 이미지 생성·코딩·긴 문서 처리·한국어 글쓰기 업무 유형별로 ChatGPT와 Claude 중 유리한 AI를 정리했습니다.
+- keywords: ChatGPT선택기준, Claude선택기준, 업무별AI선택, ChatGPT업무활용, Claude업무활용
+
+### IRP 중도인출 가능한 경우와 해지 전 반드시 확인할 사항
+- url: https://j2gblog.tistory.com/entry/IRP-중도인출-가능한-경우와-해지-전-반드시-확인할-사항
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fb2evq1%2FdJMcacXCOTj%2FAAAAAAAAAAAAAAAAAAAAACL5u7qlChlPVcUTC_GOKhXtuiGk3ltzmPfvCqZDfSY5%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DLyz8tgWIkDcSCWHdeEPb5IIc3lg%253D
+- desc: IRP 중도인출 예외 조건, 해지 시 기타소득세 16.5% 계산 방법, 납입중지·담보대출 대안까지 정리했습니다.
+- keywords: IRP중도인출, IRP해지, IRP중도해지세금, IRP해지전확인, 기타소득세16.5%
+
+### 무료 AI 도구와 유료 플랜 차이 — 꼭 돈 내야 할 상황인지 먼저 확인하세요
+- url: https://j2gblog.tistory.com/entry/무료-AI-도구와-유료-플랜-차이-—-꼭-돈-내야-할-상황인지-먼저-확인하세요
+- category: AI 도구활용
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FvQRMx%2FdJMcajbh2Kj%2FAAAAAAAAAAAAAAAAAAAAAEphHs_TJWCZpPnVEzrJ0Fnzx6wgDK58F8zUuf9CWRXA%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DRAqz0Ydm0dtgM%252Fidag3pP2MT0dk%253D
+- desc: ChatGPT·Claude 무료와 유료 플랜의 실제 기능 차이 비교. 무료로 충분한 경우와 유료가 필요한 경우를 구분합니다.
+- keywords: 무료AI도구, AI무료유료차이, ChatGPT무료, Claude무료, AI구독필요여부
+
+### 신용카드 발급 전 확인할 연회비·전월실적·한도 — 혜택만 보면 손해 보는 이유
+- url: https://j2gblog.tistory.com/entry/신용카드-발급-전-확인할-연회비·전월실적·한도-—-혜택만-보면-손해-보는-이유
+- category: 신용카드
+- thumb: pending
+- desc: 신용카드 발급 전 연회비 대비 혜택, 전월실적 조건과 제외 항목, 신용한도, 할부 수수료까지 5가지 체크리스트.
+- keywords: 신용카드발급전확인, 신용카드연회비, 전월실적조건, 신용카드한도, 신용카드혜택조건
+
+### 보험증권 읽는 법 — 가입 내역에서 반드시 확인할 항목
+- url: https://j2gblog.tistory.com/entry/보험증권-읽는-법-—-가입-내역에서-반드시-확인할-항목
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcpEAA8%2FdJMcafUnPO8%2FAAAAAAAAAAAAAAAAAAAAANCh9GHvyP_lWkU1_yGvNQzrYi5SsYdFQ7oTc20iVdqE%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DXXF0DuZz36foX42WC0Qus9OAkrs%253D
+- desc: 피보험자·수익자·보장 기간·자기부담금·갱신 주기·특약 목록 등 보험증권에서 반드시 확인할 6가지 항목.
+- keywords: 보험증권읽는법, 보험증권확인방법, 보험가입내역확인, 특약확인, 보험갱신주기
+
 ### 실손보험 1세대·2세대·3세대·4세대 차이 — 내 보험은 몇 세대일까?
 - url: https://j2gblog.tistory.com/entry/실손보험-1세대·2세대·3세대·4세대-차이-—-내-보험은-몇-세대일까?
 - category: 보험비교

@@ -312,6 +312,26 @@ Tistory 카테고리 추가/변경 시 두 파일 모두 동기화할 것.
 
 ---
 
+### [blog-writer] THUMBNAIL_PROMPT 블록 — 본문 노출 방지
+
+**문제**: blog-writer가 대표 이미지 프롬프트를 `[THUMBNAIL_PROMPT]...[/THUMBNAIL_PROMPT]` 형식으로 마크다운 파일 끝에 삽입하면, `04_notion_upload.py`의 마크다운→HTML 변환 시 이 블록이 그대로 본문에 포함되어 Tistory 게시글 하단에 프롬프트 텍스트가 노출됨.
+
+**해결** (`04_notion_upload.py`의 `parse_blog_post()`):
+```python
+# H1·메타 블록쿼트 제거 후 추가로 프롬프트 블록 제거
+body = re.sub(r'\[THUMBNAIL_PROMPT\].*?\[/THUMBNAIL_PROMPT\]', '', body, flags=re.DOTALL)
+body = body.strip()
+```
+
+**blog-writer 규칙** (blog-writer.md에 명시):
+- `[THUMBNAIL_PROMPT]` 블록은 파일 **맨 끝에만** 삽입한다.
+- 본문 중간에 절대 넣지 않는다.
+- 이 블록은 업로드 시 자동 제거되므로 독자에게 노출되지 않는다.
+
+**재발 방지**: `04_notion_upload.py`가 자동 제거하므로 위치를 잘못 지정해도 본문에 노출되지 않음. 단, blog-writer는 반드시 파일 끝에 배치할 것.
+
+---
+
 ### [비용 정책] DALL-E 이미지 생성 최소화
 
 **원칙**: gpt-image-1 API는 대표이미지(썸네일) 1장만 생성한다. 본문 이미지는 Pexels 무료 API만 사용하고, Pexels 키가 없거나 검색 실패 시 이미지를 생략한다.

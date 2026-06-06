@@ -79,12 +79,16 @@ Tistory 발행이 완료되어 실제 URL이 확정되면, `_posts_index.md`에 
 
 ## 작업 규모별 모드
 
-| 사용자 요청 패턴 | 실행 모드 | 투입 에이전트 |
-|----------------|----------|-------------|
-| "이 콘텐츠 리퍼포징해줘", "풀 변환" | **풀 파이프라인** | 5명 전원 |
-| "블로그로 변환해줘" | **블로그 모드** | source-analyst + blog-writer + quality-reviewer |
-| "SNS 포스트로 만들어줘" | **SNS 모드** | source-analyst + sns-copywriter + quality-reviewer |
-| "프레젠테이션으로 바꿔줘" | **프레젠테이션 모드** | source-analyst + presentation-builder + quality-reviewer |
+> **토큰 절감 기본 원칙**: 사용자가 "SNS", "프레젠테이션", "슬라이드", "리퍼포징"을 명시하지 않으면
+> **블로그 전용 모드**(3명)로 실행한다. sns-copywriter·presentation-builder는 spawn하지 않는다.
+
+| 사용자 요청 패턴 | 실행 모드 | 투입 에이전트 | 토큰 |
+|----------------|----------|-------------|------|
+| "포스팅해줘", "블로그 작성", "글 써줘" (기본) | **블로그 전용** | source-analyst + blog-writer + quality-reviewer | ★☆☆ |
+| "이 콘텐츠 리퍼포징해줘", "풀 변환" (명시 시만) | **풀 파이프라인** | 5명 전원 | ★★★ |
+| "블로그로 변환해줘" | **블로그 모드** | source-analyst + blog-writer + quality-reviewer | ★☆☆ |
+| "SNS 포스트로 만들어줘" | **SNS 모드** | source-analyst + sns-copywriter + quality-reviewer | ★☆☆ |
+| "프레젠테이션으로 바꿔줘" | **프레젠테이션 모드** | source-analyst + presentation-builder + quality-reviewer | ★☆☆ |
 | "이 변환 결과 검토해줘" | **리뷰 모드** | quality-reviewer 단독 |
 
 **기존 파일 활용**: 사용자가 이미 변환된 콘텐츠를 제공하면, 해당 파일을 `_workspace/`에 복사하고 해당 변환 에이전트는 건너뛴다.

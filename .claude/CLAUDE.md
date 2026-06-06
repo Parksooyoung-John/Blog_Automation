@@ -214,6 +214,30 @@ Tistory 공개 발행
 
 ---
 
+### [04_notion_upload.py] HTML 태그 중간 분할 → Tistory 렌더링 오류
+
+**문제**: `make_paragraph_blocks()`가 1,900자 단위로 기계적으로 분할할 때 HTML 태그 중간을 자르면,
+`</div>` → `</di` + `\n` + `v>` 로 분리됨. Notion 블록을 `"\n".join(texts)` 로 합치면 `</di\nv>` 가 되고,
+Tistory 에디터에서 브라우저가 줄바꿈을 공백으로 처리해 `</di v>` 가 텍스트로 그대로 노출됨.
+
+**증상**: 게시글 하단 "함께 읽으면 좋은 글" 카드 내부에 `</di v>` 같은 깨진 태그가 텍스트로 보임.
+
+**해결** (`04_notion_upload.py:make_paragraph_blocks()`):
+```python
+# CHUNK_SIZE(1900) 이내에서 마지막 '>' 위치를 찾아 그 이후에서 분할
+safe_end = html.rfind('>', pos, end + 1)
+if safe_end == -1 or safe_end <= pos:
+    chunk = html[pos:end]   # '>' 없으면 그냥 자름 (순수 텍스트 구간)
+else:
+    chunk = html[pos:safe_end + 1]
+    pos = safe_end + 1
+```
+
+**재발 방지**: 이 함수를 수정할 때 반드시 태그 경계('>') 기준 분할 로직을 유지할 것.
+CHUNK_SIZE 변경 시에도 동일한 방식으로 유지.
+
+---
+
 ### [Notion API] 블록 페이지네이션
 
 **문제**: `GET /v1/blocks/{id}/children`는 기본 100개만 반환. 긴 포스트(3350개 블록)는 첫 100개만 가져와 내용 잘림.

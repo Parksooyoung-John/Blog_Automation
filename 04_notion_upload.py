@@ -216,17 +216,35 @@ def parse_blog_post(path: Path) -> tuple[str, str]:
 # ═══════════════════════════════════════════════════════
 
 def make_paragraph_blocks(html: str) -> list:
-    """HTML 문자열을 Notion paragraph 블록 목록으로 변환 (청크 분할)"""
+    """HTML 문자열을 Notion paragraph 블록 목록으로 변환 (청크 분할).
+    반드시 HTML 태그 경계(>) 이후에서 분할 — 태그 중간 분할 시 Tistory에서
+    '</di\\nv>' → '</di v>' 처럼 태그가 텍스트로 노출되는 버그 방지.
+    """
     blocks = []
-    for i in range(0, len(html), CHUNK_SIZE):
-        chunk = html[i:i + CHUNK_SIZE]
-        blocks.append({
-            "object": "block",
-            "type": "paragraph",
-            "paragraph": {
-                "rich_text": [{"type": "text", "text": {"content": chunk}}]
-            },
-        })
+    pos = 0
+    while pos < len(html):
+        end = pos + CHUNK_SIZE
+        if end >= len(html):
+            chunk = html[pos:]
+            pos = len(html)
+        else:
+            # 태그 중간 분할 방지: CHUNK_SIZE 이내에서 마지막 '>' 위치 찾기
+            safe_end = html.rfind('>', pos, end + 1)
+            if safe_end == -1 or safe_end <= pos:
+                # '>' 없으면 그냥 CHUNK_SIZE 단위로 (순수 텍스트 구간)
+                chunk = html[pos:end]
+                pos = end
+            else:
+                chunk = html[pos:safe_end + 1]
+                pos = safe_end + 1
+        if chunk:
+            blocks.append({
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": {
+                    "rich_text": [{"type": "text", "text": {"content": chunk}}]
+                },
+            })
     return blocks
 
 

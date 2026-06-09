@@ -47,7 +47,7 @@ CATEGORY_RULES = [
     (["ISA", "IRP", "연금", "절세", "세금우대", "소득공제"],            "절세연금"),
     (["보험", "실손", "생명보험"],                                       "보험비교"),
     (["대출", "주택담보", "전세자금", "금리", "이자율", "HUG", "HF", "SGI", "전세보증", "버팀목"], "대출금리"),
-    (["주식", "ETF", "펀드", "투자", "코스피", "나스닥"],                "주식ETF"),
+    (["주식", "ETF", "공모펀드", "주식형펀드", "채권형펀드", "코스피", "나스닥"], "주식ETF"),
     (["청년", "정부지원", "지원금", "보조금"],                           "정부지원금"),
     (["신용카드", "카드혜택", "캐시백"],                                 "신용카드"),
     (["ChatGPT", "Claude", "Gemini", "Copilot", "소프트웨어 비교"],     "소프트웨어 비교"),
@@ -186,13 +186,27 @@ def ensure_db_properties():
 # 마크다운 파싱
 # ═══════════════════════════════════════════════════════
 
-def parse_blog_post(path: Path) -> tuple[str, str]:
-    """마크다운 파일에서 (제목, HTML본문) 추출 + 이미지 플레이스홀더 교체"""
+def parse_blog_post(path: Path) -> tuple[str, str, str, list[str]]:
+    """마크다운 파일에서 (제목, HTML본문, meta_category, meta_tags) 추출.
+
+    blog-writer가 블록쿼트에 명시한 카테고리·태그를 제거 전에 먼저 읽어온다.
+    이 값이 있으면 detect_category()/extract_tags()보다 우선 사용된다.
+    """
     text = path.read_text(encoding="utf-8")
 
     # H1에서 제목 추출
     m = re.search(r'^# (.+)$', text, re.MULTILINE)
     title = m.group(1).strip() if m else "제목없음"
+
+    # 블록쿼트 메타에서 카테고리·태그 추출 — 블록쿼트 제거 전에 읽어야 함
+    meta_category = ""
+    meta_tags: list[str] = []
+    m_cat = re.search(r'^> \*\*카테고리\*\*:\s*(.+)$', text, re.MULTILINE)
+    if m_cat:
+        meta_category = m_cat.group(1).strip()
+    m_tags = re.search(r'^> \*\*태그\*\*:\s*(.+)$', text, re.MULTILINE)
+    if m_tags:
+        meta_tags = [t.strip() for t in m_tags.group(1).split(",") if t.strip()]
 
     # H1 제거, 메타 블록쿼트(> **...**) 제거
     body = re.sub(r'^# .+\n', '', text, count=1, flags=re.MULTILINE)
@@ -208,7 +222,7 @@ def parse_blog_post(path: Path) -> tuple[str, str]:
     # 이미지 플레이스홀더 → 실제 이미지
     html = replace_image_placeholders(html)
 
-    return title, html
+    return title, html, meta_category, meta_tags
 
 
 # ═══════════════════════════════════════════════════════
@@ -295,9 +309,10 @@ def main():
     print(f"읽는 중: {BLOG_POST_PATH}")
 
     ensure_db_properties()
-    title, html = parse_blog_post(BLOG_POST_PATH)
-    category = detect_category(title)
-    tags = extract_tags(title)
+    title, html, meta_category, meta_tags = parse_blog_post(BLOG_POST_PATH)
+    # 마크다운 메타 우선, 없으면 제목 키워드 기반 추론
+    category = meta_category or detect_category(title)
+    tags = meta_tags if meta_tags else extract_tags(title)
 
     print(f"제목: {title}")
     print(f"카테고리: {category or '(미분류)'}")

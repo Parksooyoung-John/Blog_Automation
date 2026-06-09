@@ -79,7 +79,27 @@
 ### blog-writer 동작 규칙
 1. 작업 시작 전 `_posts_index.md` 읽기
 2. 현재 포스트와 같은 카테고리 또는 키워드가 겹치는 기발행 포스트 최대 3개 선택
-3. 본문 마지막(공식 출처 표 위)에 삽입
+3. **`thumb: pending`인 포스트는 카드 후보에서 제외** — 실제 CDN URL이 있는 포스트만 사용
+4. 본문 마지막(공식 출처 표 위)에 삽입
+
+> ⚠️ **anti-pattern**: `thumb: pending` 포스트를 카드로 사용하면 모든 카드에 같은 (잘못된) 이미지가 표시된다.
+> 발행 완료 즉시 OG 이미지 URL을 가져와 인덱스를 업데이트해야 다음 포스트에서 카드가 정상 표시된다.
+
+### 인덱스 OG 이미지 업데이트 — 발행 후 즉시 수행
+Tistory 발행 완료 → 해당 포스트 URL에서 OG 이미지 URL을 추출하여 `_posts_index.md`의 `thumb` 필드를 `pending`에서 실제 URL로 교체한다.
+
+```python
+# get_og.py 패턴 (발행 후 실행)
+import requests, re
+url = "https://j2gblog.tistory.com/{번호}"
+r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+m = re.search(r'property="og:image"\s+content="([^"]+)"', r.text)
+if not m:
+    m = re.search(r'content="([^"]+)"\s+property="og:image"', r.text)
+print(m.group(1) if m else "NOT FOUND")
+```
+
+**다음 포스트 배치 작성 전 `_posts_index.md`에 `thumb: pending` 항목이 없는지 반드시 확인할 것.**
 
 ### 필수 출력 형식 (HTML 카드)
 ```html
@@ -102,6 +122,8 @@
 ```
 | 제목 | URL | 카테고리 | 키워드 |
 ```
+
+**추가 필수**: `_posts_index.md`의 각 포스트 항목에는 `thumb:` 필드가 있다. 발행 직후 OG 이미지 URL을 확인하여 `pending`을 실제 URL로 교체할 것. `thumb: pending`인 채로 남겨두면 다음 포스팅에서 이 포스트를 내부 링크 카드로 사용할 수 없다.
 
 ---
 
@@ -186,6 +208,48 @@
 | 국세청 홈택스 | hometax.go.kr | 세액공제·연말정산 |
 | 금융감독원 | fss.or.kr | ISA·IRP·연금저축 |
 | 복지로 | bokjiro.go.kr | 청년 정부지원금 |
+
+---
+
+## 쿠팡파트너스 링크 연동
+
+블로그 포스팅 요청 시 쿠팡파트너스 링크를 함께 제공하면 포스트에 자동 삽입된다.
+
+### 사용법
+요청 메시지에 링크를 포함하면 된다:
+```
+"[주제] 포스팅해줘. 쿠팡파트너스 링크: https://link.coupang.com/a/XXXXX (상품명: OOO)"
+```
+상품명은 선택. 없으면 "상품"으로 대체.
+
+### 자동 처리 흐름
+1. **content-repurposer** Phase 1: `link.coupang.com` URL 감지 → `00_input.md`에 저장
+2. **blog-writer**: `00_input.md`의 `## 쿠팡파트너스` 섹션 확인 → CTA 버튼 + 공시 문구 삽입
+
+### 포스트 내 출력 결과
+
+**CTA 버튼** — 해당 상품 설명 섹션 바로 아래:
+```html
+<div style="text-align:center;margin:32px 0;">
+  <a href="https://link.coupang.com/a/XXXXX" target="_blank" rel="nofollow sponsored"
+     style="display:inline-block;background:#ee2222;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;">
+    🛒 쿠팡에서 [상품명] 확인하기
+  </a>
+</div>
+```
+
+**파트너스 공시 문구** — 함께 읽으면 좋은 글 카드 바로 위 (법적 의무):
+```html
+<p style="font-size:12px;color:#999;margin-top:32px;padding-top:12px;border-top:1px solid #eee;">
+이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.
+</p>
+```
+
+### 주의사항
+- `rel="nofollow sponsored"` 속성 필수 — Google 유료 링크 가이드라인
+- 공시 문구는 포스트 내 1회만 삽입 (법적 의무: 표시·광고의 공정화에 관한 법률)
+- 링크가 없으면 CTA·공시 문구 모두 삽입하지 않음
+- `04_notion_upload.py` 수정 불필요 — HTML 블록은 마크다운 변환 시 그대로 통과됨
 
 ---
 
@@ -459,10 +523,18 @@ escaped = html_content.replace("\\", "\\\\").replace("`", "\\`")
 page.evaluate(f'() => {{ tinymce.activeEditor.setContent(`{escaped}`) }}')
 ```
 
-**올바른 코드** — HTML을 JS 인자로 전달:
+**올바른 코드** — HTML을 JS 인자로 전달 + `fire('change')` + `save()` 필수:
 ```python
-page.evaluate("(html) => { tinymce.activeEditor.setContent(html); }", html_content)
+page.evaluate("""
+    (html) => {
+        tinymce.activeEditor.setContent(html);
+        tinymce.activeEditor.fire('change');  # Tistory에 변경 알림
+        tinymce.activeEditor.save();          # 내부 textarea 동기화
+    }
+""", html_content)
 ```
+
+**`fire('change')` + `save()` 생략 시 증상**: `setContent`는 시각적으로는 반영되지만, Tistory 발행 시 기존 저장 내용이 제출되어 변경 사항이 무시된다. 로그에는 ✅ 표시되지만 실제 페이지는 변경 전 상태로 유지됨.
 
 **증상 패턴**: `✅ 본문 입력 완료 (방식: tinymce)` + `✅ 발행 완료` 로그가 정상 출력되지만, 실제 Tistory URL이 404를 반환함. `debug_after_publish.png`에 발행 패널이 열린 채로 남아있음.
 
@@ -487,6 +559,96 @@ elif OPENAI_KEY:
 - 발행 성공/실패 여부와 무관하게 `_thumbs/` 파일은 삭제하지 않음
 - 동일 Notion page_id로 재발행 시 자동으로 기존 썸네일 사용
 - `_thumbs/` 디렉토리를 `.gitignore`에 추가할 것 (바이너리 파일)
+
+---
+
+### [파이프라인] 이전 세션 02_blog_post.md 잔존 → 잘못된 포스트 발행
+
+**문제**: 이전 세션에서 작성한 `02_blog_post.md`가 파일로 남아있는 상태에서 새 세션이 시작됨. 사용자가 새 포스트를 작성하기 전에 `04_notion_upload.py`를 실행하면 이전 세션 내용이 Notion에 올라가고 Tistory에 발행됨.
+
+**증상**: Tistory에 의도한 글이 아닌 이전 세션 글이 발행됨. 제목만 봐서는 확인이 어려울 수 있음.
+
+**예방 규칙**:
+1. **blog-writer는 작성 완료 후 반드시 다음 메시지를 출력한다**:
+   ```
+   ✅ 발행 준비 완료
+   제목: [H1 제목]
+   파이프라인: python -X utf8 04_notion_upload.py → python -X utf8 03_tistory_playwright.py
+   ```
+2. `04_notion_upload.py` 실행 시 제목이 의도한 포스트와 다르면 Ctrl+C로 중단하고 `02_blog_post.md`를 확인한다.
+3. 이전 세션 파일 덮어쓰기 전 확인: `head -n 3 _workspace/02_blog_post.md`
+
+**발생 시 대응**: Tistory 잘못 발행 → 아래 "[Tistory] 포스트 삭제" 절차 참조.
+
+---
+
+### [04_notion_upload.py] 카테고리 자동 분류 — 마크다운 메타 우선 사용
+
+**문제**: `detect_category(title)`가 제목 키워드만 보고 분류. "국민성장펀드" 제목에서 "펀드" 키워드가 `주식ETF` 규칙에 매칭되어 잘못 분류됨.
+
+**근본 원인**: 
+- `CATEGORY_RULES`에 `"펀드"` 키워드가 `주식ETF` 규칙에 포함됨 (너무 광범위)
+- blog-writer가 마크다운에 명시한 `> **카테고리**: 절세연금`을 무시했음
+
+**해결 (코드 수정 완료)**:
+1. `parse_blog_post()`가 블록쿼트 제거 전에 `> **카테고리**:` 와 `> **태그**:` 를 먼저 추출
+2. 추출된 값이 있으면 `detect_category()`/`extract_tags()` 대신 우선 사용:
+   ```python
+   category = meta_category or detect_category(title)
+   tags = meta_tags if meta_tags else extract_tags(title)
+   ```
+3. `CATEGORY_RULES`에서 `"펀드"` → `"공모펀드", "주식형펀드", "채권형펀드"` 로 교체
+
+**blog-writer 준수 사항**: 마크다운 메타 블록쿼트에 반드시 다음 형식으로 카테고리·태그 명시:
+```
+> **카테고리**: 절세연금
+> **태그**: 태그1, 태그2, 태그3, ...
+```
+이 값이 Notion에 그대로 저장되므로 정확한 카테고리명(절세연금/주식ETF/대출금리/…)을 사용할 것.
+
+---
+
+### [Tistory] 포스트 삭제 — Playwright 자동화
+
+**DOM 구조** (manage/posts 목록):
+```html
+<li>
+  <div class="post_btn">
+    <div class="info_btn">
+      <a class="btn_post" href="/manage/post/{id}?...">수정</a>
+      <a class="btn_post" href="#">삭제</a>   ← 이 버튼
+      <a class="btn_post" href="/manage/statistics/...">통계</a>
+    </div>
+  </div>
+</li>
+```
+
+**삭제 확인**: native `window.confirm` ("선택한 글을 삭제하시겠습니까?") — React 모달 아님.
+
+**핵심**: `page.on("dialog", ...)` 핸들러를 반드시 **클릭 전에** 등록해야 함.
+
+**올바른 코드**:
+```python
+# 1) dialog 핸들러 먼저 등록
+page.on("dialog", lambda d: d.accept())
+
+# 2) 특정 포스트 행의 삭제 버튼 JS로 클릭
+page.evaluate("""
+    () => {
+        const editLinks = document.querySelectorAll('a.btn_post[href*="/manage/post/67"]');
+        if (!editLinks.length) return false;
+        const row = editLinks[0].closest('li');
+        const delBtn = row.querySelector('a.btn_post[href="#"]');
+        if (delBtn) { delBtn.click(); return true; }
+        return false;
+    }
+""")
+page.wait_for_timeout(2500)
+```
+
+**삭제 후 확인**: `requests.get(f"https://{BLOG}.tistory.com/{POST_ID}")` → 404이면 성공.
+
+**주의**: 첫 번째 스크립트에서 `page.on("dialog", ...)` 등록 후 `input()` 호출로 비인터랙티브 환경에서 EOFError 발생 시 dialog가 처리되지 않고 스크립트가 종료된다. `input()` 제거하거나 `headless=False`로 실행할 것.
 
 ---
 

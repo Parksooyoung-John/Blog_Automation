@@ -79,7 +79,7 @@
 ### 신용카드 발급 전 확인할 연회비·전월실적·한도 — 혜택만 보면 손해 보는 이유
 - url: https://j2gblog.tistory.com/entry/신용카드-발급-전-확인할-연회비·전월실적·한도-—-혜택만-보면-손해-보는-이유
 - category: 신용카드
-- thumb: pending
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FZrFUJ%2FdJMcaaldxGJ%2FAAAAAAAAAAAAAAAAAAAAAEjZgL0hs72KtQ1jEDcyvwbdlC0fISJFvAYV2Po8_r5P%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DQE6hEKMBnpBF%252Bfrq2HWsYyKvWps%253D
 - desc: 신용카드 발급 전 연회비 대비 혜택, 전월실적 조건과 제외 항목, 신용한도, 할부 수수료까지 5가지 체크리스트.
 - keywords: 신용카드발급전확인, 신용카드연회비, 전월실적조건, 신용카드한도, 신용카드혜택조건
 
@@ -173,3 +173,66 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FBwBNi%2FdJMcagMwlZ4%2FAAAAAAAAAAAAAAAAAAAAABtdJ8AIzMniDa5X2jvvKc059mmoXG7a4H2UpHVyVrNq%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DEp3mmMYHCN8KHRC%252Fav8tapCkHD8%253D
 - desc: 버팀목 청년전세대출 서류를 카테고리별 체크리스트로 정리. 유효기간 표와 온라인 발급처 안내 포함.
 - keywords: 청년전세대출서류, 버팀목전세대출서류, 전세서류체크리스트, 주민등록등본초본, 전세계약서류
+
+### 월배당 ETF 고를 때 확인할 5가지 — 분배율만 보면 안 되는 이유
+- url: https://j2gblog.tistory.com/59
+- category: 주식, ETF
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fr8r7D%2FdJMcabdk99T%2FAAAAAAAAAAAAAAAAAAAAAHUxEFP9uB4dK1yDO1laR_KSDCbNqJrHDmO8NXYcCnlw%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DtbxroUFA05QZ4CSXq98rQ4%252Bt5VE%253D
+- desc: 월배당 ETF를 고를 때 확인할 기초자산·커버드콜 구조·목표분배율·총보수·분배금 세금까지 5가지 체크리스트로 정리했습니다.
+- keywords: 월배당ETF, 커버드콜ETF, ETF분배금, 월배당ETF세금, ETF목표분배율
+
+### 계좌별 ETF 세금 차이 — 일반계좌·ISA·연금저축에서 달라지는 것
+- url: https://j2gblog.tistory.com/60
+- category: 주식, ETF
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2F0F5CX%2FdJMcacKbGXU%2FAAAAAAAAAAAAAAAAAAAAAOkrz3fzL7mOOQf40UrFQOx7_gB99jbqxv4JknlmHZH-%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DtPK8583neucJt2A98nb9Rk4%252FKpk%253D
+- desc: 일반계좌·ISA·연금저축에서 ETF 분배금과 매매차익 세금이 어떻게 달라지는지 비교표로 정리했습니다.
+- keywords: ETF세금, ISAETF세금, 연금저축ETF세금, ETF분배금세금, ETF매매차익
+
+### 청년미래적금 2026년 6월 출시 — 가입 조건·정부기여금·청년도약계좌 갈아타기 완전 정리
+- url: https://j2gblog.tistory.com/61
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FXTVuO%2FdJMcagFPijz%2FAAAAAAAAAAAAAAAAAAAAACmSiXrpCeiyMZg3bWdEml67GksWVCd9igugtpNymIux%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D2QohEd6RpdYWHXbgKsRjj4%252BN9nE%253D
+- desc: 2026년 6월 출시 예정인 청년미래적금의 가입 조건·정부기여금 6%·12%·청년도약계좌 갈아타기 조건을 초보자용 체크리스트로 정리했습니다.
+- keywords: 청년미래적금, 청년도약계좌갈아타기, 청년미래적금조건, 정부기여금, 청년적금비과세, 청년도약계좌특별중도해지
+
+### 국민성장 ISA·생산적 금융 ISA 도입 논의 — 기존 ISA와 무엇이 다른가
+- url: https://j2gblog.tistory.com/62
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FGm7rh%2FdJMcacwCXIP%2FAAAAAAAAAAAAAAAAAAAAAM37glm0HsTrKSs0_urCO9ZYiQ1NhxauuwP3W0Bb-AR4%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DxHsqftF6Wmdk4ojP6xIGqRX8cU4%253D
+- desc: 국민성장 ISA·생산적 금융 ISA 개편 논의 내용과 기존 ISA와의 차이를 비교 정리. 아직 확정 전인 사항과 지금 확인할 점을 구분해서 설명합니다.
+- keywords: 국민성장ISA, 생산적금융ISA, ISA개편, ISA비과세한도, 중개형ISA, ISA논의, ISA개편안2026
+
+### 단일종목 레버리지 ETF·ETN이란? — 구조와 투자 전 반드시 알아야 할 위험
+- url: https://j2gblog.tistory.com/63
+- category: 주식, ETF
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcvSXo6%2FdJMb997Ixq8%2FAAAAAAAAAAAAAAAAAAAAAJ6RZvsOhRfYtv-nWisvS8-x60WT03VUua_KdNKtBk62%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D5tvRmMvDeiRwlBrH0Ce3Z0qQD44%253D
+- desc: 삼성전자·SK하이닉스 단일종목 레버리지 ETF·ETN의 일간 2배 구조, 변동성 손실, 기본예탁금·사전교육 조건을 초보자용으로 정리했습니다.
+- keywords: 단일종목ETF, 레버리지ETF위험, 단일종목ETN, 레버리지ETF구조, ETF사전교육, 기본예탁금, 변동성손실
+
+### 밸류업 ETF에 관심이 높아진 이유 — 기업가치 제고 정책과 ETF 선택 기준
+- url: https://j2gblog.tistory.com/64
+- category: 주식, ETF
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FL0Qse%2FdJMcacciYdZ%2FAAAAAAAAAAAAAAAAAAAAAIiFsZB8nZKpHv4mvfRXBjCpA7foJ7RvGGKtEv8YSMSm%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D5ZzTwoKATPhqVfYWUHcVG02H2Sc%253D
+- desc: 코리아 밸류업 지수 추종 ETF의 구조, 배당 ETF·가치주 ETF와의 차이, 자사주 소각·주주환원 강화 흐름과 ETF 선택 기준 4가지를 정리했습니다.
+- keywords: 밸류업ETF, 코리아밸류업지수, 주주환원ETF, 자사주소각, 기업가치제고ETF, 밸류업정책, 배당ETF차이
+
+### 청년미래적금 6월 출시 — 청년도약계좌 갈아타기 전 확인할 5가지
+- url: https://j2gblog.tistory.com/65
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FB2CNx%2FdJMcaiXQBQz%2FAAAAAAAAAAAAAAAAAAAAAH2TMpCTisTFVmiAjke-zRdCif6bxpTg0vM1pdKfWAnF%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DvZ4nqApcvdd3oXkgqiKPe6FbbSE%253D
+- desc: 2026년 6월 출시 예정인 청년미래적금 가입 조건·정부기여금 구조와 청년도약계좌에서 갈아타기 전 반드시 확인할 5가지를 정리했습니다.
+- keywords: 청년미래적금, 청년도약계좌갈아타기, 청년미래적금조건, 정부기여금, 청년적금비과세, 청년도약계좌특별중도해지
+
+### 단일종목 2배 ETF란? 삼성전자·SK하이닉스 ETF 투자 전 확인할 위험 5가지
+- url: https://j2gblog.tistory.com/66
+- category: 주식, ETF
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fb2QzyT%2FdJMcabkekTd%2FAAAAAAAAAAAAAAAAAAAAAEI21w3p2aJm2v9n_EgzO6ATWENHc8JDxOu7aJGEfTBk%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DA6PyCF%252BibIMvfeJZwOmpBvs5zic%253D
+- desc: 삼성전자·SK하이닉스 단일종목 2배 레버리지 ETF·ETN의 구조와 변동성 손실 원리, 투자 전 반드시 알아야 할 위험 5가지를 정리했습니다.
+- keywords: 단일종목ETF, 삼성전자2배ETF, SK하이닉스2배ETF, 레버리지ETF위험, 변동성손실, ETF사전교육, 기본예탁금
+
+### 국민성장펀드란? 가입 조건·수익률·일반 펀드와 차이 완전 정리 2026
+- url: https://j2gblog.tistory.com/68
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FVJPg1%2FdJMcafUsHYG%2FAAAAAAAAAAAAAAAAAAAAAE_aNCz0jJ9uEYl6GQUDN0J5MyuNofmsNSFJ76_tnzDS%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DSieeY9uS4WHwjfIMWlb8nRyVT1o%253D
+- desc: 국민성장펀드란 무엇인지, 가입 조건·수익률·일반 펀드와의 차이를 재테크 초보자도 이해할 수 있게 정리했습니다.
+- keywords: 국민성장펀드, 국민성장펀드가입조건, 국민성장펀드수익률, 정책펀드, 청년펀드, 장기투자펀드, 생산적금융

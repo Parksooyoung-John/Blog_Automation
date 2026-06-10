@@ -40,6 +40,7 @@ NOTION_HEADERS = {
 # 실제 Tistory 카테고리명은 이 맵에서 변환
 TISTORY_CATEGORY_MAP = {
     "절세연금":      "절세, 연금",
+    "예금금리":      "예금, 금리",
     "대출금리":      "대출, 금리",
     "주식ETF":       "주식, ETF",
     "AI부업수익화":  "AI 부업, 수익화",
@@ -566,9 +567,13 @@ def process_all():
 
     print(f"📋 발행 대기: {len(pending)}건")
 
+    # HEADLESS=true 환경변수 또는 --headless 인자 시 headless 모드 (스케줄 자동실행용)
+    import sys as _sys
+    _headless = os.getenv("HEADLESS", "").lower() == "true" or "--headless" in _sys.argv
+
     with sync_playwright() as pw:
         browser = pw.chromium.launch(
-            headless=False,   # 처음에는 False로 두고 동작 확인 후 True로 변경
+            headless=_headless,
             slow_mo=500,      # 각 동작 간 0.5초 딜레이 (안정성)
         )
         context = browser.new_context(

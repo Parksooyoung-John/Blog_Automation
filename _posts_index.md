@@ -236,3 +236,24 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FVJPg1%2FdJMcafUsHYG%2FAAAAAAAAAAAAAAAAAAAAAE_aNCz0jJ9uEYl6GQUDN0J5MyuNofmsNSFJ76_tnzDS%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DSieeY9uS4WHwjfIMWlb8nRyVT1o%253D
 - desc: 국민성장펀드란 무엇인지, 가입 조건·수익률·일반 펀드와의 차이를 재테크 초보자도 이해할 수 있게 정리했습니다.
 - keywords: 국민성장펀드, 국민성장펀드가입조건, 국민성장펀드수익률, 정책펀드, 청년펀드, 장기투자펀드, 생산적금융
+
+### 토스 파킹통장 금리 낮아졌다면? 2026 대체 파킹통장 금리 비교 TOP5
+- url: https://j2gblog.tistory.com/69
+- category: 예금, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FFsXIO%2FdJMcadvtAjc%2FAAAAAAAAAAAAAAAAAAAAAKERdUguf507AOGYiWHGq1x6Utubq1AUg3ZlCW_Oz7-r%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DLNXUxe25HAKCQM9mgWfqzRUgANo%253D
+- desc: 토스뱅크 파킹통장 금리 인하 이후 대안으로 비교할 카카오뱅크 세이프박스·케이뱅크 플러스박스 등 2026 파킹통장 금리 TOP5.
+- keywords: 파킹통장금리비교, 토스파킹통장, 카카오뱅크세이프박스, 케이뱅크플러스박스, 수시입출금통장, 파킹통장추천
+
+### 금융소득종합과세 2026 — 기준·절세 방법·ISA 활용 완전 정리
+- url: https://j2gblog.tistory.com/70
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FqyNrp%2FdJMcai4Ds4D%2FAAAAAAAAAAAAAAAAAAAAAGQZaEGo2jeNu0dKWZzcuZMpFhRaXUWD2z3OPgrEglIb%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D1O%252BdX1He1uqTN5VSPVXodJvCHII%253D
+- desc: 금융소득종합과세 2000만 원 기준과 적용 대상, 절세 방법, ISA 계좌 활용까지 2026년 기준으로 완전 정리했습니다.
+- keywords: 금융소득종합과세, 금융소득2000만원, 배당소득세금, ISA절세, 이자소득세금, 금융소득분리과세
+
+### 미성년 자녀 증여세 없이 목돈 만드는 방법 — 아동수당·용돈·ETF 활용법 2026
+- url: https://j2gblog.tistory.com/71
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FHAU5f%2FdJMcai4Ds5L%2FAAAAAAAAAAAAAAAAAAAAAEXEfvTvmsFNYefQld9FVn40HpSpbKDl9XtUVWquIAEa%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3Dq%252FUWFFMr7MQYMj5eRvQjDgKClyE%253D
+- desc: 미성년 자녀 증여세 공제 2000만 원 한도를 활용해 아동수당·용돈으로 ETF 계좌를 만드는 방법을 2026년 기준으로 정리했습니다.
+- keywords: 미성년자녀증여세, 자녀증여세공제, 아동수당저축, 자녀ETF계좌, 증여재산공제, 자녀주식계좌

@@ -257,3 +257,17 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FHAU5f%2FdJMcai4Ds5L%2FAAAAAAAAAAAAAAAAAAAAAEXEfvTvmsFNYefQld9FVn40HpSpbKDl9XtUVWquIAEa%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3Dq%252FUWFFMr7MQYMj5eRvQjDgKClyE%253D
 - desc: 미성년 자녀 증여세 공제 2000만 원 한도를 활용해 아동수당·용돈으로 ETF 계좌를 만드는 방법을 2026년 기준으로 정리했습니다.
 - keywords: 미성년자녀증여세, 자녀증여세공제, 아동수당저축, 자녀ETF계좌, 증여재산공제, 자녀주식계좌
+
+### 5세대 실손보험 출시, 1~4세대 가입자가 갈아타기 전 확인할 5가지
+- url: https://j2gblog.tistory.com/72
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fls5AO%2FdJMcafNJOwS%2FAAAAAAAAAAAAAAAAAAAAAOvp79yzJy_NcU_XmxlxDjkRUqX-TLJqjez8PFrXVKRF%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D4cxmVAFMl3b1XDmymo%252FZ5IY0JJk%253D
+- desc: 5세대 실손보험 출시 이후 기존 1~4세대 가입자가 갈아타기 전 반드시 확인할 보험료·비급여 이용 빈도·전환 주의사항 5가지.
+- keywords: 5세대실손보험, 실손보험갈아타기, 4세대실손보험차이, 실손보험비급여, 실손보험보험료할인, 실손보험전환, 비급여손해율연동
+
+### 자동차보험 5부제 할인 특약이란? 갱신 전 보험료 줄이는 조건 정리
+- url: https://j2gblog.tistory.com/73
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcamDhB%2FdJMcadvtA4b%2FAAAAAAAAAAAAAAAAAAAAAJVnRnyI0P-mDBWLNH4qUPAU558XMFj1uAnUy_RD-Z7A%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D61afUN0VfRfI6bxR1YmTd8j6zZI%253D
+- desc: 자동차보험 5부제 할인 특약의 조건·적용 방법·기존 마일리지·블랙박스 특약과의 비교까지 갱신 전 한 번에 정리했습니다.
+- keywords: 자동차보험5부제할인, 자동차보험할인특약, 차량5부제보험, 자동차보험갱신, 자동차보험보험료절감, 마일리지할인비교, 블랙박스할인

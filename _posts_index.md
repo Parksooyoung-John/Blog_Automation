@@ -285,3 +285,10 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FTVGpg%2FdJMcafUuyb8%2FAAAAAAAAAAAAAAAAAAAAADp5jWm3UpBuHBOjpQRcH_wls9zYzvNSLLZ3xo0wRhKp%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DJzPdeRZ3EPnHWB7hKUM6XyxEQ9Q%253D
 - desc: 반도체 조정 이후 방산·조선 ETF 순환매 기대감 속 구성 종목 집중도·자금 흐름·총보수·최대 낙폭 체크포인트 정리.
 - keywords: 방산ETF, 조선ETF, 순환매ETF, K방산ETF, 반도체다음주도주, 테마ETF비교, 방산ETF구성종목, ETF자금흐름
+
+### 원전 ETF 다시 주목받는 이유 — SMR·전력기기·TOP 종목 비중 확인법
+- url: https://j2gblog.tistory.com/76
+- category: 주식, ETF
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FnW7qQ%2FdJMcac4t2iI%2FAAAAAAAAAAAAAAAAAAAAADNA6CwaRva19G5x_2x4l1aaD0Lwll-lv0wa6jHmd8XH%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D5IqJVqakrudjknK1k9SdfujwPkc%253D
+- desc: 4월 급등·5월 조정 이후 다시 언급되는 원전 ETF의 SMR 노출도·전력기기 비중·종목 집중도·총보수 비교 체크포인트.
+- keywords: 원전ETF, 원자력ETF, SMRETF, 전력기기ETF, HANAROETF, ACE원자력ETF, 테마ETF비교, 원전관련주ETF

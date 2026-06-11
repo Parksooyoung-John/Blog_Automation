@@ -271,3 +271,17 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcamDhB%2FdJMcadvtA4b%2FAAAAAAAAAAAAAAAAAAAAAJVnRnyI0P-mDBWLNH4qUPAU558XMFj1uAnUy_RD-Z7A%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D61afUN0VfRfI6bxR1YmTd8j6zZI%253D
 - desc: 자동차보험 5부제 할인 특약의 조건·적용 방법·기존 마일리지·블랙박스 특약과의 비교까지 갱신 전 한 번에 정리했습니다.
 - keywords: 자동차보험5부제할인, 자동차보험할인특약, 차량5부제보험, 자동차보험갱신, 자동차보험보험료절감, 마일리지할인비교, 블랙박스할인
+
+### 인버스 ETF 거래량 왜 늘었나? 중동 리스크·반도체 조정장에 확인할 5가지
+- url: https://j2gblog.tistory.com/74
+- category: 주식, ETF
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FdhUca7%2FdJMcai4Ekcy%2FAAAAAAAAAAAAAAAAAAAAAGj08XTDtGAmObT31h5EAoJjaR5nQ0vVTroqoWCXMydw%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DbOB0BqzJBzdjYgvRkDMeskGpDsI%253D
+- desc: 중동 리스크·반도체 조정으로 인버스 ETF 거래량이 늘어난 이유와 KODEX 인버스·200선물인버스2X 구조·2배 변동성 손실·장기 보유 위험 5가지 정리.
+- keywords: 인버스ETF, KODEX인버스, 200선물인버스2X, 코스피조정, ETF투자위험, 레버리지ETF, 인버스ETF구조, 변동성손실
+
+### 반도체 다음은 방산·조선 ETF? 순환매 기대감에 확인할 체크포인트
+- url: https://j2gblog.tistory.com/75
+- category: 주식, ETF
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FTVGpg%2FdJMcafUuyb8%2FAAAAAAAAAAAAAAAAAAAAADp5jWm3UpBuHBOjpQRcH_wls9zYzvNSLLZ3xo0wRhKp%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DJzPdeRZ3EPnHWB7hKUM6XyxEQ9Q%253D
+- desc: 반도체 조정 이후 방산·조선 ETF 순환매 기대감 속 구성 종목 집중도·자금 흐름·총보수·최대 낙폭 체크포인트 정리.
+- keywords: 방산ETF, 조선ETF, 순환매ETF, K방산ETF, 반도체다음주도주, 테마ETF비교, 방산ETF구성종목, ETF자금흐름

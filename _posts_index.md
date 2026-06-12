@@ -306,3 +306,10 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FlXIch%2FdJMcahSfufw%2FAAAAAAAAAAAAAAAAAAAAABJl1fiVlZDGHvWSyJOqY2EjzdfgEx48M9lG0BCQztPB%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DxIpkjdW2%252FA%252BDb%252BgF2xD3i%252B1tnMo%253D
 - desc: 2026년 7월 대출금리 산정방식 개선 내용, 기존 대출자 자동 소급 여부, 금리인하요구권 활용 방법 체크리스트.
 - keywords: 대출금리산정방식, 대출가산금리, 대출이자줄이기, 2026대출금리, 금리인하요구권, 대출금리개편, 가산금리제외비용
+
+### 연금저축펀드에 S&P500만 넣으면 된다? 초보가 꼭 확인할 ETF 구성 기준 6가지
+- url: https://j2gblog.tistory.com/79
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fm29D2%2FdJMcafUvBlq%2FAAAAAAAAAAAAAAAAAAAAAACtYNs2XPUz0zWEKlPwNerqFRIyQtpCwend_816PQJx%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DKwUAaN%252BBKFxz3bNTSBzt4iO%252FwIM%253D
+- desc: 연금저축에 S&P500 하나로 충분한지부터 채권·배당 ETF 역할, 총보수·환노출 확인법, 공격형·안정형 포트폴리오 예시까지 정리했습니다.
+- keywords: 연금저축펀드ETF, 연금저축포트폴리오, 연금저축펀드구성, 연금저축SP500, 연금저축채권ETF, 연금저축총보수, 연금저축ETF선택

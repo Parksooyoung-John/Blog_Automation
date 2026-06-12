@@ -292,3 +292,17 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FnW7qQ%2FdJMcac4t2iI%2FAAAAAAAAAAAAAAAAAAAAADNA6CwaRva19G5x_2x4l1aaD0Lwll-lv0wa6jHmd8XH%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D5IqJVqakrudjknK1k9SdfujwPkc%253D
 - desc: 4월 급등·5월 조정 이후 다시 언급되는 원전 ETF의 SMR 노출도·전력기기 비중·종목 집중도·총보수 비교 체크포인트.
 - keywords: 원전ETF, 원자력ETF, SMRETF, 전력기기ETF, HANAROETF, ACE원자력ETF, 테마ETF비교, 원전관련주ETF
+
+### ETF 투자 민원 늘었다는데? ISA·연금저축으로 ETF 살 때 확인할 5가지
+- url: https://j2gblog.tistory.com/77
+- category: 주식, ETF
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FLgGt1%2FdJMcafNLOtX%2FAAAAAAAAAAAAAAAAAAAAAK6TYgWEL4y0DYL1HYXvyVHVkBcxKT-wXFRLx39OxXPb%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DaikH8uV9PL1WnqTEh8yjLPyiWf0%253D
+- desc: ISA·연금저축·특정금전신탁에서 ETF 매매 시 수수료 구조·매매 시점·투자 가능 종목·자동매도서비스·담보 설정 5가지 확인법.
+- keywords: ETF투자유의사항, ISAETF, 연금저축ETF, ETF수수료, ETF자동매도서비스, 특정금전신탁ETF, ETF매매시점, ETF민원사례
+
+### 대출금리 산정방식 7월부터 바뀐다 — 내 대출이자 줄어들까?
+- url: https://j2gblog.tistory.com/78
+- category: 대출, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FlXIch%2FdJMcahSfufw%2FAAAAAAAAAAAAAAAAAAAAABJl1fiVlZDGHvWSyJOqY2EjzdfgEx48M9lG0BCQztPB%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DxIpkjdW2%252FA%252BDb%252BgF2xD3i%252B1tnMo%253D
+- desc: 2026년 7월 대출금리 산정방식 개선 내용, 기존 대출자 자동 소급 여부, 금리인하요구권 활용 방법 체크리스트.
+- keywords: 대출금리산정방식, 대출가산금리, 대출이자줄이기, 2026대출금리, 금리인하요구권, 대출금리개편, 가산금리제외비용

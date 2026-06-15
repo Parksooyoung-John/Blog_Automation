@@ -313,3 +313,59 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fm29D2%2FdJMcafUvBlq%2FAAAAAAAAAAAAAAAAAAAAAACtYNs2XPUz0zWEKlPwNerqFRIyQtpCwend_816PQJx%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DKwUAaN%252BBKFxz3bNTSBzt4iO%252FwIM%253D
 - desc: 연금저축에 S&P500 하나로 충분한지부터 채권·배당 ETF 역할, 총보수·환노출 확인법, 공격형·안정형 포트폴리오 예시까지 정리했습니다.
 - keywords: 연금저축펀드ETF, 연금저축포트폴리오, 연금저축펀드구성, 연금저축SP500, 연금저축채권ETF, 연금저축총보수, 연금저축ETF선택
+
+### 연금저축펀드에 채권 ETF 꼭 넣어야 할까? 나이대별 비중 기준 정리
+- url: https://j2gblog.tistory.com/80
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FJ4Gng%2FdJMcaglw7yu%2FAAAAAAAAAAAAAAAAAAAAAAtsgjkGI7sCB7MX_eumJvoSm_thMWSlO7ZB6j3Cf1S4%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DLplatsMXKbuQ3RmAtllh%252BQzTz64%253D
+- desc: 연금저축에 채권 ETF를 넣어야 할지 고민된다면? 국내채권·미국채·단기채 역할 비교와 20~50대 나이대별 채권 비중 기준을 정리했습니다.
+- keywords: 연금저축채권ETF, 연금저축ETF비중, 연금저축포트폴리오, 미국채ETF연금저축, 채권ETF역할, 나이별ETF비중, 연금저축펀드투자
+
+### 근로장려금 신청 놓쳤다면? 2026 기한 후 신청·감액·지급일 정리
+- url: https://j2gblog.tistory.com/82
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FNoXs7%2FdJMcafAcklq%2FAAAAAAAAAAAAAAAAAAAAACSEK7QSRXm8FkFSnFtRQG0ukE8egXf1-bVfSW58ArVV%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DsdjR%252Fe8XlbwO0kI8%252BbADfiruYBo%253D
+- desc: 2026년 근로장려금 정기 신청(6월 1일)을 놓쳤다면? 기한 후 신청 기간, 5% 감액, 지급 시기까지 한 번에 정리했습니다.
+- keywords: 근로장려금기한후신청, 근로장려금지급일, 자녀장려금신청, 근로장려금5%감액, 2026근로장려금, 근로장려금신청방법, 근로장려금소득요건
+
+### 연금저축 미국 ETF, 환헤지와 환노출 뭐가 다를까? 장기투자 전 확인할 것
+- url: https://j2gblog.tistory.com/81
+- category: 주식, ETF
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbcpjEK%2FdJMcaiRb2Ms%2FAAAAAAAAAAAAAAAAAAAAAOIPnChNBUNamH0NVv2pNMDRFE5FdmBiPCh_-VUv4GeS%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DP0mDHx6wAZriQAJArOGfacFDukY%253D
+- desc: 연금저축에서 S&P500 ETF를 살 때 (H) 붙은 환헤지 상품과 환노출 상품 중 뭘 골라야 할까? 구조 차이·장기 비용·환율 영향을 비교했습니다.
+- keywords: 연금저축환헤지ETF, 환노출ETF, 미국ETF환율, S&P500환헤지, 환헤지비용, 장기투자ETF, 연금저축미국ETF, 환헤지환노출비교
+
+### 여신거래 안심차단이란? 보이스피싱 막기 전 신청·해제 방법 정리
+- url: https://j2gblog.tistory.com/83
+- category: 대출, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2F5UngL%2FdJMcaiDGcsH%2FAAAAAAAAAAAAAAAAAAAAAJ_rBw_6qQTq8e92c_fbwF8lKjcQ37bPjir42Cqfyt3j%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3Ddd%252B9qlYZTECLlgnhwJ4AftjjUhw%253D
+- desc: 여신거래 안심차단 서비스로 본인 명의 신용대출·카드 발급을 원천 차단할 수 있습니다. 신청 방법, 차단 범위, 해제 절차를 정리했습니다.
+- keywords: 여신거래안심차단, 금융거래안심차단, 보이스피싱예방, 신용대출차단, 카드발급차단, 명의도용방지, 안심차단신청방법
+
+### 금리인하요구권 자동신청이란? 2026 대출이자 줄일 수 있는 조건 정리
+- url: https://j2gblog.tistory.com/84
+- category: 대출, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcjSYT6%2FdJMcahY3knQ%2FAAAAAAAAAAAAAAAAAAAAANCmAbZQu7g1zGXxwYIL5GKDbEOD1bfiOLwDSSPrCail%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DA0gbcI8h4qsgsnqDLnEPecN0fs8%253D
+- desc: 2026년 마이데이터 기반 금리인하요구권 자동신청 서비스가 시행됐습니다. 신청 조건, 인하 가능 상황, 주의사항을 정리했습니다.
+- keywords: 금리인하요구권, 금리인하요구권자동신청, 대출이자줄이는방법, 마이데이터금리인하, 2026금리인하요구, 금리인하요구조건
+
+### 불법사금융예방대출 2026 — 소액 급전 필요할 때 조건·금리·신청방법 정리
+- url: https://j2gblog.tistory.com/85
+- category: 대출, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FdOdfVj%2FdJMcaiwU5op%2FAAAAAAAAAAAAAAAAAAAAAF0P8aSlJSKlVM4A0XXKaqF4yfmqPZ0JOKAur2puomlx%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3Ds0XxJM%252FZTOc4vDHRKC8fq9sMJjA%253D
+- desc: 소액 급전이 필요할 때 불법 사금융 대신 확인할 제도. 서민금융진흥원 불법사금융예방대출 조건·금리·신청방법을 정리했습니다.
+- keywords: 불법사금융예방대출, 소액생계비대출, 서민금융진흥원대출, 급전대출대안, 소액급전, 불법사금융예방, 서민금융대출조건
+
+### 예금자보호 1억 시대, 예금·저축은행 통장 어떻게 나눠야 할까?
+- url: https://j2gblog.tistory.com/86
+- category: 예금, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcFCWw2%2FdJMcahLyhM9%2FAAAAAAAAAAAAAAAAAAAAADrnMGT4xuYmLXGyPg0CQ4JmvuTkVd58KKiGBOVkeSfa%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DQhf6tnAtar03QIVgP3IKWAQi%252B3E%253D
+- desc: 예금보호한도가 5천만 원에서 1억 원으로 오른 지금, 기존 통장 쪼개기 공식이 달라졌습니다. 은행·저축은행 기관별 별도 한도 적용 원칙과 구체적인 분산 전략을 정리했습니다.
+- keywords: 예금자보호1억, 예금보호한도, 저축은행예금자보호, 파킹통장예금자보호, 예금분산, 통장쪼개기, 예금보험공사, 예금보호적용대상
+
+### 햇살론 2026 개편, 일반보증·특례보증 차이와 신청 전 확인할 조건
+- url: https://j2gblog.tistory.com/87
+- category: 대출, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbHTUmW%2FdJMcaiwVWOD%2FAAAAAAAAAAAAAAAAAAAAAJibZEj6cT-kFO6u9nbeAGbLEDVKTB_OQO__Whkvgt83%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DQn8zH6vF2BvaEP%252BAghptxqJ36uw%253D
+- desc: 2026년 햇살론이 일반보증·특례보증으로 개편됐습니다. 소득·신용등급별 해당 유형과 금리 차이, 신청 전 확인할 조건을 정리했습니다.
+- keywords: 햇살론2026, 햇살론일반보증, 햇살론특례보증, 서민금융진흥원햇살론, 정책서민금융, 저신용대출, 서민대출조건, 햇살론금리

@@ -376,3 +376,10 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcNrErz%2FdJMcaf70nkx%2FAAAAAAAAAAAAAAAAAAAAAFRFu4cSNb90gGZblPRZmKCL19tHRD4R8emDw6if38Ij%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DvlRihzobYRThCO26WSnpeEkndkI%253D
 - desc: 스페이스X 6월 12일 상장 후 공모가 대비 +31.8% 급등. SPCX 투자 전 밸류에이션·Starlink 의존도·락업 해제·한국 매수 경로까지 5가지 체크포인트를 정리했습니다.
 - keywords: 스페이스X주식, SPCX, SpaceXIPO, 우주항공관련주, SPCX투자위험, 스페이스X상장, 우주항공ETF, SPCX매수, 스페이스X투자, 우주산업주식
+
+### SOXL 어디까지 오를까? 반도체 3배 레버리지 ETF 투자 전 확인할 5가지
+- url: https://j2gblog.tistory.com/entry/SOXL-어디까지-오를까?-반도체-3배-레버리지-ETF-투자-전-확인할-5가지
+- category: 주식, ETF
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbilErY%2FdJMcaiRejW9%2FAAAAAAAAAAAAAAAAAAAAAEDxadDUUXUao49FgFWtIjaI-0ga6fr88MaEdceXtOyI%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DNjbwTlGVsa08OmAUVYDUM81QBjs%253D
+- desc: SOXL(반도체 3배 레버리지 ETF) 투자 전 확인할 변동성 손실 구조·랠리 지속 조건·ETF 자금 흐름·하락 시나리오·대안 ETF까지 5가지 체크포인트로 정리했습니다.
+- keywords: SOXL, SOXL주가, 반도체3배ETF, 반도체레버리지ETF, 엔비디아, AI반도체, SOXL위험, 변동성손실, 레버리지ETF, 반도체ETF

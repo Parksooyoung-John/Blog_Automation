@@ -371,8 +371,8 @@
 - keywords: 햇살론2026, 햇살론일반보증, 햇살론특례보증, 서민금융진흥원햇살론, 정책서민금융, 저신용대출, 서민대출조건, 햇살론금리
 
 ### 스페이스X 상장 후 살까 말까? SPCX 투자 전 확인할 5가지
-- url: https://j2gblog.tistory.com/88
+- url: https://j2gblog.tistory.com/89
 - category: 주식, ETF
-- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fq1uvb%2FdJMcadvxQHb%2FAAAAAAAAAAAAAAAAAAAAAA7HzsizfThSiTrlYHVDKCUMwRh1MmYG3N77UwAU0oDL%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3Dg0fLnRl7gK85yUQFggz0HeLKHOE%253D
-- desc: 스페이스X 상장 소식에 SPCX 종목이 화제입니다. 이름만 보고 투자하기 전 구조·유동성·락업·매수 경로까지 확인할 5가지를 정리했습니다.
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcNrErz%2FdJMcaf70nkx%2FAAAAAAAAAAAAAAAAAAAAAFRFu4cSNb90gGZblPRZmKCL19tHRD4R8emDw6if38Ij%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DvlRihzobYRThCO26WSnpeEkndkI%253D
+- desc: 스페이스X 6월 12일 상장 후 공모가 대비 +31.8% 급등. SPCX 투자 전 밸류에이션·Starlink 의존도·락업 해제·한국 매수 경로까지 5가지 체크포인트를 정리했습니다.
 - keywords: 스페이스X주식, SPCX, SpaceXIPO, 우주항공관련주, SPCX투자위험, 스페이스X상장, 우주항공ETF, SPCX매수, 스페이스X투자, 우주산업주식

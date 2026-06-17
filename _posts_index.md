@@ -383,3 +383,24 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbilErY%2FdJMcaiRejW9%2FAAAAAAAAAAAAAAAAAAAAAEDxadDUUXUao49FgFWtIjaI-0ga6fr88MaEdceXtOyI%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DNjbwTlGVsa08OmAUVYDUM81QBjs%253D
 - desc: SOXL(반도체 3배 레버리지 ETF) 투자 전 확인할 변동성 손실 구조·랠리 지속 조건·ETF 자금 흐름·하락 시나리오·대안 ETF까지 5가지 체크포인트로 정리했습니다.
 - keywords: SOXL, SOXL주가, 반도체3배ETF, 반도체레버리지ETF, 엔비디아, AI반도체, SOXL위험, 변동성손실, 레버리지ETF, 반도체ETF
+
+### 중도상환수수료 낮아졌다는데, 대출 갈아타기 전 꼭 계산할 5가지
+- url: https://j2gblog.tistory.com/91
+- category: 대출, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FIpA36%2FdJMcahrjYye%2FAAAAAAAAAAAAAAAAAAAAABmZiMUjjpfRj0eTwnN4TQwkIu9etcZscKiwKabrJ27r%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D7aeWFemjNIw%252FGb8vnCGiqTB0ekY%253D
+- desc: 2025년 1월 13일 이후 계약 대출은 중도상환수수료가 낮아졌습니다. 계약일 기준 확인부터 손익분기점 계산, 금리인하요구권 활용까지 갈아타기 전 꼭 계산할 5가지를 정리했습니다.
+- keywords: 중도상환수수료, 대출갈아타기, 중도상환수수료계산, 손익분기점, 금리인하요구권, 상호금융중도상환수수료, 주담대갈아타기, 대출상환수수료
+
+### K-패스 모두의 카드, 교통비 얼마나 돌려받을까? 환급 조건 정리
+- url: https://j2gblog.tistory.com/92
+- category: 신용카드
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FQH7H5%2FdJMcagZ9PYX%2FAAAAAAAAAAAAAAAAAAAAAD_9ZalSY6Yg5rjtiZAYoX_0G5jUhi1HPV0Wtim5P8Q6%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DPQJNJCjvlZ26qJVNWDFGb0g32ik%253D
+- desc: K-패스 기본형과 모두의 카드의 차이, 유형별 환급 조건(일반·청년·다자녀·저소득), 2026년 달라진 혜택, 회원가입 방법까지 정리했습니다.
+- keywords: K패스, K패스모두의카드, 교통비환급, K패스환급조건, K패스청년, 대중교통환급, K패스혜택, 교통비절약, K패스카드비교
+
+### 7월 부가세 신고, 개인사업자·부업러가 놓치기 쉬운 체크리스트
+- url: https://j2gblog.tistory.com/93
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2F37Uy2%2FdJMcadPSQ3i%2FAAAAAAAAAAAAAAAAAAAAAKkFl0TWTHddezywBB030TE_ZKg6TKAg9i0MZDol4xO8%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DpMbPOmhBKWfC%252BJIwIxx%252BYj%252Bf1k4%253D
+- desc: 2026년 7월 부가세 신고 대상과 기간 정리. 일반과세자 확정신고(7.1~7.25), 간이과세자 예정고지 납부 대상, 부업러 체크사항까지 초보자용으로 설명합니다.
+- keywords: 7월부가세신고, 개인사업자부가세, 간이과세자부가세, 부업부가세, 부가세신고기간, 1기확정신고, 홈택스부가세, 간이과세자예정고지, 부업세금신고

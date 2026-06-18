@@ -404,3 +404,17 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2F37Uy2%2FdJMcadPSQ3i%2FAAAAAAAAAAAAAAAAAAAAAKkFl0TWTHddezywBB030TE_ZKg6TKAg9i0MZDol4xO8%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DpMbPOmhBKWfC%252BJIwIxx%252BYj%252Bf1k4%253D
 - desc: 2026년 7월 부가세 신고 대상과 기간 정리. 일반과세자 확정신고(7.1~7.25), 간이과세자 예정고지 납부 대상, 부업러 체크사항까지 초보자용으로 설명합니다.
 - keywords: 7월부가세신고, 개인사업자부가세, 간이과세자부가세, 부업부가세, 부가세신고기간, 1기확정신고, 홈택스부가세, 간이과세자예정고지, 부업세금신고
+
+### 7월 재산세 납부, 카드로 내도 될까? 납부기간·수수료·실적 제외 정리
+- url: https://j2gblog.tistory.com/94
+- category: 신용카드
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fc2MqZN%2FdJMcadvzux3%2FAAAAAAAAAAAAAAAAAAAAAFuc3KcZmWymhb11TGqFh2egJjXDwN_G1N7CVNm7Xkuq%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DwV%252BVT%252Bo%252BuVNgvov5ug1lM596y1I%253D
+- desc: 2026년 7월 재산세 납부기간(7.16~7.31)과 카드 납부 가능 여부, 수수료 없음, 전월실적 포함 여부까지 카드로 재산세 낼 때 확인할 것들을 정리했습니다.
+- keywords: 7월재산세납부, 재산세카드납부, 재산세납부기간, 위택스재산세, 재산세전월실적, 재산세납부방법, 재산세고지서, 재산세수수료, 재산세포인트적립
+
+### 장마철 자동차 침수, 보험 처리될까? 자기차량손해·단독사고 특약 확인법
+- url: https://j2gblog.tistory.com/95
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Ftn7QK%2FdJMcafNQk3V%2FAAAAAAAAAAAAAAAAAAAAANJ12_rk4dQ3ldBWgBlB0yLejw8mhdb2NVUaPEUbBpGr%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D%252FVkCJYwsDL4zb8oZVb8fePqQxwQ%253D
+- desc: 장마철 차량 침수 시 자기차량손해 특약 가입 여부, 단독사고 담보, 전손·분손 기준, 보상 안 되는 경우까지 확인 방법을 정리했습니다.
+- keywords: 자동차침수보험, 장마철자동차보험, 침수차보험처리, 자기차량손해특약, 단독사고담보, 침수차보상, 침수차전손

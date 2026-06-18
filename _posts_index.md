@@ -418,3 +418,17 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Ftn7QK%2FdJMcafNQk3V%2FAAAAAAAAAAAAAAAAAAAAANJ12_rk4dQ3ldBWgBlB0yLejw8mhdb2NVUaPEUbBpGr%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D%252FVkCJYwsDL4zb8oZVb8fePqQxwQ%253D
 - desc: 장마철 차량 침수 시 자기차량손해 특약 가입 여부, 단독사고 담보, 전손·분손 기준, 보상 안 되는 경우까지 확인 방법을 정리했습니다.
 - keywords: 자동차침수보험, 장마철자동차보험, 침수차보험처리, 자기차량손해특약, 단독사고담보, 침수차보상, 침수차전손
+
+### 해외원화결제 차단 안 하면 수수료 더 낼 수 있다? DCC 설정 방법 정리
+- url: https://j2gblog.tistory.com/96
+- category: 신용카드
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fm3F1C%2FdJMcajikSMf%2FAAAAAAAAAAAAAAAAAAAAAOOjU8VkHYgz0O9eWHl-gp2xU9SlCT6Wpfbt_da4mhes%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DtOMqDaP%252BfU769CGKj%252FHMTF%252Bj3so%253D
+- desc: 해외여행 전 카드 앱에서 해외원화결제(DCC) 차단 설정 방법, 현장 대처법, DCC 추가 수수료 원리를 정리했습니다.
+- keywords: 해외원화결제차단, DCC차단, 해외카드수수료, 해외여행카드설정, 원화결제수수료, DCC수수료, 해외결제카드, 해외여행준비
+
+### 해외여행자보험, 휴대품 분실도 보상될까? 가입 전 확인할 특약 5가지
+- url: https://j2gblog.tistory.com/97
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FrgLDd%2FdJMcadWIxau%2FAAAAAAAAAAAAAAAAAAAAACuViYgeW6ilV0vjPapQLLJtGIdWzdsGlR8dYhbTSwHc%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D6mymI7qnq4z9a0lhgHl2ZLlASy0%253D
+- desc: 해외여행자보험 기본 보장과 선택 특약 5가지(휴대품·항공기 지연·의료비·배상책임·납치) 보상 조건과 보상 안 되는 경우를 정리했습니다.
+- keywords: 해외여행자보험, 여행자보험특약, 여행자보험휴대품, 항공기지연보험, 해외여행보험가입, 여행자보험보상, 배상책임특약

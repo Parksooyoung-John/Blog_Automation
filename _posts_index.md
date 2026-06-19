@@ -432,3 +432,16 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FrgLDd%2FdJMcadWIxau%2FAAAAAAAAAAAAAAAAAAAAACuViYgeW6ilV0vjPapQLLJtGIdWzdsGlR8dYhbTSwHc%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D6mymI7qnq4z9a0lhgHl2ZLlASy0%253D
 - desc: 해외여행자보험 기본 보장과 선택 특약 5가지(휴대품·항공기 지연·의료비·배상책임·납치) 보상 조건과 보상 안 되는 경우를 정리했습니다.
 - keywords: 해외여행자보험, 여행자보험특약, 여행자보험휴대품, 항공기지연보험, 해외여행보험가입, 여행자보험보상, 배상책임특약
+
+### 렌터카 빌릴 때 자차보험 꼭 들어야 할까? 차량손해면책·휴차료 확인법
+- url: https://j2gblog.tistory.com/98
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FciT0ES%2FdJMcahENUyC%2FAAAAAAAAAAAAAAAAAAAAAPOnST67f-qQokKsVHgcAusy-C3pMjcIQy-tyFt3KlM6%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DS30vzT1v31kTso5ykhc4BQWfz5U%253D
+- desc: 렌터카 빌릴 때 자차보험(CDW) 필요 여부, 면책금·휴차료 개념, 내 자동차보험 타차운전담보 활용법을 정리했습니다.
+- keywords: 렌터카자차보험, 렌터카CDW, 차량손해면책, 렌터카휴차료, 렌터카보험비교, 렌터카면책금, 해외렌터카보험, 타차운전담보
+### 휴면예금 찾아줌, 잠자는 돈 조회하는 방법 — 보험금·카드포인트까지 같이 확인
+- url: https://j2gblog.tistory.com/99
+- category: 예금금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FSTMOa%2FdJMcafmLWnS%2FAAAAAAAAAAAAAAAAAAAAAONrWNdIKlTDKuRkjRKbfTVszRFfhNl_VR7dY7CNiBFt%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DlMAXIrWNuhYf2HxcRo2E7mpTlqs%253D
+- desc: 서민금융진흥원 휴면예금 찾아줌·금융감독원 파인 내 계좌 한눈에·보험금 찾아줌·카드포인트 통합조회까지 잠자는 돈 한 번에 조회하는 방법을 정리했습니다.
+- keywords: 휴면예금찾아줌, 휴면예금조회, 잠자는돈찾기, 내계좌한눈에, 보험금찾아줌, 카드포인트통합조회, 서민금융진흥원, 금융감독원파인

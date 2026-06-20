@@ -445,3 +445,17 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FSTMOa%2FdJMcafmLWnS%2FAAAAAAAAAAAAAAAAAAAAAONrWNdIKlTDKuRkjRKbfTVszRFfhNl_VR7dY7CNiBFt%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DlMAXIrWNuhYf2HxcRo2E7mpTlqs%253D
 - desc: 서민금융진흥원 휴면예금 찾아줌·금융감독원 파인 내 계좌 한눈에·보험금 찾아줌·카드포인트 통합조회까지 잠자는 돈 한 번에 조회하는 방법을 정리했습니다.
 - keywords: 휴면예금찾아줌, 휴면예금조회, 잠자는돈찾기, 내계좌한눈에, 보험금찾아줌, 카드포인트통합조회, 서민금융진흥원, 금융감독원파인
+
+### 국민연금 보험료 2026년부터 오른다 — 월급에서 얼마나 더 빠질까?
+- url: https://j2gblog.tistory.com/100
+- category: 절세연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbDst3S%2FdJMcaiDLueO%2FAAAAAAAAAAAAAAAAAAAAAMSZ0Pcd9Y53gf4m4yQfspLVQvF07QX0vWROTn3lniue%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DJBCiIafQf7M1xVqZnaytk2JfamI%253D
+- desc: 국민연금 보험료율 2026년부터 매년 0.5%p씩 인상. 월급 300만 원 기준 실제 납부액 변화와 직장인·지역가입자 차이를 정리했습니다.
+- keywords: 국민연금보험료율인상, 2026국민연금, 국민연금직장인, 국민연금지역가입자, 국민연금상한액, 국민연금납부액계산, 국민연금추납
+
+### 에너지바우처 2026 신청 시작 — 전기요금 차감 대상·기간·신청방법 정리
+- url: https://j2gblog.tistory.com/101
+- category: 절세연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcTnh4a%2FdJMcaaZ0Xwo%2FAAAAAAAAAAAAAAAAAAAAALGCVJZzL6lXD25h5Jiy2Qon16lD9t9wcz3L1tUT90lg%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DrMTGN5fQmrxFz56g7HrDHJ3pap4%253D
+- desc: 2026 에너지바우처 신청기간(6.15~12.31)·지원 대상(기초수급자·차상위)·전기요금 자동차감 방식·주민센터·복지로 신청방법을 정리했습니다.
+- keywords: 에너지바우처2026, 에너지바우처신청, 전기요금지원, 에너지바우처대상, 에너지바우처신청기간, 에너지바우처전기요금차감, 복지로에너지바우처, 에너지바우처주민센터

@@ -487,3 +487,10 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fc9gIB8%2FdJMcahkCotk%2FAAAAAAAAAAAAAAAAAAAAAKn_ZbAfLdC5Bw6iEb4li2N4I8YMBFRJSnMjQ-EVHcVk%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DKgpCRhLvDTtUjPGQZOqMM91VIWc%253D
 - desc: 2026년 6월 15일 시행된 민영주택 신생아 특별공급. 혼인기간 제한 없이 2세 미만 자녀가 있으면 청약 가능한 조건과 소득·자산 기준을 정리했습니다.
 - keywords: 신생아특별공급, 민영주택특공, 신생아특공조건, 청약자격, 2세미만자녀청약, 혼인기간무관청약, 특별공급소득기준, 출산가구청약, 국토교통부청약정책, 신생아특공2026
+
+### 건강보험 피부양자 탈락 기준 2026 — 소득·재산·금융소득 체크리스트
+- url: https://j2gblog.tistory.com/106
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FblLVoa%2FdJMcagTu54o%2FAAAAAAAAAAAAAAAAAAAAAIvEChmZI32oPy8R2HSRv0jBoURwvdemKtuBMz40yRqj%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DtmsOqr30Cj0bShJMDL5P7xN0AkI%253D
+- desc: 2026년 기준 건강보험 피부양자 탈락 조건을 소득·재산·금융소득 세 축으로 정리했습니다. 국민연금·이자소득 증가로 자격 탈락이 늘어난 실제 케이스와 자가 진단 체크리스트 포함.
+- keywords: 건강보험피부양자탈락, 피부양자소득기준, 피부양자재산기준, 금융소득건강보험료, 지역가입자전환, 건강보험료절감, 국민연금건강보험, 금융소득종합과세, 피부양자자격, 건강보험2026

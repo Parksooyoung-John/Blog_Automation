@@ -473,3 +473,17 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcoIyTA%2FdJMcagF0kA1%2FAAAAAAAAAAAAAAAAAAAAAPlXKVypydABAyfFcCivPIuLTAcz1HipW1RR9vHs5ctX%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DlWrihavOzELz6ePw1QKLvHtpSx0%253D
 - desc: 2026년 4월부터 출산·육아휴직 중인 부모는 어린이보험료 할인·납입유예·보험계약대출 이자 유예 혜택을 받을 수 있습니다. 조건과 신청 방법을 정리했습니다.
 - keywords: 어린이보험보험료할인, 육아휴직보험료, 출산보험료지원, 보험료납입유예, 저출산보험지원, 어린이보험할인조건, 출산육아보험혜택, 보험료부담완화
+
+### 사망보험금 생전에 받을 수 있다? 유동화 신청 전 가족과 꼭 확인할 것
+- url: https://j2gblog.tistory.com/104
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fckorgt%2FdJMcaaln9vM%2FAAAAAAAAAAAAAAAAAAAAAClI1PsylKfQ4zmR2qHwidPNs7Tr-AxBLZOCM8dOAESi%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DKuZ1Gi36M1m9RIOGVVuZ1CJtYCU%253D
+- desc: 2026년 1월부터 전체 생명보험사로 확대된 사망보험금 유동화 제도. 종신보험 가입자가 생전에 보험금을 연금으로 받는 구조, 신청 조건, 유족 보장 감소 문제를 중립적으로 정리했습니다.
+- keywords: 사망보험금유동화, 종신보험, 사망보험금생전지급, 노후생활비, 생명보험, 보험유동화, 금융위원회, 연금전환, 보험리모델링, 노후준비
+
+### 신생아 특별공급 10% 신설, 혼인 7년 넘어도 청약 가능할까?
+- url: https://j2gblog.tistory.com/105
+- category: 대출금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fc9gIB8%2FdJMcahkCotk%2FAAAAAAAAAAAAAAAAAAAAAKn_ZbAfLdC5Bw6iEb4li2N4I8YMBFRJSnMjQ-EVHcVk%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DKgpCRhLvDTtUjPGQZOqMM91VIWc%253D
+- desc: 2026년 6월 15일 시행된 민영주택 신생아 특별공급. 혼인기간 제한 없이 2세 미만 자녀가 있으면 청약 가능한 조건과 소득·자산 기준을 정리했습니다.
+- keywords: 신생아특별공급, 민영주택특공, 신생아특공조건, 청약자격, 2세미만자녀청약, 혼인기간무관청약, 특별공급소득기준, 출산가구청약, 국토교통부청약정책, 신생아특공2026

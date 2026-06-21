@@ -220,6 +220,9 @@ def parse_blog_post(path: Path) -> tuple[str, str, str, list[str]]:
     # 마크다운 → HTML
     html = md_lib.markdown(body, extensions=["tables", "fenced_code", "nl2br"])
 
+    # <p> 태그에 margin-bottom 추가 — Tistory CSS가 p 마진을 0으로 초기화하므로 인라인으로 강제 적용
+    html = html.replace('<p>', '<p style="margin-bottom:1.4em;">')
+
     # 이미지 플레이스홀더 → 실제 이미지
     html = replace_image_placeholders(html)
 

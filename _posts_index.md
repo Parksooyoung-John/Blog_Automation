@@ -459,3 +459,17 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcTnh4a%2FdJMcaaZ0Xwo%2FAAAAAAAAAAAAAAAAAAAAALGCVJZzL6lXD25h5Jiy2Qon16lD9t9wcz3L1tUT90lg%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DrMTGN5fQmrxFz56g7HrDHJ3pap4%253D
 - desc: 2026 에너지바우처 신청기간(6.15~12.31)·지원 대상(기초수급자·차상위)·전기요금 자동차감 방식·주민센터·복지로 신청방법을 정리했습니다.
 - keywords: 에너지바우처2026, 에너지바우처신청, 전기요금지원, 에너지바우처대상, 에너지바우처신청기간, 에너지바우처전기요금차감, 복지로에너지바우처, 에너지바우처주민센터
+
+### 우체국에서 은행 대출 상담 가능해진다? 은행대리업 신청 전 확인할 것
+- url: https://j2gblog.tistory.com/102
+- category: 대출금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FrXgCZ%2FdJMcaftuzwl%2FAAAAAAAAAAAAAAAAAAAAAF9fVqii76LxgEdok_oOZ1hb2a9H9NFZgZAeDtXKJmPC%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3Dp47Wlj1ZD4LFajLWdvKbVwwU1ns%253D
+- desc: 2026년 도입되는 은행대리업으로 우체국에서 은행 대출 상담이 가능해집니다. 실제로 할 수 있는 것과 없는 것, 신청 전 확인할 체크리스트를 정리했습니다.
+- keywords: 은행대리업, 우체국은행업무, 우체국대출상담, 은행대리업2026, 정책서민금융, 은행지점대안, 금융접근성, 우정사업본부
+
+### 출산·육아휴직이면 보험료 줄일 수 있다? 어린이보험 할인·납입유예 정리
+- url: https://j2gblog.tistory.com/103
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcoIyTA%2FdJMcagF0kA1%2FAAAAAAAAAAAAAAAAAAAAAPlXKVypydABAyfFcCivPIuLTAcz1HipW1RR9vHs5ctX%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DlWrihavOzELz6ePw1QKLvHtpSx0%253D
+- desc: 2026년 4월부터 출산·육아휴직 중인 부모는 어린이보험료 할인·납입유예·보험계약대출 이자 유예 혜택을 받을 수 있습니다. 조건과 신청 방법을 정리했습니다.
+- keywords: 어린이보험보험료할인, 육아휴직보험료, 출산보험료지원, 보험료납입유예, 저출산보험지원, 어린이보험할인조건, 출산육아보험혜택, 보험료부담완화

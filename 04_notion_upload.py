@@ -187,6 +187,32 @@ def ensure_db_properties():
 # 마크다운 파싱
 # ═══════════════════════════════════════════════════════
 
+def _add_hierarchical_spacers(html: str) -> str:
+    """Tistory uselessPMargin.css !important 우회: 태그 전환 계층별 <p><br></p> 삽입.
+
+    h2 앞: 3개 / h2 뒤·h3 앞: 2개 / h3 뒤·p→p: 1개
+    <p><br></p> spacer 자체를 재매칭하지 않도록 negative lookahead 사용.
+    """
+    S = '<p><br></p>'
+
+    def _n(prev: str, nxt: str) -> int:
+        if nxt.startswith('<h2'):                   return 3
+        if nxt.startswith(('<h3', '<h4')):          return 2
+        if prev == '</h2>':                         return 2
+        if prev.startswith(('</h3', '</h4')):       return 1
+        return 1  # p→p 기본
+
+    def _repl(m: re.Match) -> str:
+        prev, ws, nxt = m.group(1), m.group(2), m.group(3)
+        return f'{prev}{ws}{S * _n(prev, nxt)}{ws}{nxt}'
+
+    return re.sub(
+        r'(</(?:p|h[2-6])>)(\s*)(<(?:p(?!><br>)|h[2-6]))',
+        _repl,
+        html,
+    )
+
+
 def parse_blog_post(path: Path) -> tuple[str, str, str, list[str]]:
     """마크다운 파일에서 (제목, HTML본문, meta_category, meta_tags) 추출.
 
@@ -221,8 +247,8 @@ def parse_blog_post(path: Path) -> tuple[str, str, str, list[str]]:
     html = md_lib.markdown(body, extensions=["tables", "fenced_code", "nl2br"])
 
     # Tistory 'uselessPMargin.css': p 태그 margin/padding을 !important로 제거
-    # → </p><p> 사이에 <p><br></p> 삽입으로 line-height 기반 여백 확보 (CSS 우회)
-    html = re.sub(r'</p>(\s*)<p', r'</p>\1<p><br></p>\1<p', html)
+    # → 태그 전환 계층별 <p><br></p> 삽입으로 시각적 여백 계층 구현 (CSS 우회)
+    html = _add_hierarchical_spacers(html)
 
     # 이미지 플레이스홀더 → 실제 이미지
     html = replace_image_placeholders(html)

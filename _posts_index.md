@@ -509,16 +509,3 @@
 - desc: 2026년 기초연금 선정기준액(단독 247만 원·부부 395만 2천 원)과 소득인정액 계산 방식, 국민연금 연계 감액까지 정리했습니다.
 - keywords: 기초연금2026, 기초연금수급자격, 기초연금소득인정액, 부모님기초연금, 기초연금재산기준, 기초연금선정기준액, 기초연금금액, 기초연금국민연금감액, 기초연금신청방법, 복지로기초연금
 
-### 청년미래적금 6월 출시 — 청년도약계좌 갈아타기 전 확인할 5가지
-- url: https://j2gblog.tistory.com/109
-- category: 절세, 연금
-- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fct69r7%2FdJMcac4BToD%2FAAAAAAAAAAAAAAAAAAAAAHFboIN-mOvCjxXoDdyX0BklRGlWqFJUIGcdXMtTZOyY%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DUt%252FW2BkXKoyo3LYHhT8HhfsrySQ%253D
-- desc: 2026년 6월 출시 예정 청년미래적금 가입 조건·정부기여금 구조와 청년도약계좌에서 갈아타기 전 반드시 확인해야 할 5가지를 체크리스트로 정리했습니다.
-- keywords: 청년미래적금, 청년도약계좌갈아타기, 청년미래적금조건, 정부기여금, 청년적금비과세, 청년도약계좌특별중도해지, 청년정책금융, 청년저축, 금융위원회청년정책, 청년재테크
-
-### 국민성장 ISA란? 기존 ISA와 다른 점 — 비과세·중복가입·투자대상 정리
-- url: https://j2gblog.tistory.com/110
-- category: 절세, 연금
-- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbgL79G%2FdJMcafUCHa0%2FAAAAAAAAAAAAAAAAAAAAAKr-V6D56RKftqEgsiV72de2f2wQQp5CZzDgkNqMZ96y%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DWv6%252FxKp%252FEptqo5bB8TLh4X3LsSc%253D
-- desc: 국민성장 ISA(생산적 금융 ISA) 개편 논의 내용과 기존 ISA와의 비과세 한도·중복가입·투자대상 차이를 2026년 6월 기준으로 정리했습니다.
-- keywords: 국민성장ISA, 청년형ISA, 생산적금융ISA, ISA비과세한도, ISA중복가입, ISA개편2026, 중개형ISA, ISA투자대상, 국내주식ISA, ISA한도확대

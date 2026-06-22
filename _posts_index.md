@@ -494,3 +494,17 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FblLVoa%2FdJMcagTu54o%2FAAAAAAAAAAAAAAAAAAAAAIvEChmZI32oPy8R2HSRv0jBoURwvdemKtuBMz40yRqj%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DtmsOqr30Cj0bShJMDL5P7xN0AkI%253D
 - desc: 2026년 기준 건강보험 피부양자 탈락 조건을 소득·재산·금융소득 세 축으로 정리했습니다. 국민연금·이자소득 증가로 자격 탈락이 늘어난 실제 케이스와 자가 진단 체크리스트 포함.
 - keywords: 건강보험피부양자탈락, 피부양자소득기준, 피부양자재산기준, 금융소득건강보험료, 지역가입자전환, 건강보험료절감, 국민연금건강보험, 금융소득종합과세, 피부양자자격, 건강보험2026
+
+### 퇴직연금 디폴트옵션 수익률, 그냥 안정형에 두면 괜찮을까?
+- url: https://j2gblog.tistory.com/107
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbHPIPK%2FdJMcai4MayY%2FAAAAAAAAAAAAAAAAAAAAAG44hnFWBPAiGzMojuHDTYA-6AAedEWgVKtDMaCXlqpt%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3Dvlhn2G5MpaVjTGhaGHNciOCYx74%253D
+- desc: 퇴직연금 디폴트옵션(사전지정운용제도) 수익률 현황과 안정형 vs TDF 비교. DC형·IRP 가입자가 확인할 체크리스트 포함.
+- keywords: 퇴직연금디폴트옵션, 디폴트옵션수익률, 퇴직연금안정형, TDF, IRP디폴트옵션, 사전지정운용제도, 퇴직연금운용지시, DC형퇴직연금, 퇴직연금수익률비교, 퇴직연금2026
+
+### 기초연금 2026, 부모님 받을 수 있을까? 소득인정액·재산 기준 정리
+- url: https://j2gblog.tistory.com/108
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcIXzkK%2FdJMb99UmhFO%2FAAAAAAAAAAAAAAAAAAAAAFF5GkaP2U3mvdgj3JxHnKvS0_AdtY1MbQZh4p4O5dfB%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3Do3fb6aLQprPzhY2LoImS3uPr9UM%253D
+- desc: 2026년 기초연금 선정기준액(단독 247만 원·부부 395만 2천 원)과 소득인정액 계산 방식, 국민연금 연계 감액까지 정리했습니다.
+- keywords: 기초연금2026, 기초연금수급자격, 기초연금소득인정액, 부모님기초연금, 기초연금재산기준, 기초연금선정기준액, 기초연금금액, 기초연금국민연금감액, 기초연금신청방법, 복지로기초연금

@@ -510,16 +510,16 @@
 - keywords: 기초연금2026, 기초연금수급자격, 기초연금소득인정액, 부모님기초연금, 기초연금재산기준, 기초연금선정기준액, 기초연금금액, 기초연금국민연금감액, 기초연금신청방법, 복지로기초연금
 
 ### 착한가격업소 2천원 할인, 카드만 쓰면 자동으로 받을 수 있을까?
-- url: https://j2gblog.tistory.com/111
+- url: https://j2gblog.tistory.com/113
 - category: 신용카드
-- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcwhYFo%2FdJMcacQ4ovk%2FAAAAAAAAAAAAAAAAAAAAADIX-L0hwm7UtZnpjahIeredKCfxYoJtnFOrXPBAkerV%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DArltR%252BLcijVQe3pxxOZMagE3N3E%253D
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fd28Dfj%2FdJMb991bP41%2FAAAAAAAAAAAAAAAAAAAAAN-bwt9yuErl9c9IBxZ_ECt_fGf9SdTn3-om5fvsmfT_%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3Dlo0CcoPMgIe3WrHPMuQhreEGvB4%253D
 - desc: 착한가격업소 카드 할인은 자동이 아닙니다. 카드사별 신청·활성화 조건과 월 2천원 할인 혜택을 정확히 비교해 외식비를 절약하는 방법을 정리했습니다.
-- keywords: 착한가격업소, 카드할인, 외식비절약, 캐시백, 할인카드, 신용카드혜택, 2천원할인, 가맹점할인, 카드비교, 생활비절감
+- keywords: 착한가격업소, 착한가격업소카드할인, 2천원할인, 카드캐시백, 외식비절약, 생활비절약, 행안부, 착한가격업소찾기, 카드혜택, 신용카드할인
 
 ### 미성년자 카드 발급 2026, 몇 살부터 가능할까? 한도·부모 동의 조건 정리
-- url: https://j2gblog.tistory.com/112
+- url: https://j2gblog.tistory.com/114
 - category: 신용카드
-- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2F9wupG%2FdJMcacXSiHa%2FAAAAAAAAAAAAAAAAAAAAABpOPVCcmQnvpdtLhCtaXjitiiFLpq7uuABt23V2IwK9%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3Dnw02dOilM4OgFe8BgVIRdPZsCL4%253D
-- desc: 2026년 미성년자 카드 발급 조건이 바뀌었습니다. 체크카드부터 신용카드까지 나이별·상품별 발급 가능 나이, 부모 동의 방법, 자녀 경제교육 전략을 완전 정리했습니다.
-- keywords: 미성년자카드, 청소년카드, 자녀카드발급, 체크카드, 신용카드발급, 부모동의, 자녀경제교육, 카드한도, 청소년금융, 금융제도변화
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcJZHEd%2FdJMcac4CKH5%2FAAAAAAAAAAAAAAAAAAAAAGLhAQ2ly6G6ks88EVtj6-NoYWOgNidvDccBSZvYJHAt%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DCC5SxTJyoE%252Fr5qUl6w%252FkqzHOihk%253D
+- desc: 2026년 미성년자 카드 발급 조건. 체크카드부터 신용카드까지 나이별 발급 가능 카드, 부모 동의 방법, 자녀 경제교육 전략을 완전 정리했습니다.
+- keywords: 미성년자카드, 자녀체크카드, 청소년카드발급, 부모동의카드, 미성년자결제, 청소년신용카드, 자녀용돈관리, 카드발급나이, 체크카드한도, 2026금융제도
 

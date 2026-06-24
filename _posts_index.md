@@ -523,3 +523,17 @@
 - desc: 2026년 미성년자 카드 발급 조건. 체크카드부터 신용카드까지 나이별 발급 가능 카드, 부모 동의 방법, 자녀 경제교육 전략을 완전 정리했습니다.
 - keywords: 미성년자카드, 자녀체크카드, 청소년카드발급, 부모동의카드, 미성년자결제, 청소년신용카드, 자녀용돈관리, 카드발급나이, 체크카드한도, 2026금융제도
 
+### 가족 사망 후 금융거래 막는 방법 — 사망자 명의 대출·카드 피해 예방 체크리스트
+- url: https://j2gblog.tistory.com/115
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbrwUy2%2FdJMcaaTjrqF%2FAAAAAAAAAAAAAAAAAAAAAOsDWShlxWSE_RHsOkfDBuTsyMyk2wZ08pO7Gzpexsqe%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DqjfeANx7wWU5cjZHJYDKl6agOEI%253D
+- desc: 가족 사망 후 안심상속 원스톱서비스로 금융거래를 일괄 차단하는 방법, 사망자 카드 정지·계좌 정리·상속 포기 기한까지 체크리스트로 정리했습니다.
+- keywords: 사망자금융거래차단, 안심상속원스톱서비스, 사망자명의대출, 상속금융조회, 계좌정보통합관리, 사망자카드정지, 상속포기기한, 금융거래일괄차단, 유족금융절차, 부모님사망후절차
+
+### 배당소득 분리과세 2026, 고배당주·ETF 투자자에게 유리할까?
+- url: https://j2gblog.tistory.com/116
+- category: 주식ETF
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FYH8W1%2FdJMcaiKwmrI%2FAAAAAAAAAAAAAAAAAAAAAIJ6jadal4Bv4rhVGGAXrgQHM38DTH9Qgi-jKep_lnqh%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D8EpTbE9lMwq3c9GxAEgqheESdzA%253D
+- desc: 배당소득 2천만 원 이하 분리과세와 초과 시 종합과세 차이, 2026년 분리과세 확대 논의, ETF 배당세금 비교, ISA 계좌 활용법을 정리했습니다.
+- keywords: 배당소득분리과세, 2026배당세금, 고배당주세금, 배당ETF세금, 금융소득종합과세, ISA절세, 배당소득14%, 금융소득2천만원
+

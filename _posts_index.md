@@ -537,3 +537,24 @@
 - desc: 배당소득 2천만 원 이하 분리과세와 초과 시 종합과세 차이, 2026년 분리과세 확대 논의, ETF 배당세금 비교, ISA 계좌 활용법을 정리했습니다.
 - keywords: 배당소득분리과세, 2026배당세금, 고배당주세금, 배당ETF세금, 금융소득종합과세, ISA절세, 배당소득14%, 금융소득2천만원
 
+### Harness Engineering — AI 코딩 도구를 제대로 쓰는 방법
+- url: https://j2gblog.tistory.com/entry/Harness-Engineering-—-AI-코딩-도구를-제대로-쓰는-방법
+- category: 소프트웨어 비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcNZzOc%2FdJMcac4Esx3%2FAAAAAAAAAAAAAAAAAAAAAGkRzPUQ-K6osQ-qRMLoNbHN71XHQ2jrM5LX09U-j2dB%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DftT%252B51DyMSrMhgjO3xwEhL9IKW0%253D
+- desc: AI 코딩이 잘 안 되는 이유는 코드 실력이 아니라 맥락 관리. Harness Engineering으로 AI 코딩 도구를 제대로 활용하는 방법을 정리했습니다.
+- keywords: Vibe Coding, Harness Engineering, AI 코딩, 멀티 에이전트, Context Contamination, AI 코딩 도구, 설계자 에이전트, Plan Mode, rules 파일, harness-100
+
+### Harness Engineering 실전 2편A — 레거시 데이터 대시보드 만들며 배우는 AI 코딩 실전
+- url: https://j2gblog.tistory.com/entry/Harness-Engineering-실전-2편A-—-레거시-데이터-대시보드-만들며-배우는-AI-코딩-실전
+- category: 소프트웨어 비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fbm3IeN%2FdJMcagTyxWg%2FAAAAAAAAAAAAAAAAAAAAAMdwLAEw_ZnVVF22cZO4W7E5lzYWDKUxLaxjWkeHU2jj%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DMldDwW8CEs9ZTZi49N2vyJpHpeg%253D
+- desc: 레거시 데이터 대시보드를 예시로 설계자 에이전트 프롬프트와 Hook 3가지(Raw·Encoding·Hardcode Guard)를 실전에서 어떻게 적용하는지 정리했습니다.
+- keywords: Harness Engineering 실전, AI 코딩 실전, 설계자 에이전트, Hook, rules 파일, Vibe Coding, 멀티 에이전트, 레거시 데이터 분석, Plan Mode, AI 코딩 도구
+
+
+### Harness Engineering 실전 2편B — 수집가·분석가·개발자·검토자 에이전트 프롬프트 전체 공개
+- url: https://j2gblog.tistory.com/entry/Harness-Engineering-실전-2편B-—-수집가·분석가·개발자·검토자-에이전트-프롬프트-전체-공개
+- category: 소프트웨어 비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FsCmDN%2FdJMcaiKxbnb%2FAAAAAAAAAAAAAAAAAAAAAGgxJIIlvS5ryj8Kb6x4VUojPNBBk1pBdwd4m_R9sR9n%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DL2n8sdaVQw9iAEM0kObdgPDqXCY%253D
+- desc: 수집가·분석가·개발자·검토자 에이전트 프롬프트를 전부 공개합니다. 복사해서 바로 쓸 수 있는 형태로 정리했습니다.
+- keywords: Harness Engineering 실전, AI 에이전트 프롬프트, 수집가 에이전트, 분석가 에이전트, 개발자 에이전트, 검토자 에이전트, AI 코딩 실전, 멀티 에이전트, Vibe Coding, 레거시 데이터 분석

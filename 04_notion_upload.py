@@ -247,6 +247,9 @@ def parse_blog_post(path: Path) -> tuple[str, str, str, list[str]]:
     # 마크다운 → HTML
     html = md_lib.markdown(body, extensions=["tables", "fenced_code", "nl2br"])
 
+    # 표 다음 여백: </table> 바로 뒤 텍스트가 붙지 않도록 빈 단락 삽입
+    html = re.sub(r'(</table>)', r'\1<p><br></p>', html)
+
     # Tistory 'uselessPMargin.css': p 태그 margin/padding을 !important로 제거
     # → 태그 전환 계층별 <p><br></p> 삽입으로 시각적 여백 계층 구현 (CSS 우회)
     html = _add_hierarchical_spacers(html)

@@ -558,3 +558,23 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FsCmDN%2FdJMcaiKxbnb%2FAAAAAAAAAAAAAAAAAAAAAGgxJIIlvS5ryj8Kb6x4VUojPNBBk1pBdwd4m_R9sR9n%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DL2n8sdaVQw9iAEM0kObdgPDqXCY%253D
 - desc: 수집가·분석가·개발자·검토자 에이전트 프롬프트를 전부 공개합니다. 복사해서 바로 쓸 수 있는 형태로 정리했습니다.
 - keywords: Harness Engineering 실전, AI 에이전트 프롬프트, 수집가 에이전트, 분석가 에이전트, 개발자 에이전트, 검토자 에이전트, AI 코딩 실전, 멀티 에이전트, Vibe Coding, 레거시 데이터 분석
+### 건강보험 피부양자 탈락 후 지역가입자 보험료 줄이는 방법
+- url: https://j2gblog.tistory.com/120
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FmFoke%2FdJMcaiDQxiN%2FAAAAAAAAAAAAAAAAAAAAAJzBFZfHbvhMuawGILXP834iYqtRFbYx42EhwAsh7r99%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DUUrQgPQvrW5XiWeMiSw2fPUD8L4%253D
+- desc: 피부양자 탈락 후 지역가입자로 전환됐을 때 임의계속가입, ISA 절세 계좌 활용, 재산 공제 조건으로 보험료를 줄이는 방법을 정리했습니다.
+- keywords: 건강보험피부양자탈락, 지역가입자보험료, 임의계속가입, 건강보험료절감, ISA건강보험, 금융소득건강보험료, 보험료경감, 건강보험2026
+
+### 부모님 사망 후 안심상속 원스톱서비스 신청 순서와 놓치기 쉬운 금융 절차
+- url: https://j2gblog.tistory.com/121
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fbpju4z%2FdJMcacp7Ymi%2FAAAAAAAAAAAAAAAAAAAAACsqV28USopBB2usTIA2S3GfJO9lI31hTdFu9yTyGKcO%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DjUeqQz27p8iJ5z939IImn%252FXpX4U%253D
+- desc: 안심상속 원스톱서비스 신청 순서, 금융감독원 상속인 조회 서비스, 국민연금·IRP 사망 처리, 상속 포기 기한까지 체크리스트로 정리했습니다.
+- keywords: 안심상속원스톱서비스, 부모님사망후절차, 상속금융조회, 금융감독원상속인조회, 상속포기, 한정승인, 국민연금사망일시금, 유족연금, 사망신고절차, 상속금융절차
+
+### 전세보증금 반환보증 가입 전 확인할 7가지 — HUG·HF·SGI 차이
+- url: https://j2gblog.tistory.com/122
+- category: 대출, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcBg4jw%2FdJMcacwRPBi%2FAAAAAAAAAAAAAAAAAAAAAMSzRf0K_opm2ajRdxKVO1-talYlQw_0ZbJAV3O-0lDo%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DzSI%252BkWC2FtW4qdOdTt8Egr9fDGI%253D
+- desc: 전세보증금 반환보증 가입 전 전세가율, 임대인 동의, 보증 한도, 가입 시점 등 7가지 확인 항목과 HUG·HF·SGI 차이를 정리했습니다.
+- keywords: 전세보증금반환보증, HUG전세보증, HF전세보증, SGI전세보증, 전세보증보험, 전세가율, 깡통전세대비, 전세보증가입방법, 전세사기예방, 임대차보증금

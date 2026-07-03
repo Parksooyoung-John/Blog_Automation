@@ -264,7 +264,7 @@ def generate_thumbnail_base64(title: str) -> str:
     )
     headers = {"Authorization": f"Bearer {OPENAI_KEY}", "Content-Type": "application/json"}
     payload = {
-        "model": "gpt-image-1",
+        "model": "gpt-image-1-mini",
         "prompt": prompt,
         "n": 1,
         "size": "1536x1024",

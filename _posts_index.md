@@ -578,3 +578,73 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcBg4jw%2FdJMcacwRPBi%2FAAAAAAAAAAAAAAAAAAAAAMSzRf0K_opm2ajRdxKVO1-talYlQw_0ZbJAV3O-0lDo%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DzSI%252BkWC2FtW4qdOdTt8Egr9fDGI%253D
 - desc: 전세보증금 반환보증 가입 전 전세가율, 임대인 동의, 보증 한도, 가입 시점 등 7가지 확인 항목과 HUG·HF·SGI 차이를 정리했습니다.
 - keywords: 전세보증금반환보증, HUG전세보증, HF전세보증, SGI전세보증, 전세보증보험, 전세가율, 깡통전세대비, 전세보증가입방법, 전세사기예방, 임대차보증금
+
+### IRP 해지하면 세금 얼마? 중도인출 조건과 기타소득세 16.5% 정리
+- url: https://j2gblog.tistory.com/123
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fx2uZB%2FdJMcabrb1hf%2FAAAAAAAAAAAAAAAAAAAAADlR4_MuiyQWa0XHDJngwKqqTqfDaYUIYb_1IBwo4yXS%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DFXYR9H%252FgraxFyFFE3OtpGFJD6yE%253D
+- desc: IRP 해지 전 기타소득세 16.5% 계산법, 중도인출 가능 조건 6가지, 납입중지·담보대출 대안까지 정리합니다.
+- keywords: IRP중도인출, IRP해지세금, 기타소득세16.5%, IRP해지전확인, 퇴직연금해지, IRP중도해지, 연금세금, IRP담보대출, 퇴직연금중도인출, 절세연금
+
+### 전월실적 제외 항목 총정리 — 카드 혜택 못 받는 이유 7가지
+- url: https://j2gblog.tistory.com/124
+- category: 신용카드
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fb4jngr%2FdJMcacp71OY%2FAAAAAAAAAAAAAAAAAAAAAOPchbEWmIpbz3XTVSI3vP0CS-ywzMw-L314HTVcemtY%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3Daik5hpBpFI%252FKkQWSGzid1lJJme4%253D
+- desc: 카드 전월실적 제외 항목 7가지 총정리. 세금·상품권·자동이체가 실적에 왜 안 잡히는지, 혜택 제외 업종과 확인 체크리스트를 정리했습니다.
+- keywords: 전월실적제외, 카드혜택안됨, 카드실적미인정, 전월실적조건, 카드상품권제외, 카드자동이체, 세금카드실적, 카드혜택체크리스트, 신용카드전월실적, 카드할인제외
+
+### 신용카드 리볼빙, 최소결제만 하면 왜 위험할까? 이자와 신용점수 체크리스트
+- url: https://j2gblog.tistory.com/125
+- category: 신용카드
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FpW0pn%2FdJMcaaFSuo1%2FAAAAAAAAAAAAAAAAAAAAAE3ia9ANQf3nvX1V_QOmnueQsiXHFbK8UxIKA6p4lwlW%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DZJqi2QdqtVlCDAw3YCw8ugB41bk%253D
+- desc: 신용카드 리볼빙 최소결제만 반복하면 이자가 얼마나 쌓이는지, 신용점수에 어떤 영향을 주는지, 리볼빙 탈출 체크리스트까지 정리했습니다.
+- keywords: 신용카드리볼빙, 리볼빙위험성, 최소결제이자, 리볼빙신용점수, 카드리볼빙해지, 리볼빙이자계산, 리볼빙탈출, 카드최소결제, 신용점수관리, 리볼빙주의사항
+
+### 전세보증보험 가입 후 집주인이 바뀌면 다시 확인해야 할 것들
+- url: https://j2gblog.tistory.com/126
+- category: 대출, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbKKi2e%2FdJMcabxVpfm%2FAAAAAAAAAAAAAAAAAAAAANQ9R16naNOTRmeKgt6awU4junI4FxgbS5-PJJwX8dV1%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DN0lo2AEZzNDnjP1%252Fzdf2DoOiC5A%253D
+- desc: 전세보증보험 가입 후 집주인이 바뀌면 HUG·HF·SGI별로 해야 할 일이 다릅니다. 30일 이내 통보 의무와 체크리스트를 정리했습니다.
+- keywords: 전세보증보험집주인변경, 전세보증임대인변경, HUG집주인변경, 전세보증승계, 임대인변경보증, 전세보증보험유지, 집주인바뀜전세, 전세보증재가입, 전세계약집주인변경, 전세사기예방
+
+### 카드론과 현금서비스 차이 — 신용점수와 이자 부담 비교
+- url: https://j2gblog.tistory.com/127
+- category: 신용카드
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbWBNSh%2FdJMcaftADnh%2FAAAAAAAAAAAAAAAAAAAAAJHPdDM9f-yXIIKchVqlb8tUoOD2zC7seRKoCxRHYxs7%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3DxKYnapVT8wmqrjckoo4lspVaKkk%253D
+- desc: 카드론과 현금서비스의 금리·신용점수 영향·상환 방식 차이를 비교하고, 상황별 선택 기준과 주의사항 체크리스트를 정리했습니다.
+- keywords: 카드론현금서비스차이, 카드론이자율, 현금서비스신용점수, 단기카드대출, 장기카드대출, 카드론신용점수, 현금서비스이자, 카드대출비교, 카드론선택기준, 신용카드대출
+
+### 전세 계약 갱신 전 보증보험 다시 확인해야 하는 이유
+- url: https://j2gblog.tistory.com/128
+- category: 대출, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FTKq02%2FdJMcaiKzPpK%2FAAAAAAAAAAAAAAAAAAAAAIyXujlL3Hmt3CoZ37ezlerdVo3_EW0VucEi3kjMJWgt%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1782831599%26allow_ip%3D%26allow_referer%3D%26signature%3D4zWXS7y75I5l6bn84%252F0UigiYaXQ%253D
+- desc: 전세 계약 갱신 전 보증보험을 확인해야 하는 이유. 묵시적·합의 갱신별 HUG·HF·SGI 처리 방법과 갱신 전 체크리스트 6가지를 정리했습니다.
+- keywords: 전세계약갱신보증보험, 전세갱신보증, 묵시적갱신보증보험, 전세보증보험갱신, HUG갱신처리, 전세계약갱신확인, 전세보증재가입, 전세보증공백, 전세갱신체크리스트, 전세보증보험만기
+
+### 암보험 가입 전 확인할 5가지 — 진단비·면책기간·감액기간 차이
+- url: https://j2gblog.tistory.com/131
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FH84id%2FdJMcaasmj7F%2FAAAAAAAAAAAAAAAAAAAAAMScKWMLVZD3TdQ0uYHzEomDTU0zv0AF6zo2qWpZckWC%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DNXtKL2tfqDZNIX15nJ7idSxDNyU%253D
+- desc: 암보험 가입 전 반드시 확인해야 할 진단비·면책기간·감액기간 차이, 갱신형 vs 비갱신형 선택 기준, 중복 보장 확인법을 정리했습니다.
+- keywords: 암보험가입, 암보험진단비, 면책기간, 감액기간, 갱신형비갱신형, 암보험체크리스트, 암보험비교, 소액암보험, 암진단비보험, 보험비교
+
+### 연금저축 세액공제 못 받은 납입금, 나중에 돌려받을 수 있을까?
+- url: https://j2gblog.tistory.com/132
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fb6z7uP%2FdJMcaiDT813%2FAAAAAAAAAAAAAAAAAAAAAIrUoy5Rb89k0yPJNkli5gsZ66Pb6YwyoISjfEVAx2_h%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DHh75vhfH%252Bg5mg2LidCw8pmDJ660%253D
+- desc: 연금저축 납입금 중 세액공제 받지 않은 비과세납입분을 수령 시 어떻게 돌려받는지, 경정청구로 소급 환급이 가능한지 정리했습니다.
+- keywords: 연금저축세액공제, 비과세납입분, 연금저축인출세금, 연금저축공제누락, 경정청구연금저축, 연금소득세, 연금저축수령세금, 절세연금, 연금저축환급, IRP세액공제
+
+### IRP 수수료 비교 전 확인할 5가지 — 운용관리·자산관리 수수료 차이
+- url: https://j2gblog.tistory.com/133
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FrZ3vh%2FdJMcadJhbbO%2FAAAAAAAAAAAAAAAAAAAAANZCgQIpgx4cSEH9O0BaIZJtuJBbEnOXA9WeIJeghYDN%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DWdxQ5XysXpmAclzLo5i2YZtCp2k%253D
+- desc: IRP 수수료 0% 광고의 실제 의미부터 운용관리·자산관리 수수료 차이, ETF 직접 투자 시 이중 구조, 30년 누적 효과까지 5가지 체크리스트로 정리했습니다.
+- keywords: IRP수수료, 자산관리수수료, 운용관리수수료, IRP계좌비교, ETF운용보수, 수수료0%, 연금저축수수료, IRP증권사은행
+
+### 운전자보험과 자동차보험 차이 — 벌금·변호사비용·교통사고처리지원금 확인
+- url: https://j2gblog.tistory.com/134
+- category: 보험비교
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcIWm6B%2FdJMcahLK2Fv%2FAAAAAAAAAAAAAAAAAAAAAMIG4f_1Fm6B8iz2nKTfWvxK1yIuseOrPjMHH6TIvi4X%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DMZX6iZKgWg6NfAn7%252B3g2da6tack%253D
+- desc: 자동차보험과 운전자보험의 보장 대상 차이, 벌금·변호사비용·교통사고처리지원금 등 핵심 담보 비교, 두 보험 모두 필요한 이유를 체크리스트로 정리했습니다.
+- keywords: 운전자보험, 자동차보험차이, 운전자보험벌금, 교통사고처리지원금, 변호사비용, 자동차보험담보, 운전자보험가입체크리스트, 보험비교

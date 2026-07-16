@@ -663,6 +663,38 @@ page.wait_for_timeout(2500)
 
 ---
 
+### [내부 링크 카드] 썸네일 URL 만료 — 약 1개월 주기로 전체 깨짐
+
+**문제**: `_posts_index.md`의 `thumb` 필드는 Tistory og:image 프록시(`img1.daumcdn.net/thumb/...`) URL을 저장하는데, 이 URL은 내부에 `credential`·`expires`·`signature` 서명이 걸려 있고 **발급 후 약 1개월이면 만료**된다. 만료되면 원본 `blog.kakaocdn.net` 이미지가 404를 반환해 "함께 읽으면 좋은 글" 카드 이미지가 전부 깨진다.
+
+**증상**: 특정 시점 이후 발행된 모든 포스트의 내부 링크 카드 썸네일이 동시에 깨짐(예: 2026-07-16 점검 시 인덱스 102개 항목 전부가 `expires=1782831599`, 즉 2026-06-30 만료로 통일되어 있었음 — 최초 수집 시점이 몰려 있어 한꺼번에 터짐).
+
+**해결**: 만료된 thumb URL은 **재수집(get_og.py 패턴)하면 항상 새로 서명된 URL을 받을 수 있다** — Tistory가 요청 시점 기준 새 서명을 발급하기 때문. 고정 불변 URL이 아니므로:
+1. `_posts_index.md`의 thumb 값은 "한 번 저장하면 끝"이 아니라 **주기적으로 재검증·재수집이 필요한 캐시**로 취급한다.
+2. 이미 발행된 포스트 본문 안에 박제된 카드 이미지도 같은 이유로 시간이 지나면 깨진다 — 새 포스트 작성 시뿐 아니라, 기존 포스트를 재발행할 계기가 있으면 카드 이미지도 함께 새로고침을 검토한다.
+3. 슬러그(entry/제목) URL 포스트는 공개 URL만으로 편집 페이지(`/manage/post/{id}`)에 접근할 수 없다 — 페이지 소스의 `"entryId":숫자` 값이 실제 내부 게시글 ID이므로 이를 추출해 사용한다.
+
+**징후 감지법**:
+```python
+# thumb URL의 expires 파라미터를 확인해 만료 여부 판단
+import re, datetime
+m = re.search(r'expires%3D(\d+)|expires=(\d+)', thumb_url)
+expires_at = datetime.datetime.utcfromtimestamp(int(m.group(1) or m.group(2)))
+is_expired = expires_at < datetime.datetime.utcnow()
+```
+
+**재발 방지 — `refresh_thumbs.py` (프로젝트 루트)**:
+```bash
+python -X utf8 refresh_thumbs.py --check   # 만료 현황만 리포트 (파일 변경 없음)
+python -X utf8 refresh_thumbs.py           # 인덱스 thumb 전체 재수집 + 깨진 카드 patch 파일(enhanced_{id}.html) 생성
+python -X utf8 update_posts.py             # 위 patch 파일을 UPDATE_POSTS에 반영 후 실제 라이브 재발행
+```
+- **새 포스트 작성 시작 전** `--check` 로 만료 임박 항목이 있는지 확인하는 습관을 들일 것 — 특히 대량 발행 배치(예: 애드센스 소급 개선) 직전·직후.
+- `refresh_thumbs.py`(인자 없이 실행)는 파일 변경까지 수행하므로, 실행 후 `update_posts.py`의 `UPDATE_POSTS` 리스트를 출력된 ID로 **정확히 교체**한 뒤 실행할 것.
+- `update_posts.py`는 2026-07-16부터 **발행 성공 시 해당 `enhanced_{id}.html`을 자동 삭제**한다 — 과거 세션의 잔존 patch 파일이 다음 실행에 섞여 의도치 않은 포스트가 재발행되는 사고(2026-07-16 실제 발견)를 막기 위함. 실패한 포스트의 파일만 재시도용으로 남는다.
+
+---
+
 ### [공통] 환경변수 (.env)
 
 | 변수명 | 용도 |

@@ -18,7 +18,8 @@ TISTORY_BLOG = os.getenv("TISTORY_BLOG_NAME")
 WS = Path("_workspace")
 
 # 업데이트할 포스트 번호 목록 (우선순위 순)
-UPDATE_POSTS = [122, 133, 131, 134, 106, 132, 127, 91]
+# 내부링크 카드 썸네일 만료(daumcdn 서명 URL) 전체 사이트 복구 (2026-07-16)
+UPDATE_POSTS = [24, 29, 30, 31, 32, 33, 34, 36, 37, 38, 40, 49, 60, 61, 62, 63, 64, 65, 66, 68, 69, 70, 71, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 89, 90, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 107, 108, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 125, 126, 128, 132, 133, 134, 135, 136, 138, 139, 140, 141, 142, 143, 144]
 
 
 def login(page: Page):
@@ -153,8 +154,11 @@ def main():
             success = update_post(page, post_num)
             if success:
                 print(f"  ✅ /{post_num} 업데이트 완료")
+                # 처리 완료된 patch 파일은 즉시 삭제 — 다음 실행에서 잔존 파일이
+                # 의도치 않게 재사용되는 사고를 막는다 (2026-07-16 발견된 이슈)
+                (WS / f"enhanced_{post_num}.html").unlink(missing_ok=True)
             else:
-                print(f"  ❌ /{post_num} 업데이트 실패")
+                print(f"  ❌ /{post_num} 업데이트 실패 — 파일 보존 (재시도 가능)")
             page.wait_for_timeout(2000)
 
         browser.close()

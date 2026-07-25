@@ -223,13 +223,6 @@
 - desc: 코리아 밸류업 지수 추종 ETF의 구조, 배당 ETF·가치주 ETF와의 차이, 자사주 소각·주주환원 강화 흐름과 ETF 선택 기준 4가지를 정리했습니다.
 - keywords: 밸류업ETF, 코리아밸류업지수, 주주환원ETF, 자사주소각, 기업가치제고ETF, 밸류업정책, 배당ETF차이
 
-### 청년미래적금 6월 출시 — 청년도약계좌 갈아타기 전 확인할 5가지
-- url: https://j2gblog.tistory.com/65
-- category: 절세, 연금
-- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FB2CNx%2FdJMcaiXQBQz%2FAAAAAAAAAAAAAAAAAAAAAH2TMpCTisTFVmiAjke-zRdCif6bxpTg0vM1pdKfWAnF%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DN8%252FQi7RohDYqxv13uUTRO6O%252BzDQ%253D
-- desc: 2026년 6월 출시 예정인 청년미래적금 가입 조건·정부기여금 구조와 청년도약계좌에서 갈아타기 전 반드시 확인할 5가지를 정리했습니다.
-- keywords: 청년미래적금, 청년도약계좌갈아타기, 청년미래적금조건, 정부기여금, 청년적금비과세, 청년도약계좌특별중도해지
-
 ### 단일종목 2배 ETF란? 삼성전자·SK하이닉스 ETF 투자 전 확인할 위험 5가지
 - url: https://j2gblog.tistory.com/66
 - category: 주식, ETF
@@ -405,20 +398,6 @@
 - desc: K-패스 기본형과 모두의 카드의 차이, 유형별 환급 조건(일반·청년·다자녀·저소득), 2026년 달라진 혜택, 회원가입 방법까지 정리했습니다.
 - keywords: K패스, K패스모두의카드, 교통비환급, K패스환급조건, K패스청년, 대중교통환급, K패스혜택, 교통비절약, K패스카드비교
 
-### 7월 부가세 신고, 개인사업자·부업러가 놓치기 쉬운 체크리스트
-- url: https://j2gblog.tistory.com/93
-- category: 절세, 연금
-- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2F37Uy2%2FdJMcadPSQ3i%2FAAAAAAAAAAAAAAAAAAAAAKkFl0TWTHddezywBB030TE_ZKg6TKAg9i0MZDol4xO8%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3D%252BZgi66fnEr%252FH7tDdO4Y7OwZDVgk%253D
-- desc: 2026년 7월 부가세 신고 대상과 기간 정리. 일반과세자 확정신고(7.1~7.25), 간이과세자 예정고지 납부 대상, 부업러 체크사항까지 초보자용으로 설명합니다.
-- keywords: 7월부가세신고, 개인사업자부가세, 간이과세자부가세, 부업부가세, 부가세신고기간, 1기확정신고, 홈택스부가세, 간이과세자예정고지, 부업세금신고
-
-### 7월 재산세 납부, 카드로 내도 될까? 납부기간·수수료·실적 제외 정리
-- url: https://j2gblog.tistory.com/94
-- category: 신용카드
-- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fc2MqZN%2FdJMcadvzux3%2FAAAAAAAAAAAAAAAAAAAAAFuc3KcZmWymhb11TGqFh2egJjXDwN_G1N7CVNm7Xkuq%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DrzF%252FiUsZNkF%252Br8E%252Beze02j92FMc%253D
-- desc: 2026년 7월 재산세 납부기간(7.16~7.31)과 카드 납부 가능 여부, 수수료 없음, 전월실적 포함 여부까지 카드로 재산세 낼 때 확인할 것들을 정리했습니다.
-- keywords: 7월재산세납부, 재산세카드납부, 재산세납부기간, 위택스재산세, 재산세전월실적, 재산세납부방법, 재산세고지서, 재산세수수료, 재산세포인트적립
-
 ### 장마철 자동차 침수, 보험 처리될까? 자기차량손해·단독사고 특약 확인법
 - url: https://j2gblog.tistory.com/95
 - category: 보험비교
@@ -544,27 +523,7 @@
 - desc: 배당소득 2천만 원 이하 분리과세와 초과 시 종합과세 차이, 2026년 분리과세 확대 논의, ETF 배당세금 비교, ISA 계좌 활용법을 정리했습니다.
 - keywords: 배당소득분리과세, 2026배당세금, 고배당주세금, 배당ETF세금, 금융소득종합과세, ISA절세, 배당소득14%, 금융소득2천만원
 
-### Harness Engineering — AI 코딩 도구를 제대로 쓰는 방법
-- url: https://j2gblog.tistory.com/entry/Harness-Engineering-—-AI-코딩-도구를-제대로-쓰는-방법
-- category: 소프트웨어 비교
-- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcNZzOc%2FdJMcac4Esx3%2FAAAAAAAAAAAAAAAAAAAAAGkRzPUQ-K6osQ-qRMLoNbHN71XHQ2jrM5LX09U-j2dB%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DlNmBn%252FsAOyimTbui3nWIzeApn7M%253D
-- desc: AI 코딩이 잘 안 되는 이유는 코드 실력이 아니라 맥락 관리. Harness Engineering으로 AI 코딩 도구를 제대로 활용하는 방법을 정리했습니다.
-- keywords: Vibe Coding, Harness Engineering, AI 코딩, 멀티 에이전트, Context Contamination, AI 코딩 도구, 설계자 에이전트, Plan Mode, rules 파일, harness-100
 
-### Harness Engineering 실전 2편A — 레거시 데이터 대시보드 만들며 배우는 AI 코딩 실전
-- url: https://j2gblog.tistory.com/entry/Harness-Engineering-실전-2편A-—-레거시-데이터-대시보드-만들며-배우는-AI-코딩-실전
-- category: 소프트웨어 비교
-- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fbm3IeN%2FdJMcagTyxWg%2FAAAAAAAAAAAAAAAAAAAAAMdwLAEw_ZnVVF22cZO4W7E5lzYWDKUxLaxjWkeHU2jj%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DjtBNFC5jPITODXe4NRQ76EV7xAs%253D
-- desc: 레거시 데이터 대시보드를 예시로 설계자 에이전트 프롬프트와 Hook 3가지(Raw·Encoding·Hardcode Guard)를 실전에서 어떻게 적용하는지 정리했습니다.
-- keywords: Harness Engineering 실전, AI 코딩 실전, 설계자 에이전트, Hook, rules 파일, Vibe Coding, 멀티 에이전트, 레거시 데이터 분석, Plan Mode, AI 코딩 도구
-
-
-### [바이브코딩 3편] 클로드코드 멀티 Agent 프롬프트 공개 — 수집·분석·개발·검토까지 자동화하기
-- url: https://j2gblog.tistory.com/119
-- category: 소프트웨어 비교
-- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FsCmDN%2FdJMcaiKxbnb%2FAAAAAAAAAAAAAAAAAAAAAGgxJIIlvS5ryj8Kb6x4VUojPNBBk1pBdwd4m_R9sR9n%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3D2s6otq0j9mlGU%252FxZ7x7wJ44%252BYCQ%253D
-- desc: 수집가·분석가·개발자·검토자 에이전트 프롬프트를 전부 공개합니다. 복사해서 바로 쓸 수 있는 형태로 정리했습니다.
-- keywords: 바이브코딩, 클로드코드, 멀티 Agent, AI 에이전트 프롬프트, 수집가 에이전트, 분석가 에이전트, 개발자 에이전트, 검토자 에이전트, AI 코딩 실전, 멀티 에이전트
 ### 건강보험 피부양자 탈락 후 지역가입자 보험료 줄이는 방법
 - url: https://j2gblog.tistory.com/120
 - category: 절세, 연금

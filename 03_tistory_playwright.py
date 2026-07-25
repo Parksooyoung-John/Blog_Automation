@@ -17,6 +17,8 @@ import base64
 import requests
 from datetime import datetime
 from dotenv import load_dotenv
+
+from verify_post import print_verify_result
 from playwright.sync_api import sync_playwright, Page, TimeoutError as PlaywrightTimeout
 
 load_dotenv()
@@ -638,6 +640,9 @@ def process_all():
                 update_notion_status(page_id, "발행완료", post_url)
 
                 # 썸네일 파일은 _thumbs/ 에 영구 보관 (재발행 시 재사용)
+
+                if post_url:
+                    print_verify_result(title, post_url)
 
                 print(f"  ✅ [{title}] 완료")
                 time.sleep(3)  # 연속 발행 시 딜레이

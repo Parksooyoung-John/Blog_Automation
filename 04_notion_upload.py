@@ -8,6 +8,7 @@ Harness _workspace/02_blog_post.md → Notion DB "발행대기" 업로드
 
 import os
 import re
+import sys
 import math
 from datetime import date
 from pathlib import Path
@@ -231,14 +232,23 @@ def parse_blog_post(path: Path) -> tuple[str, str, str, list[str]]:
     meta_tags: list[str] = []
     m_cat = re.search(r'^> \*\*카테고리\*\*:\s*(.+)$', text, re.MULTILINE)
     if m_cat:
-        meta_category = m_cat.group(1).strip()
+        # Notion select는 쉼표 불허 — blog-writer가 "절세, 연금"처럼 사람이 읽기 좋은
+        # 형태로 쓰는 경우가 있어 자동으로 "절세연금" 형태로 정규화한다(2026-07-17 발견).
+        meta_category = m_cat.group(1).strip().replace(", ", "").replace(",", "")
     m_tags = re.search(r'^> \*\*태그\*\*:\s*(.+)$', text, re.MULTILINE)
     if m_tags:
         meta_tags = [t.strip() for t in m_tags.group(1).split(",") if t.strip()]
 
-    # H1 제거, 메타 블록쿼트(> **...**) 제거
+    # H1 제거, blog-writer.md "산출물 포맷"이 정의하는 5개 메타 필드만 제거
+    # (메타 디스크립션·키워드·예상 읽기 시간·카테고리·태그) — 그 외 블록쿼트(최종
+    # 업데이트 공지·면책 문구 등)는 실제 본문에 렌더링돼야 하므로 절대 건드리지 않는다.
+    # 주의: 과거엔 '^>.*'로 모든 블록쿼트를 지워 공지·면책 문구까지 삭제됐고(2026-07-17 발견),
+    # 그 수정이 카테고리·태그만 화이트리스트에 넣어 메타 디스크립션·키워드가 본문에 노출된 적도 있음.
+    META_ONLY_LABELS = ["메타 디스크립션", "키워드", "예상 읽기 시간", "카테고리", "태그"]
     body = re.sub(r'^# .+\n', '', text, count=1, flags=re.MULTILINE)
-    body = re.sub(r'^>.*\n?', '', body, flags=re.MULTILINE).strip()
+    for label in META_ONLY_LABELS:
+        body = re.sub(rf'^> \*\*{re.escape(label)}\*\*:.*\n?', '', body, flags=re.MULTILINE)
+    body = body.strip()
 
     # blog-writer가 추가하는 메타 블록 제거 (본문에 노출되면 안 되는 내용)
     body = re.sub(r'\[THUMBNAIL_PROMPT\].*?\[/THUMBNAIL_PROMPT\]', '', body, flags=re.DOTALL)
@@ -360,5 +370,46 @@ def main():
     print(f"\n다음 단계: python -X utf8 03_tistory_playwright.py")
 
 
+def _selftest() -> None:
+    """parse_blog_post() 회귀 테스트 — 메타 필드는 지워지고 공지·면책 블록쿼트는 남아야 한다.
+    04_notion_upload.py의 정규식을 고칠 때마다 `python -X utf8 04_notion_upload.py --selftest`로 확인할 것.
+    2026-07-17: 모든 블록쿼트를 지우는 버그 → 카테고리·태그만 남기는 과수정 → 메타 디스크립션·키워드 노출,
+    이렇게 두 번 회귀했던 지점이라 자동 테스트로 고정한다.
+    """
+    import tempfile
+
+    sample = (
+        "# 제목\n\n"
+        "> **메타 디스크립션**: 요약\n"
+        "> **키워드**: a, b\n"
+        "> **예상 읽기 시간**: 5분\n"
+        "> **카테고리**: 절세, 연금\n"
+        "> **태그**: x, y\n\n"
+        "> 📅 최종 업데이트: 2026년 7월 17일\n"
+        "> ⚠️ 주의: 테스트\n\n"
+        "본문 내용입니다.\n\n"
+        "> ⚠️ 면책 문구입니다.\n"
+    )
+    with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8") as f:
+        f.write(sample)
+        tmp_path = Path(f.name)
+    try:
+        title, html, cat, tags = parse_blog_post(tmp_path)
+        assert "메타 디스크립션" not in html, "메타 디스크립션이 본문에 노출됨"
+        assert "키워드" not in html, "키워드가 본문에 노출됨"
+        assert "예상 읽기 시간" not in html, "예상 읽기 시간이 본문에 노출됨"
+        assert html.count("<blockquote>") == 2, f"blockquote 2개 기대, 실제 {html.count('<blockquote>')}"
+        assert "최종 업데이트" in html, "공지 블록쿼트가 사라짐"
+        assert "면책 문구" in html, "면책 블록쿼트가 사라짐"
+        assert cat == "절세연금", f"카테고리 쉼표 정규화 실패: {cat!r}"
+        assert tags == ["x", "y"]
+    finally:
+        tmp_path.unlink(missing_ok=True)
+    print("✅ _selftest 통과")
+
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "--selftest":
+        _selftest()
+    else:
+        main()

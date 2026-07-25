@@ -41,6 +41,13 @@
 - desc: 2026년 ISA 확정 변경사항과 논의 중인 한도 상향을 구분 정리. 가입 전 5대 체크리스트 포함.
 - keywords: ISA2026, ISA변경사항, 가입체크리스트, IRP이전특례, 비과세, 중개형ISA
 
+### 사회초년생 ISA·연금저축·IRP 시작 순서 — 무엇부터 가입해야 할까?
+- url: https://j2gblog.tistory.com/43
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbF0dDG%2FdJMcaaZOkQK%2FAAAAAAAAAAAAAAAAAAAAADc1k7uOEYBGqMSUHnGDkqAosu3J0dj7vzH5N7J4Byxs%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DX%252FRHsaSytyTHTyGrty%252BO7piKBHs%253D
+- desc: 사회초년생이 ISA·연금저축·IRP를 한 번에 다 채우기는 현실적으로 어렵습니다. 연봉과 여유 자금에 맞는 시작 순서와 이유를 정리했습니다.
+- keywords: 사회초년생재테크, ISA시작순서, 연금저축IRP비교, 절세계좌순서, 2026절세, 계좌개설순서
+
 ### 연봉별 연금저축·IRP 세액공제 계산 예시 — 내 환급액 바로 확인
 - url: https://j2gblog.tistory.com/22
 - category: 절세, 연금
@@ -552,12 +559,12 @@
 - keywords: Harness Engineering 실전, AI 코딩 실전, 설계자 에이전트, Hook, rules 파일, Vibe Coding, 멀티 에이전트, 레거시 데이터 분석, Plan Mode, AI 코딩 도구
 
 
-### Harness Engineering 실전 2편B — 수집가·분석가·개발자·검토자 에이전트 프롬프트 전체 공개
-- url: https://j2gblog.tistory.com/entry/Harness-Engineering-실전-2편B-—-수집가·분석가·개발자·검토자-에이전트-프롬프트-전체-공개
+### [바이브코딩 3편] 클로드코드 멀티 Agent 프롬프트 공개 — 수집·분석·개발·검토까지 자동화하기
+- url: https://j2gblog.tistory.com/119
 - category: 소프트웨어 비교
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FsCmDN%2FdJMcaiKxbnb%2FAAAAAAAAAAAAAAAAAAAAAGgxJIIlvS5ryj8Kb6x4VUojPNBBk1pBdwd4m_R9sR9n%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3D2s6otq0j9mlGU%252FxZ7x7wJ44%252BYCQ%253D
 - desc: 수집가·분석가·개발자·검토자 에이전트 프롬프트를 전부 공개합니다. 복사해서 바로 쓸 수 있는 형태로 정리했습니다.
-- keywords: Harness Engineering 실전, AI 에이전트 프롬프트, 수집가 에이전트, 분석가 에이전트, 개발자 에이전트, 검토자 에이전트, AI 코딩 실전, 멀티 에이전트, Vibe Coding, 레거시 데이터 분석
+- keywords: 바이브코딩, 클로드코드, 멀티 Agent, AI 에이전트 프롬프트, 수집가 에이전트, 분석가 에이전트, 개발자 에이전트, 검토자 에이전트, AI 코딩 실전, 멀티 에이전트
 ### 건강보험 피부양자 탈락 후 지역가입자 보험료 줄이는 방법
 - url: https://j2gblog.tistory.com/120
 - category: 절세, 연금
@@ -718,3 +725,24 @@
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FlozZy%2FdJMcaiYesU6%2FAAAAAAAAAAAAAAAAAAAAAPVHVSTp7hNmwGbb_Vl2VoMaquPG2sDHYaEiaeOlfmAR%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3Di7d56odZG73B0maxNSE2oR3vysw%253D
 - desc: ESG 공시 의무화 2028년 시작 — 코스피 상장사 단계별 적용 일정, MSCI 편입 효과, ETF 편입 기준 변화, 그린워싱 확인법을 ETF 투자자 관점에서 정리했습니다.
 - keywords: ESG, ESG ETF, ESG공시, ESG공시의무화, MSCI ESG, 지속가능경영, 그린워싱, ETF편입, 금융위원회, 한국거래소
+
+### 신용카드 발급 전 확인할 연회비·전월실적·한도 — 혜택만 보면 손해 보는 이유
+- url: https://j2gblog.tistory.com/49
+- category: 신용카드
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FZrFUJ%2FdJMcaaldxGJ%2FAAAAAAAAAAAAAAAAAAAAAEjZgL0hs72KtQ1jEDcyvwbdlC0fISJFvAYV2Po8_r5P%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DUuJbCtqyzOGDdvP5E%252BG5%252FWirfQo%253D
+- desc: 신용카드 광고 속 혜택과 실제 적용 혜택이 다른 이유. 연회비·전월실적·한도 조건을 발급 전에 확인해야 손해를 피할 수 있습니다.
+- keywords: 신용카드발급, 연회비비교, 전월실적조건, 카드한도, 카드혜택확인, 카드발급전확인사항
+
+### 재산세 7월 납부 전 확인할 5가지, 위택스와 카드 납부 체크리스트
+- url: https://j2gblog.tistory.com/145
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FboIe1W%2FdJMcabZnLxw%2FAAAAAAAAAAAAAAAAAAAAAJ3g7csU8VMHqgudeYnRyA4XiymdCaoV4W80PPs1bnYa%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DwehdlK6mCP9S1quqh6A08h0PFck%253D
+- desc: 7월 16일~31일 재산세 납부기간, 납부 대상과 과세 기준, 카드 납부 전 확인할 5가지, 위택스·인터넷지로 납부 방법을 정리했습니다.
+- keywords: 재산세, 재산세납부기간, 위택스, 카드납부, 무이자할부, 재산세세율, 1주택특례, 지방세, 재산세고지서, 인터넷지로
+
+### 부가세 신고 7월 27일까지, 개인사업자가 확인할 5가지
+- url: https://j2gblog.tistory.com/146
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FkU6m9%2FdJMcaglZvvp%2FAAAAAAAAAAAAAAAAAAAAAGfB-qLsqsbSbZu7ZjaNRQ19c5648Xn_uaHoLr1eIkQl%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3D5YJGjGYaSD4q%252Bt%252F20CVZTzwq0Dg%253D
+- desc: 2026년 1기 부가가치세 확정신고 기한 7월 27일. 개인사업자가 신고 전 확인할 대상 판단·매입세액 검토·가산세·환급·세금계산서 5가지 체크리스트.
+- keywords: 부가세신고, 개인사업자부가세, 부가세신고기한, 2026부가세, 홈택스부가세, 매입세액공제, 부가세환급, 부가세가산세, 간이과세자, 일반과세자

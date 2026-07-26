@@ -704,4 +704,18 @@
 - category: 절세, 연금
 - thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FkU6m9%2FdJMcaglZvvp%2FAAAAAAAAAAAAAAAAAAAAAGfB-qLsqsbSbZu7ZjaNRQ19c5648Xn_uaHoLr1eIkQl%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3D5YJGjGYaSD4q%252Bt%252F20CVZTzwq0Dg%253D
 - desc: 2026년 1기 부가가치세 확정신고 기한 7월 27일. 개인사업자가 신고 전 확인할 대상 판단·매입세액 검토·가산세·환급·세금계산서 5가지 체크리스트.
+
+### 국민연금 조기수령 vs 연기연금, 나에게 유리한 선택은?
+- url: https://j2gblog.tistory.com/147
+- category: 절세, 연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FFibmN%2FdJMcagfiryl%2FAAAAAAAAAAAAAAAAAAAAAJ-BPaG_KTvnMgXKFle6NVH1S_z2XzOqKEC1L8yIYLOL%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DOvl2ZyngN7qDQ590uu0fXxKwa84%253D
+- desc: 국민연금 조기수령과 연기연금의 감액률·가산율 구조를 비교하고, 건강 상태·소득 조건·기대 수명에 따른 선택 기준을 체크리스트로 정리했습니다.
+- keywords: 국민연금조기수령, 연기연금, 조기노령연금, 연기연금가산율, 국민연금수급개시연령, 국민연금감액, 국민연금선택, 노령연금
+
+### 온라인 대환대출로 주택담보대출 갈아타기 전 확인할 5가지
+- url: https://j2gblog.tistory.com/148
+- category: 대출, 금리
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbTPYw1%2FdJMcahL1TpQ%2FAAAAAAAAAAAAAAAAAAAAAOqiLzoWsMpQbkL5QSOVVTcQvzwTZxkn88j9CnA9l7hX%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3Dg8%252Fj3RFtZdbO0NPoQKD8lShcpTw%253D
+- desc: 온라인 대환대출 인프라로 주택담보대출·전세대출까지 갈아타기 가능. 2026 스트레스 DSR 3단계 영향·중도상환수수료·규제지역 조건 5가지 체크리스트.
+- keywords: 온라인대환대출, 주택담보대출갈아타기, 대환대출인프라, 스트레스DSR3단계, 중도상환수수료, 대출비교플랫폼, HUG, 대환가능여부, 규제지역대출, 우대금리조건
 - keywords: 부가세신고, 개인사업자부가세, 부가세신고기한, 2026부가세, 홈택스부가세, 매입세액공제, 부가세환급, 부가세가산세, 간이과세자, 일반과세자

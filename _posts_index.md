@@ -6,6 +6,20 @@
 
 ---
 
+### 2027년 최저임금 10,700원 확정, 내 월급은 얼마나 오를까?
+- url: https://j2gblog.tistory.com/149
+- category: 절세연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FVGbOt%2FdJMcafU3UcP%2FAAAAAAAAAAAAAAAAAAAAAA4pmWwXD_peDk8M5o7bWApHjUt8nentyGwPueGRtrke%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DZKbMF7oWeNfMMvKSmJTWDZdqees%253D
+- desc: 2027년 최저임금 시간당 10,700원 확정. 월급 환산액 2,236,300원, 주휴수당 포함 계산법과 4대보험 공제 후 실수령액 차이까지 정리했습니다.
+- keywords: 2027년최저임금, 최저임금10700원, 최저임금월급환산, 주휴수당계산, 최저임금실수령액
+
+### 노란우산공제 50개월 한도 폐지, 자영업자가 확인할 5가지
+- url: https://j2gblog.tistory.com/150
+- category: 절세연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FnVXmn%2FdJMcafU3Udx%2FAAAAAAAAAAAAAAAAAAAAAE8K5eAXTTi5WK6ENbLpJbsqYl9trGGUNOkyDnGUEKaz%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DDk4DNYeGyTJUBl2hlLrej5%252BzkQU%253D
+- desc: 2026년 1월 1일부터 노란우산공제 50개월 한도가 폐지됩니다. 사업을 유지하는 한 매년 소득공제를 반복 활용할 수 있는 변화를 확인하세요.
+- keywords: 노란우산공제, 50개월한도폐지, 자영업자절세, 소득공제, 종합소득세
+
 ### ISA 계좌 2026 절세 한도 및 개설 방법 완전 정리 | IRP vs ISA 비교
 - url: https://j2gblog.tistory.com/14
 - category: 절세, 연금

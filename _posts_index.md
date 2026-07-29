@@ -20,6 +20,20 @@
 - desc: 2026년 1월 1일부터 노란우산공제 50개월 한도가 폐지됩니다. 사업을 유지하는 한 매년 소득공제를 반복 활용할 수 있는 변화를 확인하세요.
 - keywords: 노란우산공제, 50개월한도폐지, 자영업자절세, 소득공제, 종합소득세
 
+### 2026년 실업급여 상한액 68,100원으로 인상, 퇴사 전 확인할 5가지
+- url: https://j2gblog.tistory.com/151
+- category: 절세연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbC20vH%2FdJMcabZsnTf%2FAAAAAAAAAAAAAAAAAAAAANQqKbIRiDB15MXaHECUIjwpSgghLQmZDI51MNdVgpEu%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DsGk0FSpVF%252B6PJTkjF%252BNMxi0Qirg%253D
+- desc: 2026년 실업급여 하한액 66,048원·상한액 68,100원으로 7년 만에 동시 인상. 최저임금 연동 구조와 퇴사 전 확인해야 할 수급 조건·금액 계산법 정리.
+- keywords: 2026년실업급여, 실업급여하한액, 실업급여상한액, 구직급여계산, 실업급여금액
+
+### 퇴직금 세금 얼마나 뗄까? 퇴직소득세 계산법과 IRP 절세 방법
+- url: https://j2gblog.tistory.com/152
+- category: 절세연금
+- thumb: https://img1.daumcdn.net/thumb/R800x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Ft8a8w%2FdJMcaijU5b0%2FAAAAAAAAAAAAAAAAAAAAAABhs9apbEeLtXx-oOLcXszaDp1Fd1H9pdKCENmSwcH0%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1785509999%26allow_ip%3D%26allow_referer%3D%26signature%3DshVRvzwQKPP9wKej6iKPUyjblH4%253D
+- desc: 퇴직금에서 실제로 떼는 세금은 얼마일까요? 근속연수에 따라 달라지는 퇴직소득세 계산 구조와 IRP 이체로 세금을 더 줄이는 방법을 정리했습니다.
+- keywords: 퇴직금세금, 퇴직소득세, 근속연수공제, IRP절세, 퇴직금실수령액
+
 ### ISA 계좌 2026 절세 한도 및 개설 방법 완전 정리 | IRP vs ISA 비교
 - url: https://j2gblog.tistory.com/14
 - category: 절세, 연금

@@ -86,21 +86,39 @@
 > ⚠️ **anti-pattern**: `thumb: pending` 포스트를 카드로 사용하면 모든 카드에 같은 (잘못된) 이미지가 표시된다.
 > 발행 완료 즉시 OG 이미지 URL을 가져와 인덱스를 업데이트해야 다음 포스트에서 카드가 정상 표시된다.
 
-### 인덱스 OG 이미지 업데이트 — 발행 후 즉시 수행
-Tistory 발행 완료 → 해당 포스트 URL에서 OG 이미지 URL을 추출하여 `_posts_index.md`의 `thumb` 필드를 `pending`에서 실제 URL로 교체한다.
+### 인덱스 썸네일 업데이트 — 발행 후 즉시 수행 (영구 호스팅, 2026-08-03부터)
 
-```python
-# get_og.py 패턴 (발행 후 실행)
+> **배경**: Tistory og:image(daumcdn 서명 URL)는 계정 단위로 약 1개월마다 일괄 만료되어
+> 사이트 전체 내부링크 카드가 동시에 깨지는 문제가 반복됐다(`thumb_host.py` 도입 전 이력은
+> 아래 "[내부 링크 카드] 썸네일 URL 만료" 섹션 참조). 2026-08-03 `thumb_host.py` +
+> `migrate_thumbs_permanent.py` 도입 이후로는 **썸네일을 한 번 다운로드해 이 저장소
+> (`assets/thumbnails/`)에 커밋하고 jsdelivr CDN으로 서빙** — 만료가 없다. 새 포스트도
+> 반드시 이 방식을 따를 것 (예전 `get_og.py` raw-URL 저장 패턴으로 되돌아가지 말 것).
+
+Tistory 발행 완료 → `thumb_host.py`로 og:image를 다운로드·압축해 영구 URL을 받아
+`_posts_index.md`의 `thumb` 필드에 저장한다:
+
+```bash
+python -X utf8 -c "
 import requests, re
-url = "https://j2gblog.tistory.com/{번호}"
-r = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-m = re.search(r'property="og:image"\s+content="([^"]+)"', r.text)
+from thumb_host import host_thumb
+
+post_id = '{번호}'
+url = f'https://j2gblog.tistory.com/{post_id}'
+r = requests.get(url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
+m = re.search(r'property=\"og:image\"\s+content=\"([^\"]+)\"', r.text)
 if not m:
-    m = re.search(r'content="([^"]+)"\s+property="og:image"', r.text)
-print(m.group(1) if m else "NOT FOUND")
+    m = re.search(r'content=\"([^\"]+)\"\s+property=\"og:image\"', r.text)
+og = m.group(1) if m else None
+print(host_thumb(post_id, og) if og else 'OG NOT FOUND')
+"
 ```
 
-**다음 포스트 배치 작성 전 `_posts_index.md`에 `thumb: pending` 항목이 없는지 반드시 확인할 것.**
+출력된 `https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/{번호}.jpg`를
+`thumb:` 필드에 그대로 저장한다. **`assets/thumbnails/{번호}.jpg`가 git에 커밋·푸시되기 전까지는
+jsdelivr가 서빙하지 못하므로, 이 스크립트 실행 후 반드시 `assets/thumbnails/` 를 커밋·푸시할 것.**
+
+**다음 포스트 배치 작성 전 `_posts_index.md`에 `thumb: pending`이나 `daumcdn` 원본 URL이 남아있지 않은지 확인할 것.**
 
 ### 필수 출력 형식 (HTML 카드)
 ```html
@@ -664,9 +682,15 @@ page.wait_for_timeout(2500)
 
 ---
 
-### [내부 링크 카드] 썸네일 URL 만료 — 약 1개월 주기로 전체 깨짐
+### [내부 링크 카드] 썸네일 URL 만료 — 약 1개월 주기로 전체 깨짐 (2026-08-03 근본 해결됨)
 
-**문제**: `_posts_index.md`의 `thumb` 필드는 Tistory og:image 프록시(`img1.daumcdn.net/thumb/...`) URL을 저장하는데, 이 URL은 내부에 `credential`·`expires`·`signature` 서명이 걸려 있고 **발급 후 약 1개월이면 만료**된다. 만료되면 원본 `blog.kakaocdn.net` 이미지가 404를 반환해 "함께 읽으면 좋은 글" 카드 이미지가 전부 깨진다.
+> ✅ **2026-08-03부터 이 문제는 구조적으로 해결됨**: `thumb_host.py` 도입 이후 썸네일을
+> `assets/thumbnails/`에 영구 커밋하고 jsdelivr CDN으로 서빙한다 — 더 이상 만료되지 않는다.
+> 아래는 문제가 왜 반복됐는지, 어떻게 고쳤는지 기록해 둔 이력이다. 새 포스트는 위
+> "인덱스 썸네일 업데이트 — 발행 후 즉시 수행 (영구 호스팅)" 섹션을 따를 것 —
+> `refresh_thumbs.py`/`update_posts.py` 대량 재발행은 더 이상 정기적으로 필요하지 않다.
+
+**문제(이력)**: `_posts_index.md`의 `thumb` 필드는 Tistory og:image 프록시(`img1.daumcdn.net/thumb/...`) URL을 저장하는데, 이 URL은 내부에 `credential`·`expires`·`signature` 서명이 걸려 있고 **발급 후 약 1개월이면 만료**된다. 만료되면 원본 `blog.kakaocdn.net` 이미지가 404를 반환해 "함께 읽으면 좋은 글" 카드 이미지가 전부 깨진다.
 
 **증상**: 특정 시점 이후 발행된 모든 포스트의 내부 링크 카드 썸네일이 동시에 깨짐(예: 2026-07-16 점검 시 인덱스 102개 항목 전부가 `expires=1782831599`, 즉 2026-06-30 만료로 통일되어 있었음 — 최초 수집 시점이 몰려 있어 한꺼번에 터짐).
 

@@ -104,33 +104,12 @@
 - desc: HUG·HF·SGI 보증금 한도·보증료·임대인 동의 조건을 한눈에 비교. 상황별 4가지 시나리오로 내 보증기관을 바로 선택하세요.
 - keywords: HUG보증, HF보증, SGI보증, 전세보증차이, 전세보증선택, 전세보증보험비교, 전세대출보증, 보증료비교
 
-### 업무별 ChatGPT·Claude 선택 기준 — 어떤 AI가 내 일에 더 맞을까?
-- url: https://j2gblog.tistory.com/entry/업무별-ChatGPT·Claude-선택-기준-—-어떤-AI가-내-일에-더-맞을까?
-- category: AI 도구활용
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/36.jpg
-- desc: 이미지 생성·코딩·긴 문서 처리·한국어 글쓰기 업무 유형별로 ChatGPT와 Claude 중 유리한 AI를 정리했습니다.
-- keywords: ChatGPT선택기준, Claude선택기준, 업무별AI선택, ChatGPT업무활용, Claude업무활용
-
 ### IRP 중도인출 가능한 경우와 해지 전 반드시 확인할 사항
 - url: https://j2gblog.tistory.com/entry/IRP-중도인출-가능한-경우와-해지-전-반드시-확인할-사항
 - category: 절세, 연금
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/37.jpg
 - desc: IRP 중도인출 예외 조건, 해지 시 기타소득세 16.5% 계산 방법, 납입중지·담보대출 대안까지 정리했습니다.
 - keywords: IRP중도인출, IRP해지, IRP중도해지세금, IRP해지전확인, 기타소득세16.5%
-
-### 무료 AI 도구와 유료 플랜 차이 — 꼭 돈 내야 할 상황인지 먼저 확인하세요
-- url: https://j2gblog.tistory.com/entry/무료-AI-도구와-유료-플랜-차이-—-꼭-돈-내야-할-상황인지-먼저-확인하세요
-- category: AI 도구활용
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/38.jpg
-- desc: ChatGPT·Claude 무료와 유료 플랜의 실제 기능 차이 비교. 무료로 충분한 경우와 유료가 필요한 경우를 구분합니다.
-- keywords: 무료AI도구, AI무료유료차이, ChatGPT무료, Claude무료, AI구독필요여부
-
-### 신용카드 발급 전 확인할 연회비·전월실적·한도 — 혜택만 보면 손해 보는 이유
-- url: https://j2gblog.tistory.com/entry/신용카드-발급-전-확인할-연회비·전월실적·한도-—-혜택만-보면-손해-보는-이유
-- category: 신용카드
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/49.jpg
-- desc: 신용카드 발급 전 연회비 대비 혜택, 전월실적 조건과 제외 항목, 신용한도, 할부 수수료까지 5가지 체크리스트.
-- keywords: 신용카드발급전확인, 신용카드연회비, 전월실적조건, 신용카드한도, 신용카드혜택조건
 
 ### 보험증권 읽는 법 — 가입 내역에서 반드시 확인할 항목
 - url: https://j2gblog.tistory.com/entry/보험증권-읽는-법-—-가입-내역에서-반드시-확인할-항목
@@ -152,13 +131,6 @@
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/34.jpg
 - desc: 기준금리·가산금리·우대금리·보증료·중도상환수수료까지 전세대출 금리 비교 시 확인할 7가지.
 - keywords: 전세대출금리비교, 전세대출우대금리, 전세대출보증료, 중도상환수수료, 변동금리고정금리, 정책대출금리
-
-### AI 구독료를 줄이는 방법 — ChatGPT·Claude 유료 결제 전에 확인할 체크리스트
-- url: https://j2gblog.tistory.com/entry/AI-구독료를-줄이는-방법-—-ChatGPT·Claude-유료-결제-전에-확인할-체크리스트
-- category: AI 도구활용
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/35.jpg
-- desc: ChatGPT·Claude 유료 플랜이 필요한지 확인하는 방법. 무료 플랜 사용 사례, 중복 결제 방지, 팀 요금제 혼동 주의.
-- keywords: ChatGPT유료플랜, Claude유료플랜, AI구독료절감, AI구독체크리스트, ChatGPTPlus, ClaudePro
 
 ### 보험료를 줄이고 싶을 때 먼저 확인할 7가지
 - url: https://j2gblog.tistory.com/entry/보험료를-줄이고-싶을-때-먼저-확인할-7가지
@@ -265,13 +237,6 @@
 - desc: 코리아 밸류업 지수 추종 ETF의 구조, 배당 ETF·가치주 ETF와의 차이, 자사주 소각·주주환원 강화 흐름과 ETF 선택 기준 4가지를 정리했습니다.
 - keywords: 밸류업ETF, 코리아밸류업지수, 주주환원ETF, 자사주소각, 기업가치제고ETF, 밸류업정책, 배당ETF차이
 
-### 단일종목 2배 ETF란? 삼성전자·SK하이닉스 ETF 투자 전 확인할 위험 5가지
-- url: https://j2gblog.tistory.com/66
-- category: 주식, ETF
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/66.jpg
-- desc: 삼성전자·SK하이닉스 단일종목 2배 레버리지 ETF·ETN의 구조와 변동성 손실 원리, 투자 전 반드시 알아야 할 위험 5가지를 정리했습니다.
-- keywords: 단일종목ETF, 삼성전자2배ETF, SK하이닉스2배ETF, 레버리지ETF위험, 변동성손실, ETF사전교육, 기본예탁금
-
 ### 국민성장펀드란? 가입 조건·수익률·일반 펀드와 차이 완전 정리 2026
 - url: https://j2gblog.tistory.com/68
 - category: 절세, 연금
@@ -363,13 +328,6 @@
 - desc: 연금저축에 채권 ETF를 넣어야 할지 고민된다면? 국내채권·미국채·단기채 역할 비교와 20~50대 나이대별 채권 비중 기준을 정리했습니다.
 - keywords: 연금저축채권ETF, 연금저축ETF비중, 연금저축포트폴리오, 미국채ETF연금저축, 채권ETF역할, 나이별ETF비중, 연금저축펀드투자
 
-### 근로장려금 신청 놓쳤다면? 2026 기한 후 신청·감액·지급일 정리
-- url: https://j2gblog.tistory.com/82
-- category: 절세, 연금
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/82.jpg
-- desc: 2026년 근로장려금 정기 신청(6월 1일)을 놓쳤다면? 기한 후 신청 기간, 5% 감액, 지급 시기까지 한 번에 정리했습니다.
-- keywords: 근로장려금기한후신청, 근로장려금지급일, 자녀장려금신청, 근로장려금5%감액, 2026근로장려금, 근로장려금신청방법, 근로장려금소득요건
-
 ### 연금저축 미국 ETF, 환헤지와 환노출 뭐가 다를까? 장기투자 전 확인할 것
 - url: https://j2gblog.tistory.com/81
 - category: 주식, ETF
@@ -433,26 +391,12 @@
 - desc: 2025년 1월 13일 이후 계약 대출은 중도상환수수료가 낮아졌습니다. 계약일 기준 확인부터 손익분기점 계산, 금리인하요구권 활용까지 갈아타기 전 꼭 계산할 5가지를 정리했습니다.
 - keywords: 중도상환수수료, 대출갈아타기, 중도상환수수료계산, 손익분기점, 금리인하요구권, 상호금융중도상환수수료, 주담대갈아타기, 대출상환수수료
 
-### K-패스 모두의 카드, 교통비 얼마나 돌려받을까? 환급 조건 정리
-- url: https://j2gblog.tistory.com/92
-- category: 신용카드
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/92.jpg
-- desc: K-패스 기본형과 모두의 카드의 차이, 유형별 환급 조건(일반·청년·다자녀·저소득), 2026년 달라진 혜택, 회원가입 방법까지 정리했습니다.
-- keywords: K패스, K패스모두의카드, 교통비환급, K패스환급조건, K패스청년, 대중교통환급, K패스혜택, 교통비절약, K패스카드비교
-
 ### 장마철 자동차 침수, 보험 처리될까? 자기차량손해·단독사고 특약 확인법
 - url: https://j2gblog.tistory.com/95
 - category: 보험비교
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/95.jpg
 - desc: 장마철 차량 침수 시 자기차량손해 특약 가입 여부, 단독사고 담보, 전손·분손 기준, 보상 안 되는 경우까지 확인 방법을 정리했습니다.
 - keywords: 자동차침수보험, 장마철자동차보험, 침수차보험처리, 자기차량손해특약, 단독사고담보, 침수차보상, 침수차전손
-
-### 해외원화결제 차단 안 하면 수수료 더 낼 수 있다? DCC 설정 방법 정리
-- url: https://j2gblog.tistory.com/96
-- category: 신용카드
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/96.jpg
-- desc: 해외여행 전 카드 앱에서 해외원화결제(DCC) 차단 설정 방법, 현장 대처법, DCC 추가 수수료 원리를 정리했습니다.
-- keywords: 해외원화결제차단, DCC차단, 해외카드수수료, 해외여행카드설정, 원화결제수수료, DCC수수료, 해외결제카드, 해외여행준비
 
 ### 해외여행자보험, 휴대품 분실도 보상될까? 가입 전 확인할 특약 5가지
 - url: https://j2gblog.tistory.com/97
@@ -467,6 +411,7 @@
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/98.jpg
 - desc: 렌터카 빌릴 때 자차보험(CDW) 필요 여부, 면책금·휴차료 개념, 내 자동차보험 타차운전담보 활용법을 정리했습니다.
 - keywords: 렌터카자차보험, 렌터카CDW, 차량손해면책, 렌터카휴차료, 렌터카보험비교, 렌터카면책금, 해외렌터카보험, 타차운전담보
+
 ### 휴면예금 찾아줌, 잠자는 돈 조회하는 방법 — 보험금·카드포인트까지 같이 확인
 - url: https://j2gblog.tistory.com/99
 - category: 예금금리
@@ -487,20 +432,6 @@
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/101.jpg
 - desc: 2026 에너지바우처 신청기간(6.15~12.31)·지원 대상(기초수급자·차상위)·전기요금 자동차감 방식·주민센터·복지로 신청방법을 정리했습니다.
 - keywords: 에너지바우처2026, 에너지바우처신청, 전기요금지원, 에너지바우처대상, 에너지바우처신청기간, 에너지바우처전기요금차감, 복지로에너지바우처, 에너지바우처주민센터
-
-### 우체국에서 은행 대출 상담 가능해진다? 은행대리업 신청 전 확인할 것
-- url: https://j2gblog.tistory.com/102
-- category: 대출금리
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/102.jpg
-- desc: 2026년 도입되는 은행대리업으로 우체국에서 은행 대출 상담이 가능해집니다. 실제로 할 수 있는 것과 없는 것, 신청 전 확인할 체크리스트를 정리했습니다.
-- keywords: 은행대리업, 우체국은행업무, 우체국대출상담, 은행대리업2026, 정책서민금융, 은행지점대안, 금융접근성, 우정사업본부
-
-### 출산·육아휴직이면 보험료 줄일 수 있다? 어린이보험 할인·납입유예 정리
-- url: https://j2gblog.tistory.com/103
-- category: 보험비교
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/103.jpg
-- desc: 2026년 4월부터 출산·육아휴직 중인 부모는 어린이보험료 할인·납입유예·보험계약대출 이자 유예 혜택을 받을 수 있습니다. 조건과 신청 방법을 정리했습니다.
-- keywords: 어린이보험보험료할인, 육아휴직보험료, 출산보험료지원, 보험료납입유예, 저출산보험지원, 어린이보험할인조건, 출산육아보험혜택, 보험료부담완화
 
 ### 사망보험금 생전에 받을 수 있다? 유동화 신청 전 가족과 꼭 확인할 것
 - url: https://j2gblog.tistory.com/104
@@ -565,14 +496,6 @@
 - desc: 배당소득 2천만 원 이하 분리과세와 초과 시 종합과세 차이, 2026년 분리과세 확대 논의, ETF 배당세금 비교, ISA 계좌 활용법을 정리했습니다.
 - keywords: 배당소득분리과세, 2026배당세금, 고배당주세금, 배당ETF세금, 금융소득종합과세, ISA절세, 배당소득14%, 금융소득2천만원
 
-
-### 건강보험 피부양자 탈락 후 지역가입자 보험료 줄이는 방법
-- url: https://j2gblog.tistory.com/120
-- category: 절세, 연금
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/120.jpg
-- desc: 피부양자 탈락 후 지역가입자로 전환됐을 때 임의계속가입, ISA 절세 계좌 활용, 재산 공제 조건으로 보험료를 줄이는 방법을 정리했습니다.
-- keywords: 건강보험피부양자탈락, 지역가입자보험료, 임의계속가입, 건강보험료절감, ISA건강보험, 금융소득건강보험료, 보험료경감, 건강보험2026
-
 ### 부모님 사망 후 안심상속 원스톱서비스 신청 순서와 놓치기 쉬운 금융 절차
 - url: https://j2gblog.tistory.com/121
 - category: 보험비교
@@ -586,13 +509,6 @@
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/122.jpg
 - desc: 전세보증금 반환보증 가입 전 전세가율, 임대인 동의, 보증 한도, 가입 시점 등 7가지 확인 항목과 HUG·HF·SGI 차이를 정리했습니다.
 - keywords: 전세보증금반환보증, HUG전세보증, HF전세보증, SGI전세보증, 전세보증보험, 전세가율, 깡통전세대비, 전세보증가입방법, 전세사기예방, 임대차보증금
-
-### IRP 해지하면 세금 얼마? 중도인출 조건과 기타소득세 16.5% 정리
-- url: https://j2gblog.tistory.com/entry/IRP-중도인출-가능한-경우와-해지-전-반드시-확인할-사항
-- category: 절세, 연금
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/37.jpg
-- desc: IRP 해지 전 기타소득세 16.5% 계산법, 중도인출 가능 조건 6가지, 납입중지·담보대출 대안까지 정리합니다.
-- keywords: IRP중도인출, IRP해지세금, 기타소득세16.5%, IRP해지전확인, 퇴직연금해지, IRP중도해지, 연금세금, IRP담보대출, 퇴직연금중도인출, 절세연금
 
 ### 전월실적 제외 항목 총정리 — 카드 혜택 못 받는 이유 7가지
 - url: https://j2gblog.tistory.com/124
@@ -760,4 +676,3 @@
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/148.jpg
 - desc: 온라인 대환대출 인프라로 주택담보대출·전세대출까지 갈아타기 가능. 2026 스트레스 DSR 3단계 영향·중도상환수수료·규제지역 조건 5가지 체크리스트.
 - keywords: 온라인대환대출, 주택담보대출갈아타기, 대환대출인프라, 스트레스DSR3단계, 중도상환수수료, 대출비교플랫폼, HUG, 대환가능여부, 규제지역대출, 우대금리조건
-- keywords: 부가세신고, 개인사업자부가세, 부가세신고기한, 2026부가세, 홈택스부가세, 매입세액공제, 부가세환급, 부가세가산세, 간이과세자, 일반과세자

@@ -34,6 +34,20 @@
 - desc: 퇴직금에서 실제로 떼는 세금은 얼마일까요? 근속연수에 따라 달라지는 퇴직소득세 계산 구조와 IRP 이체로 세금을 더 줄이는 방법을 정리했습니다.
 - keywords: 퇴직금세금, 퇴직소득세, 근속연수공제, IRP절세, 퇴직금실수령액
 
+### 2026년 자동차세 연납 신청, 9월에 하면 얼마나 할인될까?
+- url: https://j2gblog.tistory.com/153
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/153.jpg
+- desc: 2026년 자동차세 연납 9월 신청 시 할인율 1.3%. 1월·3월·6월과 비교한 할인율 차이, 서울시 이택스·위택스 신청 방법, 9월 연납이 유리한 상황을 정리했습니다.
+- keywords: 자동차세연납, 자동차세9월할인, 위택스연납, 이택스, 자동차세할인율
+
+### 국민연금 실업크레딧, 실업급여 받으면서 놓치기 쉬운 혜택
+- url: https://j2gblog.tistory.com/154
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/154.jpg
+- desc: 구직급여 받는 동안 국민연금 보험료 75% 국가 지원. 실업크레딧 대상·신청 방법·제외 조건을 체크리스트로 정리했습니다.
+- keywords: 실업크레딧, 국민연금실업크레딧, 구직급여국민연금, 실업급여크레딧, 국민연금보험료지원
+
 ### ISA 계좌 2026 절세 한도 및 개설 방법 완전 정리 | IRP vs ISA 비교
 - url: https://j2gblog.tistory.com/14
 - category: 절세, 연금

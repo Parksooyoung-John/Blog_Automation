@@ -22,8 +22,8 @@ WS = Path("_workspace")
 # 업데이트할 포스트 번호 목록 (우선순위 순)
 # 블록쿼트 삭제 버그 복구 — 신규 발행 /145, /146 (2026-07-17)
 # 메타 필드 노출 버그 수정 — /145, /146 (2026-07-17)
-# 애드센스 Phase 0 — 삭제된 /67을 가리키던 죽은 카드 교체 (GSC 404 목록에 있던 URL)
-UPDATE_POSTS = [68]
+# 애드센스 Phase 2 — 공지 블록쿼트를 도입부 다음으로 이동 + 저자 박스 삽입 (전체 배치)
+UPDATE_POSTS = [13, 14, 15, 16, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 37, 40, 43, 49, 59, 60, 61, 62, 63, 64, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 89, 90, 91, 95, 97, 98, 99, 100, 101, 104, 105, 106, 107, 108, 113, 114, 115, 116, 121, 122, 124, 125, 126, 127, 128, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154]
 
 
 def login(page: Page):
@@ -48,8 +48,15 @@ def update_post(page: Page, post_num: int) -> bool:
     print(f"  HTML 길이: {len(new_html)}자")
 
     # 편집 페이지 이동
+    # ponytail: 로그인 직후 첫 네비게이션에서 networkidle이 30초 내 안 잡히는 경우가
+    # 재현성 있게 발생함(에디터 페이지의 지속 연결 때문으로 추정, 2026-08-06 확인).
+    # domcontentloaded로 완화 — 실제 로드 완료 여부는 아래 tinymce 대기가 보장한다.
     edit_url = f"https://{TISTORY_BLOG}.tistory.com/manage/post/{post_num}"
-    page.goto(edit_url, wait_until="networkidle")
+    try:
+        page.goto(edit_url, wait_until="networkidle", timeout=30000)
+    except Exception:
+        print("  ⚠️  networkidle 대기 실패 — domcontentloaded로 재시도")
+        page.goto(edit_url, wait_until="domcontentloaded", timeout=30000)
     page.wait_for_timeout(3000)
     print(f"  편집 페이지: {page.url}")
 

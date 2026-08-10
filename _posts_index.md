@@ -6,6 +6,50 @@
 
 ---
 
+### IRP 중도인출 가능한 경우와 해지 전 반드시 확인할 사항
+- url: https://j2gblog.tistory.com/37
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/37.jpg
+- desc: IRP 중도해지 시 기타소득세 16.5%가 부과되며, 무주택 주택구입·6개월 이상 요양 등 법정 사유에만 예외 적용됩니다.
+- keywords: IRP 중도인출, IRP 해지, 개인형퇴직연금, 기타소득세, 연금계좌
+
+### 갱신형 vs 비갱신형 보험 차이 — 보험료만 보면 안 되는 이유
+- url: https://j2gblog.tistory.com/26
+- category: 보험비교
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/26.jpg
+- desc: 갱신형은 초기 보험료가 낮지만 10년 후 갱신 시 2배 이상 오를 수 있습니다. 비갱신형은 초기 보험료가 높아도 만기까지 고정됩니다. 가입 기간별 선택 기준을 확인하세요.
+- keywords: 갱신형 보험, 비갱신형 보험, 보험료 인상, 갱신형 비갱신형 차이, 암보험 갱신
+
+### 실손보험 가입 전 확인할 보장 항목 체크리스트
+- url: https://j2gblog.tistory.com/25
+- category: 보험비교
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/25.jpg
+- desc: 4세대 실손보험은 급여 10~20%, 비급여 30% 자기부담에 MRI·도수치료·주사료가 별도 특약이므로, 가입 전 특약 구성과 세대별 갱신 주기를 반드시 확인해야 합니다.
+- keywords: 실손보험, 4세대 실손, 비급여 특약, 자기부담금, 도수치료
+
+### SOXL 어디까지 오를까? 반도체 3배 레버리지 ETF 투자 전 확인할 5가지
+- url: https://j2gblog.tistory.com/90
+- category: 주식ETF
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/90.jpg
+- desc: 2026년 상반기 440% 급등 뒤 6월 이후 63% 하락한 SOXL — 하루 리셋 구조가 만드는 변동성 손실이 연 60% 변동성 환경에서 방향성 수익을 어떻게 잠식하는지 실제 데이터로 확인합니다.
+- keywords: SOXL, 반도체 ETF, 레버리지 ETF, 3배 레버리지, 변동성 손실, 변동성 붕괴
+
+### 실손보험 1세대·2세대·3세대·4세대 차이 — 내 보험은 몇 세대일까?
+- url: https://j2gblog.tistory.com/33
+- category: 보험비교
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/33.jpg
+- desc: 1세대는 자기부담금 없음, 4세대는 비급여 30% 본인부담입니다. 세대별 재가입 주기와 보장구조 차이로 보험료·보장범위가 달라집니다. 내 실손이 몇 세대인지 확인 방법까지 정리했습니다.
+- keywords: 실손보험 세대, 실손보험 차이, 1세대 실손, 4세대 실손, 자기부담금, 재가입 주기
+
+### 버팀목 청년전용 전세대출 신청 순서와 자주 탈락하는 이유
+- url: https://j2gblog.tistory.com/30
+- category: 대출금리
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/30.jpg
+- desc: 만 34세 이하 무주택자 대상 연 1.3~2.1% 금리로 최대 1.5억 원 지원하는데 소득 5천만 원 초과·보증금 수도권 3억 원 초과·주택 85㎡ 초과·서류 유효기간 만료 시 탈락하며 신청 6단계와 탈락 회피법을 함께 정리합니다.
+- keywords: 버팀목 청년전용 전세대출, 주택도시기금, 전세자금대출, 청년 대출, 탈락 이유
+
+---
+
 ### 2027년 최저임금 10,700원 확정, 내 월급은 얼마나 오를까?
 - url: https://j2gblog.tistory.com/149
 - category: 절세연금

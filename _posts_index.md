@@ -2,9 +2,25 @@
 
 > blog-writer 에이전트가 "함께 읽으면 좋은 글" 카드 링크 생성 시 이 파일을 참조한다.
 > 새 포스트 발행 후 반드시 이 파일에 추가할 것 (content-repurposer Phase 4).
-> 썸네일 URL은 Tistory CDN 서명 URL (~1년 유효). 만료 시 refresh_thumbnails.py 실행.
+> 썸네일 URL은 jsdelivr 영구 호스팅(`assets/thumbnails/{id}.jpg`). 발행 후 `thumb_host.py`로 확보하고 커밋할 것.
+> **URL은 반드시 숫자 형태(`tistory.com/{번호}`)로 등재한다** — 슬러그 URL(`/entry/제목`)로 넣으면
+> 중복 등재를 탐지하지 못한다(2026-08-13에 이 원인으로 6건 중복 발견·정리).
 
 ---
+
+### 연말정산 미리보기, 9~12월 남은 기간에 바꿀 수 있는 것
+- url: https://j2gblog.tistory.com/156
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/156.jpg
+- desc: 신용카드 25% 문턱을 넘겼다면 9~12월 지출 전략이 정반대로 갈립니다. 연금저축은 12월 31일까지, 실손보험금은 반드시 제외해야 과다공제 가산세를 피합니다.
+- keywords: 연말정산 미리보기, 신용카드 소득공제, 연금저축 추가납입, 실손보험금, 연말정산 전략
+
+### 상속세 자녀공제 5억 확정됐다? 2026 개편안과 무산된 2024 안 구분법
+- url: https://j2gblog.tistory.com/157
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/157.jpg
+- desc: 자녀공제 5억 확대는 2024년 무산된 안이며 2026년 세제개편안에는 없습니다. 현행 일괄공제 5억·배우자공제 최소 5억이 그대로 적용됩니다.
+- keywords: 상속세, 자녀공제, 세제개편안, 일괄공제, 배우자공제, 유산취득세
 
 ### LTV·DTI·DSR 차이 쉽게 이해하기 — 대출 한도가 줄어드는 이유
 - url: https://j2gblog.tistory.com/44
@@ -235,98 +251,63 @@
 - keywords: 세액공제계산, 연봉별환급액, 연말정산, 연금저축IRP, 세금환급
 
 ### HUG·HF·SGI 전세보증 차이 완전 비교 — 내 상황에 맞는 선택법
-- url: https://j2gblog.tistory.com/entry/HUG·HF·SGI-전세보증-차이-완전-비교-—-내-상황에-맞는-선택법
+- url: https://j2gblog.tistory.com/24
 - category: 대출, 금리
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/24.jpg
 - desc: HUG·HF·SGI 보증금 한도·보증료·임대인 동의 조건을 한눈에 비교. 상황별 4가지 시나리오로 내 보증기관을 바로 선택하세요.
 - keywords: HUG보증, HF보증, SGI보증, 전세보증차이, 전세보증선택, 전세보증보험비교, 전세대출보증, 보증료비교
 
-### IRP 중도인출 가능한 경우와 해지 전 반드시 확인할 사항
-- url: https://j2gblog.tistory.com/entry/IRP-중도인출-가능한-경우와-해지-전-반드시-확인할-사항
-- category: 절세, 연금
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/37.jpg
-- desc: IRP 중도인출 예외 조건, 해지 시 기타소득세 16.5% 계산 방법, 납입중지·담보대출 대안까지 정리했습니다.
-- keywords: IRP중도인출, IRP해지, IRP중도해지세금, IRP해지전확인, 기타소득세16.5%
-
 ### 보험증권 읽는 법 — 가입 내역에서 반드시 확인할 항목
-- url: https://j2gblog.tistory.com/entry/보험증권-읽는-법-—-가입-내역에서-반드시-확인할-항목
+- url: https://j2gblog.tistory.com/40
 - category: 보험비교
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/40.jpg
 - desc: 피보험자·수익자·보장 기간·자기부담금·갱신 주기·특약 목록 등 보험증권에서 반드시 확인할 6가지 항목.
 - keywords: 보험증권읽는법, 보험증권확인방법, 보험가입내역확인, 특약확인, 보험갱신주기
 
-### 실손보험 1세대·2세대·3세대·4세대 차이 — 내 보험은 몇 세대일까?
-- url: https://j2gblog.tistory.com/entry/실손보험-1세대·2세대·3세대·4세대-차이-—-내-보험은-몇-세대일까?
-- category: 보험비교
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/33.jpg
-- desc: 실손보험 1~4세대 가입 시기별 자기부담금·갱신 구조 차이. 해지 전 반드시 확인해야 할 사항 포함.
-- keywords: 실손보험세대, 실손보험1세대, 실손보험4세대, 실손보험세대비교, 실손보험자기부담금, 실손보험갱신구조
-
 ### 전세대출 금리 비교 전에 확인할 7가지 — 최저금리만 보면 안 되는 이유
-- url: https://j2gblog.tistory.com/entry/전세대출-금리-비교-전에-확인할-7가지-—-최저금리만-보면-안-되는-이유
+- url: https://j2gblog.tistory.com/34
 - category: 대출, 금리
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/34.jpg
 - desc: 기준금리·가산금리·우대금리·보증료·중도상환수수료까지 전세대출 금리 비교 시 확인할 7가지.
 - keywords: 전세대출금리비교, 전세대출우대금리, 전세대출보증료, 중도상환수수료, 변동금리고정금리, 정책대출금리
 
 ### 보험료를 줄이고 싶을 때 먼저 확인할 7가지
-- url: https://j2gblog.tistory.com/entry/보험료를-줄이고-싶을-때-먼저-확인할-7가지
+- url: https://j2gblog.tistory.com/29
 - category: 보험비교
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/29.jpg
 - desc: 중복 실손 조회부터 감액납입·연납 전환까지 보험료를 실질적으로 줄이는 7가지 체크리스트.
 - keywords: 보험료절감, 보험료줄이기, 중복실손보험, 비급여특약, 감액납입, 보험리모델링
 
-### 버팀목 청년전용 전세대출 신청 순서와 자주 탈락하는 이유
-- url: https://j2gblog.tistory.com/entry/버팀목-청년전용-전세대출-신청-순서와-자주-탈락하는-이유
-- category: 대출, 금리
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/30.jpg
-- desc: 버팀목 청년전용 전세대출 6단계 신청 순서와 소득초과·보증금초과·서류미비 등 5가지 탈락 원인 정리.
-- keywords: 버팀목전세대출신청, 청년전세대출신청순서, 버팀목탈락이유, 전세대출조건, 버팀목신청방법
-
 ### 자동차보험 갱신 체크리스트 — 만기 전에 확인할 항목
-- url: https://j2gblog.tistory.com/entry/자동차보험-갱신-체크리스트-—-만기-전에-확인할-항목
+- url: https://j2gblog.tistory.com/32
 - category: 보험비교
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/32.jpg
 - desc: 자동차보험 만기 30일 전 확인할 8가지 체크리스트. 할인 특약 놓침·담보 과잉·무사고 경력 이전까지.
 - keywords: 자동차보험갱신, 자동차보험체크리스트, 자동차보험만기, 자동차보험비교, 보험다모아
 
 ### ISA 만기 후 연금저축·IRP로 이전하는 방법 — 60일 안에 최대 49만 원 환급
-- url: https://j2gblog.tistory.com/entry/ISA-만기-후-연금저축·IRP로-이전하는-방법-—-60일-안에-최대-49만-원-환급
+- url: https://j2gblog.tistory.com/31
 - category: 절세, 연금
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/31.jpg
 - desc: ISA 만기 후 60일 이내 IRP·연금저축 이전 시 추가 세액공제 최대 300만 원. 5단계 실행 방법과 계산 예시.
 - keywords: ISA만기이전, ISA이전특례, 연금저축IRP이전, ISA만기후, 300만원세액공제
 
-### 실손보험 가입 전 확인할 보장 항목 체크리스트
-- url: https://j2gblog.tistory.com/entry/실손보험-가입-전-확인할-보장-항목-체크리스트
-- category: 보험비교
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/25.jpg
-- desc: 실손보험 가입 전 꼭 확인해야 할 비급여 보장 범위·자기부담금·갱신 주기·특약을 체크리스트로 정리했습니다.
-- keywords: 실손보험, 실손보험가입, 실손보험보장항목, 비급여보장, 실손보험체크리스트, 실손보험비교
-
-### 갱신형 vs 비갱신형 보험 차이 — 보험료만 보면 안 되는 이유
-- url: https://j2gblog.tistory.com/entry/갱신형-vs-비갱신형-보험-차이-—-보험료만-보면-안-되는-이유
-- category: 보험비교
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/26.jpg
-- desc: 갱신형과 비갱신형 보험의 보험료 구조·장단점·장기 비용 차이를 비교합니다. 초기 보험료만 보면 손해 보는 이유.
-- keywords: 갱신형보험, 비갱신형보험, 갱신형vs비갱신형, 보험료비교, 보험선택, 보험리모델링
-
 ### 자동차보험 갱신 전 확인할 할인 특약 10가지
-- url: https://j2gblog.tistory.com/entry/자동차보험-갱신-전-확인할-할인-특약-10가지
+- url: https://j2gblog.tistory.com/27
 - category: 보험비교
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/27.jpg
 - desc: 자동차보험 갱신 시즌에 놓치기 쉬운 마일리지·블랙박스·안전운전 등 10가지 할인 특약을 정리했습니다.
 - keywords: 자동차보험할인, 자동차보험특약, 자동차보험갱신, 마일리지할인, 블랙박스할인, 자동차보험절약
 
 ### 보험 리모델링 전에 해지하면 안 되는 이유
-- url: https://j2gblog.tistory.com/entry/보험-리모델링-전에-해지하면-안-되는-이유
+- url: https://j2gblog.tistory.com/28
 - category: 보험비교
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/28.jpg
 - desc: 보험 리모델링 시 기존 계약을 먼저 해지하면 재가입 거절·보험료 인상 위험이 있습니다. 올바른 순서와 주의사항 정리.
 - keywords: 보험리모델링, 보험해지, 보험재가입, 보험갱신, 보험정리, 보험점검
 
 ### 청년 전세대출 신청 서류 체크리스트 — 은행 방문 전 준비할 것
-- url: https://j2gblog.tistory.com/entry/청년-전세대출-신청-서류-체크리스트-—-은행-방문-전-준비할-것
+- url: https://j2gblog.tistory.com/23
 - category: 대출, 금리
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/23.jpg
 - desc: 버팀목 청년전세대출 서류를 카테고리별 체크리스트로 정리. 유효기간 표와 온라인 발급처 안내 포함.
@@ -513,13 +494,6 @@
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/89.jpg
 - desc: 스페이스X 6월 12일 상장 후 공모가 대비 +31.8% 급등. SPCX 투자 전 밸류에이션·Starlink 의존도·락업 해제·한국 매수 경로까지 5가지 체크포인트를 정리했습니다.
 - keywords: 스페이스X주식, SPCX, SpaceXIPO, 우주항공관련주, SPCX투자위험, 스페이스X상장, 우주항공ETF, SPCX매수, 스페이스X투자, 우주산업주식
-
-### SOXL 어디까지 오를까? 반도체 3배 레버리지 ETF 투자 전 확인할 5가지
-- url: https://j2gblog.tistory.com/entry/SOXL-어디까지-오를까-반도체-3배-레버리지-ETF-투자-전-확인할-5가지
-- category: 주식, ETF
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/90.jpg
-- desc: SOXL(반도체 3배 레버리지 ETF) 투자 전 확인할 변동성 손실 구조·랠리 지속 조건·ETF 자금 흐름·하락 시나리오·대안 ETF까지 5가지 체크포인트로 정리했습니다.
-- keywords: SOXL, SOXL주가, 반도체3배ETF, 반도체레버리지ETF, 엔비디아, AI반도체, SOXL위험, 변동성손실, 레버리지ETF, 반도체ETF
 
 ### 중도상환수수료 낮아졌다는데, 대출 갈아타기 전 꼭 계산할 5가지
 - url: https://j2gblog.tistory.com/91

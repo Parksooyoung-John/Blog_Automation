@@ -6,6 +6,99 @@
 
 ---
 
+### LTV·DTI·DSR 차이 쉽게 이해하기 — 대출 한도가 줄어드는 이유
+- url: https://j2gblog.tistory.com/44
+- category: 대출금리
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/44.jpg
+- desc: LTV·DTI·DSR 세 가지 규제가 동시에 적용되며 가장 낮은 한도가 실제 대출 한도가 됩니다. 각 규제의 계산법과 실제 영향을 정리했습니다.
+- keywords: LTV, DTI, DSR, 대출한도, 대출규제
+
+### AI에 개인정보를 입력하기 전 확인할 사항 — ChatGPT·Claude 사용 시 주의점
+- url: https://j2gblog.tistory.com/45
+- category: 소프트웨어 비교
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/45.jpg
+- desc: AI 챗봇에 계좌번호·주민번호 같은 개인정보를 입력하면 서버에 그대로 전송됩니다. 안전하게 사용하는 방법을 정리했습니다.
+- keywords: AI 개인정보보호, ChatGPT 보안, Claude 개인정보, AI 챗봇 주의사항
+
+### ETF 처음 시작할 때 확인할 용어 10개 — 모르면 손해 보는 기초 개념
+- url: https://j2gblog.tistory.com/46
+- category: 주식ETF
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/46.jpg
+- desc: 총보수·추적오차·괴리율 등 ETF 투자 전 반드시 알아야 할 핵심 용어 10개를 초보자도 이해할 수 있도록 정리했습니다.
+- keywords: ETF 용어, 총보수, 추적오차, 괴리율, ETF 기초
+
+### 직장인이 바로 쓰는 AI 프롬프트 10개 — 복사해서 바로 써도 됩니다
+- url: https://j2gblog.tistory.com/47
+- category: 소프트웨어 비교
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/47.jpg
+- desc: 회의록 요약부터 일정 계획까지, 직장인이 업무에 바로 쓸 수 있는 AI 프롬프트 10개를 정리했습니다.
+- keywords: AI 프롬프트, ChatGPT 활용, Claude 활용, 업무 자동화
+
+### 내 보험 한눈에 서비스로 중복 가입 확인하는 방법 — 5분이면 됩니다
+- url: https://j2gblog.tistory.com/48
+- category: 보험비교
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/48.jpg
+- desc: 단체보험과 개인 실손보험이 중복 가입돼 있어도 보험금은 두 배로 받을 수 없습니다. 내 보험 한눈에 서비스로 확인하는 방법을 정리했습니다.
+- keywords: 내보험한눈에, 보험중복가입, 금융감독원파인, 실손보험
+
+### ETF 총보수와 실제 비용의 차이 — 숫자 하나가 수익률을 바꾼다
+- url: https://j2gblog.tistory.com/50
+- category: 주식ETF
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/50.jpg
+- desc: 같은 지수를 추종해도 ETF마다 수익률이 다른 이유는 총보수 외 숨은 비용 때문입니다. 실제 비용을 확인하는 방법을 정리했습니다.
+- keywords: ETF 총보수, TER, ETF 숨은비용, ETF 비교
+
+### 전세보증금 반환보증 가입 전 확인 사항 — 빠뜨리면 보증이 안 되는 조건
+- url: https://j2gblog.tistory.com/51
+- category: 대출금리
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/51.jpg
+- desc: 전세보증금 반환보증은 주택가격 대비 보증금 비율·임대인 대출·신청 시점 등 조건 하나만 어긋나도 가입이 거절됩니다.
+- keywords: 전세보증금반환보증, 보증가입거절, 전세보증보험, HUG
+
+### 체크카드 vs 신용카드 연말정산 공제 차이 — 어떤 카드가 더 유리할까?
+- url: https://j2gblog.tistory.com/52
+- category: 신용카드
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/52.jpg
+- desc: 체크카드 소득공제율(30%)은 신용카드(15%)의 두 배입니다. 연말정산에 유리한 카드 사용 비중을 정리했습니다.
+- keywords: 연말정산 카드공제, 체크카드 소득공제, 신용카드 소득공제
+
+### 연금저축 계좌에서 ETF를 고를 때 확인할 항목 — 일반 계좌와 다른 점 5가지
+- url: https://j2gblog.tistory.com/53
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/53.jpg
+- desc: 연금저축 계좌는 투자 가능한 ETF 종목이 제한됩니다. 일반 증권 계좌와 다른 점 5가지를 정리했습니다.
+- keywords: 연금저축ETF, 연금저축펀드, 연금계좌ETF선택
+
+### 실손24로 보험금 청구하는 방법 — 병원·약국에서 안 될 때 확인할 것
+- url: https://j2gblog.tistory.com/54
+- category: 보험비교
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/54.jpg
+- desc: 실손보험 청구 전산화 제도와 실손24 앱으로 서류 없이 보험금을 청구하는 방법, 안 될 때 확인할 사항을 정리했습니다.
+- keywords: 실손24, 실손보험청구전산화, 보험금청구
+
+### 전월실적에서 제외되는 항목 총정리 — 카드 혜택 못 받는 이유
+- url: https://j2gblog.tistory.com/55
+- category: 신용카드
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/55.jpg
+- desc: 카드 결제 금액 전부가 전월실적으로 인정되는 건 아닙니다. 전월실적에서 제외되는 항목을 정리했습니다.
+- keywords: 전월실적제외, 카드혜택, 카드전월실적기준
+
+### 스트레스 DSR 3단계 쉽게 이해하기 — 대출 한도가 줄어드는 이유
+- url: https://j2gblog.tistory.com/56
+- category: 대출금리
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/56.jpg
+- desc: 스트레스 DSR은 실제 금리보다 높은 금리를 가정해 대출 한도를 계산하는 방식입니다. 2026년 3단계 시행 내용을 정리했습니다.
+- keywords: 스트레스DSR, DSR3단계, 대출한도축소
+
+### AI 반도체 ETF 고를 때 확인할 5가지 — HBM·소부장·TOP 종목
+- url: https://j2gblog.tistory.com/58
+- category: 주식ETF
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/58.jpg
+- desc: AI 반도체 ETF를 고를 때 HBM 중심인지 소부장 중심인지, TOP 종목 집중도·총보수·운용 규모를 비교하는 기준을 정리했습니다.
+- keywords: AI반도체ETF, HBM ETF, 반도체ETF비교
+
+---
+
 ### IRP 중도인출 가능한 경우와 해지 전 반드시 확인할 사항
 - url: https://j2gblog.tistory.com/37
 - category: 절세연금

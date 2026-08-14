@@ -8,6 +8,20 @@
 
 ---
 
+### 정기예금 만기 앞두고 금리 상승기에 계산해봐야 할 것
+- url: https://j2gblog.tistory.com/158
+- category: 예금금리
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/158.jpg
+- desc: 기준금리 2.75% 인상기에 3년 만기로 묶으면 6개월 뒤 더 높은 금리를 놓칠 수 있습니다. 래더링 전략과 중도해지 손익분기 계산법을 다룹니다.
+- keywords: 정기예금, 금리 상승기, 예금 갈아타기, 래더링, 중도해지이율, 예금자보호
+
+### 해외 카드 결제 수수료 구조, 어느 층이 얼마나 빠져나가는가
+- url: https://j2gblog.tistory.com/159
+- category: 신용카드
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/159.jpg
+- desc: 국제브랜드 1%·카드사 0.2~0.3%·환전 스프레드 1~3%가 각각 다른 주체에게 부과됩니다. "수수료 무료"가 어느 층을 면제하는지 구분하는 법과 DCC 차단 절차를 다룹니다.
+- keywords: 해외결제수수료, 국제브랜드수수료, DCC차단, 해외원화결제, 트래블카드, 환전스프레드
+
 ### 연말정산 미리보기, 9~12월 남은 기간에 바꿀 수 있는 것
 - url: https://j2gblog.tistory.com/156
 - category: 절세연금

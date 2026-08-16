@@ -8,6 +8,20 @@
 
 ---
 
+### 전기요금 누진제 450kWh 넘으면 얼마나 더 낼까?
+- url: https://j2gblog.tistory.com/160
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/160.jpg
+- desc: 450kWh에서 495kWh로 10% 늘면 요금은 85,740원에서 108,460원으로 26% 오릅니다. 여름철 완화 구간은 8월 31일까지이고 9월부터 원복됩니다.
+- keywords: 전기요금, 누진제, 450kWh, 누진구간, 여름철 완화, 에너지캐시백
+
+### 추석 상여금 세금 계산법, 월급보다 많이 떼이는 이유
+- url: https://j2gblog.tistory.com/161
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/161.jpg
+- desc: 상여금 지급월은 그달 소득이 커 보여 원천징수가 많아질 뿐, 소득세는 연말정산에서 정산됩니다. 다만 4대 보험료는 정산 대상이 아닙니다.
+- keywords: 추석 상여금, 상여금 세금, 원천징수, 간이세액표, 연말정산, 4대보험
+
 ### 정기예금 만기 앞두고 금리 상승기에 계산해봐야 할 것
 - url: https://j2gblog.tistory.com/158
 - category: 예금금리

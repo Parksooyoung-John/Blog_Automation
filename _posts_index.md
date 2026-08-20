@@ -8,6 +8,20 @@
 
 ---
 
+### 카드포인트 자동사용 서비스, 신청 안 해도 빠져나갈 수 있다
+- url: https://j2gblog.tistory.com/162
+- category: 신용카드
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/162.jpg
+- desc: 2026년 2월부터 65세 이상은 별도 신청 없이 카드 결제 시 포인트가 자동 차감됩니다. 원치 않으면 고객센터(ARS)로 해지해야 하며, cardpoint.or.kr 신청 시 1일 1회 한도·취소 불가 제약이 있습니다.
+- keywords: 카드포인트 자동사용, 65세 이상 자동 적용, cardpoint.or.kr, 카드포인트 통합조회, 포인트 소멸
+
+### 국민연금 추납 2026 개정, 언제 신청해야 유리할까?
+- url: https://j2gblog.tistory.com/163
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/163.jpg
+- desc: 2025년 11월 25일 시행된 국민연금법 개정으로 추납보험료 산정기준이 납부시점 기준으로 변경됐습니다. 119개월 한도·60회 분할납부와 보험료율 인상 일정을 함께 고려해야 합니다.
+- keywords: 국민연금 추납, 추후납부, 추납보험료 산정기준, 2025년 11월 개정, 119개월 한도
+
 ### 전기요금 누진제 450kWh 넘으면 얼마나 더 낼까?
 - url: https://j2gblog.tistory.com/160
 - category: 절세연금

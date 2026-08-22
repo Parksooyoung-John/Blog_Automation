@@ -60,8 +60,32 @@ COUPANG_KEYWORD_MAP = {
 # NOTION 관련 함수
 # ═══════════════════════════════════════════════════════
 
+def _recover_stuck_processing():
+    """'처리중' 상태로 멈춘 항목을 '발행대기'로 되돌린다.
+
+    이 파이프라인은 한 번에 한 인스턴스만 순차 실행하는 전제이므로, 스크립트 시작
+    시점에 '처리중'이 남아있다는 건 곧 이전 실행이 타임아웃·크래시로 비정상 종료돼
+    except 블록(→'오류' 상태 전환)조차 못 타고 죽었다는 뜻이다(2026-08-22, Bash 도구
+    300초 타임아웃으로 실제 재현 — 재시도 루프가 '발행대기'만 조회해서 이 항목을
+    영영 못 찾고 "발행 대기 중인 포스팅 없음"만 반복 출력했다). 사람이 Notion 콘솔에서
+    수동으로 상태를 되돌리지 않아도 되도록 시작 시 자동 복구한다.
+    """
+    url = f"https://api.notion.com/v1/databases/{NOTION_DB_ID}/query"
+    payload = {"filter": {"property": "상태", "select": {"equals": "처리중"}}}
+    res = requests.post(url, headers=NOTION_HEADERS, json=payload)
+    res.raise_for_status()
+    stuck = res.json().get("results", [])
+    for page in stuck:
+        title_list = page["properties"].get("이름", {}).get("title", [])
+        title = title_list[0].get("text", {}).get("content", "제목없음") if title_list else "제목없음"
+        print(f"  ⚠️  '처리중' 상태로 멈춘 항목 발견 → 발행대기로 복구: {title}")
+        update_notion_status(page["id"], "발행대기")
+
+
 def fetch_pending_posts() -> list:
-    """Notion DB에서 '발행대기' 상태 항목 조회"""
+    """Notion DB에서 '발행대기' 상태 항목 조회 (좀비 '처리중' 항목 자동 복구 포함)"""
+    _recover_stuck_processing()
+
     url = f"https://api.notion.com/v1/databases/{NOTION_DB_ID}/query"
     payload = {
         "filter": {

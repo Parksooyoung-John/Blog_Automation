@@ -7,6 +7,14 @@
 4. 제목에 쉼표·물음표가 있으면 Tistory가 슬러그에서 해당 문자를 제거해
    발행 패널이 보여준 URL과 실제 라이브 URL이 달라짐(SOXL, 재산세, 부가세에서 확인)
 
+2026-08-22 추가로 발견·수정된 2개 결함:
+5. **카드 이미지 검증 사각지대**: 3번 해결책이 "thumb/R800x0"(구 daumcdn 프록시) 패턴만
+   찾았는데, 2026-08-03 thumb_host.py 도입 이후 카드 이미지는 전부 jsdelivr CDN URL로
+   바뀌었다. 즉 이 함수가 몇 주간 카드 이미지를 사실상 전혀 검사하지 않고 있었다
+   (필터에 안 걸려 imgs가 항상 빈 리스트). 두 패턴을 모두 인식하도록 수정.
+6. 제목에 `%`(퍼센트) 기호가 있으면 슬러그에서 제거돼 쉼표·물음표와 같은 문제가
+   발생한다("10% 안 갚으면" → URL은 "10%-안-갚으면"). `_strip_slug_punctuation`에 추가.
+
 발행 스크립트를 막지는 않는다 — 문제 발견 시 콘솔에 경고만 출력해 사람이 바로 알아채게 한다.
 """
 import html as ihtml
@@ -19,8 +27,8 @@ META_LEAK_MARKERS = ["메타 디스크립션", "예상 읽기 시간"]
 
 
 def _strip_slug_punctuation(url: str) -> str:
-    """Tistory가 슬러그 생성 시 제거하는 문자(쉼표·물음표 등)를 제거한 대체 URL."""
-    return re.sub(r"[,?]", "", url)
+    """Tistory가 슬러그 생성 시 제거하는 문자(쉼표·물음표·퍼센트 등)를 제거한 대체 URL."""
+    return re.sub(r"[,?%]", "", url)
 
 
 def verify_live_post(url: str) -> list[str]:
@@ -55,8 +63,12 @@ def verify_live_post(url: str) -> list[str]:
     if "<blockquote" not in r.text:
         problems.append("공지·면책 블록쿼트 없음")
 
+    # 카드 이미지 URL 패턴: "thumb/R800x0"(구 daumcdn 프록시, 만료됨) 또는
+    # jsdelivr 영구 CDN(2026-08-03 thumb_host.py 도입 이후 표준). 하나만 검사하면
+    # 다른 쪽으로 이미 전환된 사이트에서는 카드 이미지가 검증 대상에서 통째로 빠진다.
     imgs = re.findall(r'<img[^>]+src="([^"]+)"', r.text)
-    imgs = [ihtml.unescape(u) for u in imgs if "thumb/R800x0" in u]
+    imgs = [ihtml.unescape(u) for u in imgs
+            if "thumb/R800x0" in u or "cdn.jsdelivr.net" in u and "thumbnails" in u]
     for u in imgs[:6]:  # 카드 이미지만 확인 — 과도한 요청 방지
         try:
             rr = requests.get(u, timeout=8, headers=UA)

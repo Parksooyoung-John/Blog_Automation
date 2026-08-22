@@ -8,6 +8,20 @@
 
 ---
 
+### 전세대출 갱신, 대출금 10% 안 갚으면 금리가 오른다
+- url: https://j2gblog.tistory.com/164
+- category: 대출금리
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/164.jpg
+- desc: 전세 계약 갱신 때 대출금의 10% 이상을 상환하지 않으면 연 0.2%p 가산금리가 붙습니다. 재심사로 조건이 바뀌면 연장이 거절될 수 있어 만기 1개월 전 준비가 필요합니다.
+- keywords: 전세대출 갱신, 전세대출 연장, 10% 상환, 가산금리, 전세대출 재심사
+
+### 생애최초 취득세 감면, 소득 상관없이 받을 수 있을까?
+- url: https://j2gblog.tistory.com/165
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/165.jpg
+- desc: 2026년 생애최초 취득세 감면은 소득요건이 폐지됐지만 취득가액 12억 원 이하라는 조건이 있습니다. 200만 원 감면을 받으려면 무주택·가격·시점 조건을 모두 충족해야 하며, 인구감소지역은 300만 원까지 확대됩니다.
+- keywords: 생애최초 취득세 감면, 소득요건 폐지, 취득가액 12억, 취득세 200만원 감면, 인구감소지역 300만원
+
 ### 카드포인트 자동사용 서비스, 신청 안 해도 빠져나갈 수 있다
 - url: https://j2gblog.tistory.com/162
 - category: 신용카드

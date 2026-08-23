@@ -148,7 +148,7 @@
 - desc: 실손보험 청구 전산화 제도와 실손24 앱으로 서류 없이 보험금을 청구하는 방법, 안 될 때 확인할 사항을 정리했습니다.
 - keywords: 실손24, 실손보험청구전산화, 보험금청구
 
-### 전월실적에서 제외되는 항목 총정리 — 카드 혜택 못 받는 이유
+### 50만 원 썼는데 전월실적 미달, 어디서 빠졌나
 - url: https://j2gblog.tistory.com/55
 - category: 신용카드
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/55.jpg
@@ -390,7 +390,7 @@
 - desc: 2026년 6월 출시 예정인 청년미래적금의 가입 조건·정부기여금 6%·12%·청년도약계좌 갈아타기 조건을 초보자용 체크리스트로 정리했습니다.
 - keywords: 청년미래적금, 청년도약계좌갈아타기, 청년미래적금조건, 정부기여금, 청년적금비과세, 청년도약계좌특별중도해지
 
-### 국민성장 ISA·생산적 금융 ISA 도입 논의 — 기존 ISA와 무엇이 다른가
+### 생산적금융 ISA, 아직 확정된 건 이름과 숫자뿐이다
 - url: https://j2gblog.tistory.com/62
 - category: 절세, 연금
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/62.jpg
@@ -418,7 +418,7 @@
 - desc: 국민성장펀드란 무엇인지, 가입 조건·수익률·일반 펀드와의 차이를 재테크 초보자도 이해할 수 있게 정리했습니다.
 - keywords: 국민성장펀드, 국민성장펀드가입조건, 국민성장펀드수익률, 정책펀드, 청년펀드, 장기투자펀드, 생산적금융
 
-### 토스 파킹통장 금리 낮아졌다면? 2026 대체 파킹통장 금리 비교 TOP5
+### 파킹통장 0.5%p 차이, 1,000만 원이면 1년에 얼마인가
 - url: https://j2gblog.tistory.com/69
 - category: 예금, 금리
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/69.jpg
@@ -460,7 +460,7 @@
 - desc: 중동 리스크·반도체 조정으로 인버스 ETF 거래량이 늘어난 이유와 KODEX 인버스·200선물인버스2X 구조·2배 변동성 손실·장기 보유 위험 5가지 정리.
 - keywords: 인버스ETF, KODEX인버스, 200선물인버스2X, 코스피조정, ETF투자위험, 레버리지ETF, 인버스ETF구조, 변동성손실
 
-### 반도체 다음은 방산·조선 ETF? 순환매 기대감에 확인할 체크포인트
+### 방산·조선 ETF, 순환매가 기대인지 수급인지 가르는 기준
 - url: https://j2gblog.tistory.com/75
 - category: 주식, ETF
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/75.jpg
@@ -474,7 +474,7 @@
 - desc: 4월 급등·5월 조정 이후 다시 언급되는 원전 ETF의 SMR 노출도·전력기기 비중·종목 집중도·총보수 비교 체크포인트.
 - keywords: 원전ETF, 원자력ETF, SMRETF, 전력기기ETF, HANAROETF, ACE원자력ETF, 테마ETF비교, 원전관련주ETF
 
-### ETF 투자 민원 늘었다는데? ISA·연금저축으로 ETF 살 때 확인할 5가지
+### 같은 ETF인데 ISA·연금저축에서 사면 수수료가 10배 차이 난다
 - url: https://j2gblog.tistory.com/77
 - category: 주식, ETF
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/77.jpg
@@ -502,14 +502,14 @@
 - desc: 연금저축에 채권 ETF를 넣어야 할지 고민된다면? 국내채권·미국채·단기채 역할 비교와 20~50대 나이대별 채권 비중 기준을 정리했습니다.
 - keywords: 연금저축채권ETF, 연금저축ETF비중, 연금저축포트폴리오, 미국채ETF연금저축, 채권ETF역할, 나이별ETF비중, 연금저축펀드투자
 
-### 연금저축 미국 ETF, 환헤지와 환노출 뭐가 다를까? 장기투자 전 확인할 것
+### 연금저축 미국 ETF, 이름 뒤 (H) 하나가 20년 뒤 수익을 가른다
 - url: https://j2gblog.tistory.com/81
 - category: 주식, ETF
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/81.jpg
 - desc: 연금저축에서 S&P500 ETF를 살 때 (H) 붙은 환헤지 상품과 환노출 상품 중 뭘 골라야 할까? 구조 차이·장기 비용·환율 영향을 비교했습니다.
 - keywords: 연금저축환헤지ETF, 환노출ETF, 미국ETF환율, S&P500환헤지, 환헤지비용, 장기투자ETF, 연금저축미국ETF, 환헤지환노출비교
 
-### 여신거래 안심차단이란? 보이스피싱 막기 전 신청·해제 방법 정리
+### 여신거래 안심차단, 걸기는 앱으로 되는데 풀려면 영업점에 가야 한다
 - url: https://j2gblog.tistory.com/83
 - category: 대출, 금리
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/83.jpg
@@ -642,7 +642,7 @@
 - desc: 착한가격업소 카드 할인은 자동이 아닙니다. 카드사별 신청·활성화 조건과 월 2천원 할인 혜택을 정확히 비교해 외식비를 절약하는 방법을 정리했습니다.
 - keywords: 착한가격업소, 착한가격업소카드할인, 2천원할인, 카드캐시백, 외식비절약, 생활비절약, 행안부, 착한가격업소찾기, 카드혜택, 신용카드할인
 
-### 미성년자 카드 발급 2026, 몇 살부터 가능할까? 한도·부모 동의 조건 정리
+### 미성년자 카드, 나이 조건은 채웠는데 발급이 막히는 이유
 - url: https://j2gblog.tistory.com/114
 - category: 신용카드
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/114.jpg

@@ -91,8 +91,12 @@ def verify_live_post(url: str) -> list[str]:
     # 카드 이미지 URL 패턴: "thumb/R800x0"(구 daumcdn 프록시, 만료됨) 또는
     # jsdelivr 영구 CDN(2026-08-03 thumb_host.py 도입 이후 표준). 하나만 검사하면
     # 다른 쪽으로 이미 전환된 사이트에서는 카드 이미지가 검증 대상에서 통째로 빠진다.
-    imgs = re.findall(r'<img[^>]+src="([^"]+)"', r.text)
-    imgs = [ihtml.unescape(u) for u in imgs
+    # Tistory가 저장한 HTML은 src 속성 안에 줄바꿈을 넣기도 한다. 그대로 두면
+    # "im\ng1.daumcdn.net" 같은 URL이 만들어져 DNS 실패 → 멀쩡한 이미지를 깨진 것으로
+    # 오탐한다(2026-08-23 /55에서 실제 발생). URL에 공백은 올 수 없으므로 전부 제거한다.
+    imgs = [re.sub(r"\s+", "", ihtml.unescape(u))
+            for u in re.findall(r'<img[^>]+src="([^"]+)"', r.text)]
+    imgs = [u for u in imgs
             if "thumb/R800x0" in u or "cdn.jsdelivr.net" in u and "thumbnails" in u]
     for u in imgs[:6]:  # 카드 이미지만 확인 — 과도한 요청 방지
         try:

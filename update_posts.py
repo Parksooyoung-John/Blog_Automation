@@ -4,6 +4,7 @@ _workspace/enhanced_{num}.html 파일을 읽어 해당 포스트를 수정 발�
 
 Usage: python -X utf8 update_posts.py
 """
+import json
 import os
 import time
 from pathlib import Path
@@ -19,11 +20,16 @@ TISTORY_BLOG = os.getenv("TISTORY_BLOG_NAME")
 
 WS = Path("_workspace")
 
+# {post_id: "새 제목"} — 제목까지 바꿔야 하는 글만 등록한다.
+# 본문(enhanced_*.html)과 제목을 같은 실행에서 함께 반영해 글당 발행 1회로 끝내기 위한 것.
+_TITLES_FILE = WS / "onepass" / "titles.json"
+NEW_TITLES = json.loads(_TITLES_FILE.read_text(encoding="utf-8")) if _TITLES_FILE.exists() else {}
+
 # 업데이트할 포스트 번호 목록 (우선순위 순)
 # 블록쿼트 삭제 버그 복구 — 신규 발행 /145, /146 (2026-07-17)
 # 메타 필드 노출 버그 수정 — /145, /146 (2026-07-17)
-# /149 4대보험 요율·산술 오류 정정
-UPDATE_POSTS = [149]
+# onepass 배치 1 — 제목·도입부 1회 완결 수정 (2026-08-23)
+UPDATE_POSTS = [69, 83, 62, 75]
 
 
 def login(page: Page):
@@ -68,6 +74,18 @@ def update_post(page: Page, post_num: int) -> bool:
         page.wait_for_timeout(3000)
 
     page.wait_for_timeout(1000)
+
+    # 제목 교체 — onepass/titles.json에 지정된 글만.
+    # 실패하면 발행하지 않고 건너뛴다: 제목만 옛것으로 남은 채 발행되면
+    # 이 글을 다시 수정해야 하고, "글당 1회 수정" 원칙이 깨진다.
+    new_title = NEW_TITLES.get(str(post_num))
+    if new_title:
+        try:
+            page.fill('textarea#title, input#title, [placeholder*="제목"]', new_title)
+            print(f"  📝 제목 교체: {new_title}")
+        except Exception as e:
+            print(f"  ❌ 제목 교체 실패 — 발행 중단(재시도 가능): {e}")
+            return False
 
     # 본문 설정
     page.evaluate("""

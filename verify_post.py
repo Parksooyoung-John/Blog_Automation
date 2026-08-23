@@ -31,6 +31,29 @@ def _strip_slug_punctuation(url: str) -> str:
     return re.sub(r"[,?%]", "", url)
 
 
+def _check_search_snippet(page_html: str) -> list[str]:
+    """구글 검색결과에 실제로 노출되는 설명문을 점검한다.
+
+    Tistory는 blog-writer가 쓴 메타 디스크립션을 쓰지 않고 **본문 앞부분을 잘라**
+    description/og:description을 만든다. 따라서 도입부 첫 문장이 곧 검색결과 설명문이다.
+    2026-08-23 실측에서 공지 블록쿼트가 설명문에 그대로 찍힌 글(/83)이 발견됐는데,
+    42노출·7.98위인데 클릭이 0이었다. 이 함수는 그 유형을 발행 직후 잡는다.
+    """
+    m = re.search(r'<meta name="description" content="([^"]*)"', page_html)
+    if not m:
+        return ["검색결과 설명문(description) 태그 없음"]
+
+    desc = ihtml.unescape(m.group(1))
+    head = desc[:120]
+    out = []
+
+    if "📅" in desc[:200] or "최종 업데이트" in desc[:200]:
+        out.append("검색결과 설명문에 공지 블록 노출 — 공지를 본문 맨 아래(v3)로 옮길 것")
+    if not re.search(r"\d", head):
+        out.append("검색결과 설명문 앞 120자에 숫자가 없음 — 도입부에 구체 수치 배치 권장")
+    return out
+
+
 def verify_live_post(url: str) -> list[str]:
     """발행된 글 URL을 점검해 문제 목록을 반환한다 (빈 리스트면 이상 없음)."""
     problems = []
@@ -62,6 +85,8 @@ def verify_live_post(url: str) -> list[str]:
 
     if "<blockquote" not in r.text:
         problems.append("공지·면책 블록쿼트 없음")
+
+    problems.extend(_check_search_snippet(r.text))
 
     # 카드 이미지 URL 패턴: "thumb/R800x0"(구 daumcdn 프록시, 만료됨) 또는
     # jsdelivr 영구 CDN(2026-08-03 thumb_host.py 도입 이후 표준). 하나만 검사하면

@@ -29,7 +29,7 @@ NEW_TITLES = json.loads(_TITLES_FILE.read_text(encoding="utf-8")) if _TITLES_FIL
 # 블록쿼트 삭제 버그 복구 — 신규 발행 /145, /146 (2026-07-17)
 # 메타 필드 노출 버그 수정 — /145, /146 (2026-07-17)
 # onepass 배치 1 — 제목·도입부 1회 완결 수정 (2026-08-23)
-UPDATE_POSTS = [69, 83, 62, 75]
+UPDATE_POSTS = [115, 84]
 
 
 def login(page: Page):

@@ -92,7 +92,7 @@
 - desc: AI 챗봇에 계좌번호·주민번호 같은 개인정보를 입력하면 서버에 그대로 전송됩니다. 안전하게 사용하는 방법을 정리했습니다.
 - keywords: AI 개인정보보호, ChatGPT 보안, Claude 개인정보, AI 챗봇 주의사항
 
-### ETF 처음 시작할 때 확인할 용어 10개 — 모르면 손해 보는 기초 개념
+### 총보수·추적오차·괴리율, ETF 용어가 수익률을 깎는 방식
 - url: https://j2gblog.tistory.com/46
 - category: 주식ETF
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/46.jpg
@@ -134,7 +134,7 @@
 - desc: 체크카드 소득공제율(30%)은 신용카드(15%)의 두 배입니다. 연말정산에 유리한 카드 사용 비중을 정리했습니다.
 - keywords: 연말정산 카드공제, 체크카드 소득공제, 신용카드 소득공제
 
-### 연금저축 계좌에서 ETF를 고를 때 확인할 항목 — 일반 계좌와 다른 점 5가지
+### 연금저축 계좌에서는 못 사는 ETF가 있다
 - url: https://j2gblog.tistory.com/53
 - category: 절세연금
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/53.jpg
@@ -369,7 +369,7 @@
 - desc: 버팀목 청년전세대출 서류를 카테고리별 체크리스트로 정리. 유효기간 표와 온라인 발급처 안내 포함.
 - keywords: 청년전세대출서류, 버팀목전세대출서류, 전세서류체크리스트, 주민등록등본초본, 전세계약서류
 
-### 월배당 ETF 고를 때 확인할 5가지 — 분배율만 보면 안 되는 이유
+### 분배율 12%라던 월배당 ETF가 실제로는 8%인 이유
 - url: https://j2gblog.tistory.com/59
 - category: 주식, ETF
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/59.jpg
@@ -383,7 +383,7 @@
 - desc: 일반계좌·ISA·연금저축에서 ETF 분배금과 매매차익 세금이 어떻게 달라지는지 비교표로 정리했습니다.
 - keywords: ETF세금, ISAETF세금, 연금저축ETF세금, ETF분배금세금, ETF매매차익
 
-### 청년미래적금 2026년 6월 출시 — 가입 조건·정부기여금·청년도약계좌 갈아타기 완전 정리
+### 청년미래적금, 5년 만기 월 70만 원이 아니다
 - url: https://j2gblog.tistory.com/61
 - category: 절세, 연금
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/61.jpg
@@ -404,14 +404,14 @@
 - desc: 삼성전자·SK하이닉스 단일종목 레버리지 ETF·ETN의 일간 2배 구조, 변동성 손실, 기본예탁금·사전교육 조건을 초보자용으로 정리했습니다.
 - keywords: 단일종목ETF, 레버리지ETF위험, 단일종목ETN, 레버리지ETF구조, ETF사전교육, 기본예탁금, 변동성손실
 
-### 밸류업 ETF에 관심이 높아진 이유 — 기업가치 제고 정책과 ETF 선택 기준
+### 밸류업 지수가 코스피를 21%p 앞선 건 정책 때문만이 아니다
 - url: https://j2gblog.tistory.com/64
 - category: 주식, ETF
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/64.jpg
 - desc: 코리아 밸류업 지수 추종 ETF의 구조, 배당 ETF·가치주 ETF와의 차이, 자사주 소각·주주환원 강화 흐름과 ETF 선택 기준 4가지를 정리했습니다.
 - keywords: 밸류업ETF, 코리아밸류업지수, 주주환원ETF, 자사주소각, 기업가치제고ETF, 밸류업정책, 배당ETF차이
 
-### 국민성장펀드란? 가입 조건·수익률·일반 펀드와 차이 완전 정리 2026
+### 국민성장펀드가 일반 공모펀드와 갈리는 지점은 세제다
 - url: https://j2gblog.tistory.com/68
 - category: 절세, 연금
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/68.jpg
@@ -425,14 +425,14 @@
 - desc: 토스뱅크 파킹통장 금리 인하 이후 대안으로 비교할 카카오뱅크 세이프박스·케이뱅크 플러스박스 등 2026 파킹통장 금리 TOP5.
 - keywords: 파킹통장금리비교, 토스파킹통장, 카카오뱅크세이프박스, 케이뱅크플러스박스, 수시입출금통장, 파킹통장추천
 
-### 금융소득종합과세 2026 — 기준·절세 방법·ISA 활용 완전 정리
+### 금융소득 2,000만 원을 넘기면 세금 계산이 통째로 달라진다
 - url: https://j2gblog.tistory.com/70
 - category: 절세, 연금
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/70.jpg
 - desc: 금융소득종합과세 2000만 원 기준과 적용 대상, 절세 방법, ISA 계좌 활용까지 2026년 기준으로 완전 정리했습니다.
 - keywords: 금융소득종합과세, 금융소득2000만원, 배당소득세금, ISA절세, 이자소득세금, 금융소득분리과세
 
-### 미성년 자녀 증여세 없이 목돈 만드는 방법 — 아동수당·용돈·ETF 활용법 2026
+### 자녀 명의 계좌, 증여세 없이 넣을 수 있는 한도는 10년 2,000만 원
 - url: https://j2gblog.tistory.com/71
 - category: 절세, 연금
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/71.jpg
@@ -453,7 +453,7 @@
 - desc: 자동차보험 5부제 할인 특약의 조건·적용 방법·기존 마일리지·블랙박스 특약과의 비교까지 갱신 전 한 번에 정리했습니다.
 - keywords: 자동차보험5부제할인, 자동차보험할인특약, 차량5부제보험, 자동차보험갱신, 자동차보험보험료절감, 마일리지할인비교, 블랙박스할인
 
-### 인버스 ETF 거래량 왜 늘었나? 중동 리스크·반도체 조정장에 확인할 5가지
+### 인버스 ETF 거래량 급증, 시장 방향이 아니라 규제 때문일 때가 있다
 - url: https://j2gblog.tistory.com/74
 - category: 주식, ETF
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/74.jpg
@@ -467,7 +467,7 @@
 - desc: 반도체 조정 이후 방산·조선 ETF 순환매 기대감 속 구성 종목 집중도·자금 흐름·총보수·최대 낙폭 체크포인트 정리.
 - keywords: 방산ETF, 조선ETF, 순환매ETF, K방산ETF, 반도체다음주도주, 테마ETF비교, 방산ETF구성종목, ETF자금흐름
 
-### 원전 ETF 다시 주목받는 이유 — SMR·전력기기·TOP 종목 비중 확인법
+### 원전 ETF, 같은 이름이어도 SMR이 안 들어간 상품이 있다
 - url: https://j2gblog.tistory.com/76
 - category: 주식, ETF
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/76.jpg
@@ -481,7 +481,7 @@
 - desc: ISA·연금저축·특정금전신탁에서 ETF 매매 시 수수료 구조·매매 시점·투자 가능 종목·자동매도서비스·담보 설정 5가지 확인법.
 - keywords: ETF투자유의사항, ISAETF, 연금저축ETF, ETF수수료, ETF자동매도서비스, 특정금전신탁ETF, ETF매매시점, ETF민원사례
 
-### 대출금리 산정방식 7월부터 바뀐다 — 내 대출이자 줄어들까?
+### 가산금리는 내렸는데 대출이자가 그대로인 이유
 - url: https://j2gblog.tistory.com/78
 - category: 대출, 금리
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/78.jpg
@@ -516,7 +516,7 @@
 - desc: 여신거래 안심차단 서비스로 본인 명의 신용대출·카드 발급을 원천 차단할 수 있습니다. 신청 방법, 차단 범위, 해제 절차를 정리했습니다.
 - keywords: 여신거래안심차단, 금융거래안심차단, 보이스피싱예방, 신용대출차단, 카드발급차단, 명의도용방지, 안심차단신청방법
 
-### 금리인하요구권 자동신청이란? 2026 대출이자 줄일 수 있는 조건 정리
+### 승진해서 연봉이 올랐다면 대출금리를 다시 물어볼 수 있다
 - url: https://j2gblog.tistory.com/84
 - category: 대출, 금리
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/84.jpg
@@ -649,7 +649,7 @@
 - desc: 2026년 미성년자 카드 발급 조건. 체크카드부터 신용카드까지 나이별 발급 가능 카드, 부모 동의 방법, 자녀 경제교육 전략을 완전 정리했습니다.
 - keywords: 미성년자카드, 자녀체크카드, 청소년카드발급, 부모동의카드, 미성년자결제, 청소년신용카드, 자녀용돈관리, 카드발급나이, 체크카드한도, 2026금융제도
 
-### 가족 사망 후 금융거래 막는 방법 — 사망자 명의 대출·카드 피해 예방 체크리스트
+### 사망 신고를 해도 카드는 자동으로 정지되지 않는다
 - url: https://j2gblog.tistory.com/115
 - category: 보험비교
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/115.jpg
@@ -684,7 +684,7 @@
 - desc: 카드 전월실적 제외 항목 7가지 총정리. 세금·상품권·자동이체가 실적에 왜 안 잡히는지, 혜택 제외 업종과 확인 체크리스트를 정리했습니다.
 - keywords: 전월실적제외, 카드혜택안됨, 카드실적미인정, 전월실적조건, 카드상품권제외, 카드자동이체, 세금카드실적, 카드혜택체크리스트, 신용카드전월실적, 카드할인제외
 
-### 신용카드 리볼빙, 최소결제만 하면 왜 위험할까? 이자와 신용점수 체크리스트
+### 리볼빙 최소결제, 100만 원 청구에 10만 원 내면 나머지는 어떻게 되나
 - url: https://j2gblog.tistory.com/125
 - category: 신용카드
 - thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/125.jpg

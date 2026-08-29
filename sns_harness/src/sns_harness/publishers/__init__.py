@@ -1,0 +1,1 @@
+"""Social network publisher adapters."""

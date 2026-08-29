@@ -1,0 +1,51 @@
+name: Blog SNS publish
+
+on:
+  schedule:
+    - cron: "30 23,9 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Show due count without scheduling or publishing"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: blog-sns-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: sns_harness
+    env:
+      TZ: Asia/Seoul
+      DEFAULT_SLOTS: 08:30,18:30
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      NOTION_SNS_DATABASE_ID: ${{ secrets.NOTION_SNS_DATABASE_ID }}
+      THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+      THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+      DRY_RUN: ${{ inputs.dry_run }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: sns_harness/pyproject.toml
+      - run: python -m pip install .
+      - name: Publish one due item
+        shell: bash
+        run: |
+          args=()
+          if [[ "${DRY_RUN:-false}" == "true" ]]; then
+            args+=(--dry-run)
+          fi
+          python -m sns_harness publish-due "${args[@]}"

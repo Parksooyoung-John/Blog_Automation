@@ -47,6 +47,7 @@ class FakeQueue:
         self.replaced = 0
         self.hash_updates = 0
         self.failed = 0
+        self.retried = 0
 
     def find_by_tistory_id(self, tistory_id: str):
         return self.existing
@@ -62,6 +63,9 @@ class FakeQueue:
 
     def fail(self, item, message):
         self.failed += 1
+
+    def retry(self, item, message):
+        self.retried += 1
 
 
 def make_source(content: str = "12억 원 이하 조건") -> SourcePost:
@@ -157,3 +161,51 @@ def test_publish_stops_when_source_changed_after_approval() -> None:
         )
 
     assert queue.failed == 1
+
+
+def test_retryable_publish_error_keeps_item_for_retry() -> None:
+    current_source = make_source()
+    approved = QueueItem(
+        page_id="page-1",
+        status=QueueStatus.APPROVED,
+        source_url=current_source.url,
+        tistory_id=current_source.tistory_id,
+        source_hash=current_source.source_hash,
+        title=current_source.title,
+        draft=ThreadsDraft(
+            format="single",
+            posts=[f"12억 원 이하 조건은 원문을 확인하세요. {current_source.url}"],
+        ),
+        scheduled_at=datetime.now(UTC) - timedelta(minutes=1),
+    )
+
+    class PublishQueue(FakeQueue):
+        def approved_without_schedule(self):
+            return []
+
+        def due(self, now, limit=1):
+            return [approved]
+
+        def claim(self, item):
+            return True
+
+    class RetryableError(RuntimeError):
+        retryable = True
+
+    class Publisher:
+        def publish(self, item, save_progress):
+            raise RetryableError("temporary failure")
+
+    queue = PublishQueue()
+    orchestrator = HarnessOrchestrator(FakeSource(current_source), None, None, queue)
+
+    with pytest.raises(RetryableError):
+        orchestrator.publish_due(
+            Publisher(),
+            now=datetime.now(UTC),
+            slots=("08:30", "18:30"),
+            timezone=ZoneInfo("Asia/Seoul"),
+        )
+
+    assert queue.retried == 1
+    assert queue.failed == 0

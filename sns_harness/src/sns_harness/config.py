@@ -9,6 +9,13 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
+def _default_prompt_dir() -> Path:
+    packaged = Path(__file__).resolve().parent / "prompts"
+    if packaged.is_dir():
+        return packaged
+    return Path(__file__).resolve().parents[2] / "prompts"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=(".env", "../.env"),
@@ -28,9 +35,7 @@ class Settings(BaseSettings):
     default_slots: Annotated[tuple[str, ...], NoDecode] = ("08:30", "18:30")
     sync_lookback_hours: int = 48
     request_timeout_seconds: float = 20.0
-    prompt_dir: Path = Field(
-        default_factory=lambda: Path(__file__).resolve().parents[2] / "prompts"
-    )
+    prompt_dir: Path = Field(default_factory=_default_prompt_dir)
 
     @field_validator("blog_base_url")
     @classmethod

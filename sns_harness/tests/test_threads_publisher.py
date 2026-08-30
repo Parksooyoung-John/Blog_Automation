@@ -1,7 +1,9 @@
 from datetime import UTC, datetime
 
+import pytest
+
 from sns_harness.models import QueueItem, QueueStatus, ThreadsDraft
-from sns_harness.publishers.threads import ThreadsPublisher
+from sns_harness.publishers.threads import ThreadsAPIError, ThreadsPublisher
 
 
 class FakeResponse:
@@ -19,12 +21,18 @@ class FakeSession:
     def __init__(self) -> None:
         self.created = []
         self.publish_count = 0
+        self.status_checks = {}
 
     def request(self, method, url, **kwargs):
         if url.endswith("threads_publishing_limit"):
             return FakeResponse({"data": [{"quota_usage": 2, "config": {"quota_total": 250}}]})
         if method == "GET" and url.endswith("/threads"):
             return FakeResponse({"data": []})
+        if method == "GET" and "/container-" in url:
+            container_id = url.rsplit("/", 1)[-1]
+            self.status_checks[container_id] = self.status_checks.get(container_id, 0) + 1
+            status = "IN_PROGRESS" if self.status_checks[container_id] == 1 else "FINISHED"
+            return FakeResponse({"id": container_id, "status": status})
         if method == "POST" and url.endswith("/threads"):
             self.created.append(kwargs["data"])
             return FakeResponse({"id": f"container-{len(self.created)}"})
@@ -69,6 +77,11 @@ def test_publishes_root_then_reply_chain_and_saves_each_id() -> None:
     assert session.created[1]["reply_to_id"] == "media-1"
     assert session.created[2]["reply_to_id"] == "media-2"
     assert session.created[0]["topic_tag"] == "취득세"
+    assert session.status_checks == {
+        "container-1": 2,
+        "container-2": 2,
+        "container-3": 2,
+    }
 
 
 def test_resumes_after_existing_root_without_reposting_it() -> None:
@@ -80,3 +93,20 @@ def test_resumes_after_existing_root_without_reposting_it() -> None:
     assert result == ["existing-root", "media-1", "media-2"]
     assert len(session.created) == 2
     assert session.created[0]["reply_to_id"] == "existing-root"
+
+
+def test_container_error_stops_before_publish() -> None:
+    class ErrorSession(FakeSession):
+        def request(self, method, url, **kwargs):
+            if method == "GET" and "/container-" in url:
+                return FakeResponse({"status": "ERROR", "error_message": "invalid topic"})
+            return super().request(method, url, **kwargs)
+
+    session = ErrorSession()
+    publisher = ThreadsPublisher("user", "token", session=session, sleep=lambda _: None)
+
+    with pytest.raises(ThreadsAPIError, match="invalid topic") as raised:
+        publisher.publish(item(), lambda _: None)
+
+    assert raised.value.retryable is False
+    assert session.publish_count == 0

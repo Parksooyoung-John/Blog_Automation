@@ -136,6 +136,9 @@ class HarnessOrchestrator:
             )
             self.queue.complete(item.page_id, ids, now)
         except Exception as exc:
-            self.queue.fail(item, str(exc))
+            if getattr(exc, "retryable", False):
+                self.queue.retry(item, str(exc))
+            else:
+                self.queue.fail(item, str(exc))
             raise
         return {"scheduled": scheduled, "published": 1, "due": 1}

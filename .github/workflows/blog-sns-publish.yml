@@ -2,7 +2,7 @@ name: Blog SNS publish
 
 on:
   schedule:
-    - cron: "30 23,9 * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
       dry_run:

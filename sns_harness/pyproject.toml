@@ -31,6 +31,9 @@ sns-harness = "sns_harness.__main__:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/sns_harness"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"prompts" = "sns_harness/prompts"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

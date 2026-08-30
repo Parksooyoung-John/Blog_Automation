@@ -190,6 +190,16 @@ class NotionQueue:
             },
         )
 
+    def retry(self, item: QueueItem, message: str) -> None:
+        self._patch(
+            item.page_id,
+            {
+                "상태": self._select(QueueStatus.PUBLISHING.value),
+                "오류": self._rich(message[:1900]),
+                "재시도횟수": {"number": item.retry_count + 1},
+            },
+        )
+
     def _draft_properties(
         self, source: SourcePost, draft: ThreadsDraft, status: QueueStatus
     ) -> dict[str, Any]:

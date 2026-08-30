@@ -11,7 +11,9 @@ from sns_harness.models import QueueItem
 
 
 class ThreadsAPIError(RuntimeError):
-    pass
+    def __init__(self, message: str, *, retryable: bool = False) -> None:
+        super().__init__(message)
+        self.retryable = retryable
 
 
 class ThreadsPublisher:
@@ -29,7 +31,7 @@ class ThreadsPublisher:
         self.timeout = timeout
         self.session = session or requests.Session()
         self.sleep = sleep
-        self.base_url = "https://graph.threads.com/v1.0"
+        self.base_url = "https://graph.threads.net/v1.0"
 
     def publishing_quota(self) -> tuple[int, int]:
         response = self._request(
@@ -121,6 +123,8 @@ class ThreadsPublisher:
         if not creation_id:
             raise ThreadsAPIError("Threads container response did not include an id")
 
+        self._wait_until_ready(creation_id)
+
         published = self._request(
             "POST",
             f"/{self.user_id}/threads_publish",
@@ -130,6 +134,29 @@ class ThreadsPublisher:
         if not media_id:
             raise ThreadsAPIError("Threads publish response did not include an id")
         return media_id
+
+    def _wait_until_ready(self, creation_id: str) -> None:
+        for attempt in range(10):
+            container = self._request(
+                "GET",
+                f"/{creation_id}",
+                params={
+                    "fields": "status,error_message",
+                    "access_token": self.access_token,
+                },
+            )
+            status = str(container.get("status") or "").upper()
+            if status == "FINISHED":
+                return
+            if status in {"ERROR", "EXPIRED"}:
+                detail = str(container.get("error_message") or "unknown container error")
+                raise ThreadsAPIError(f"Threads container {status}: {detail}")
+            if attempt < 9:
+                self.sleep(3)
+        raise ThreadsAPIError(
+            "Threads container was not ready after 30 seconds",
+            retryable=True,
+        )
 
     def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         last_error = ""
@@ -161,4 +188,7 @@ class ThreadsPublisher:
             if attempt < 2:
                 retry_after = response.headers.get("Retry-After")
                 self.sleep(float(retry_after) if retry_after else 2**attempt)
-        raise ThreadsAPIError(f"Threads API request failed after retries: {last_error}")
+        raise ThreadsAPIError(
+            f"Threads API request failed after retries: {last_error}",
+            retryable=True,
+        )

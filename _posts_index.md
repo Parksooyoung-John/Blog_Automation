@@ -278,13 +278,6 @@
 - desc: 버팀목 청년전용 금리부터 HUG·HF·SGI 보증 차이, 상황별 선택 가이드까지 완전 정리했습니다.
 - keywords: 청년전세대출, 버팀목, HUG, HF, SGI, 전세보증, 금리비교
 
-### ChatGPT vs Claude 2026 완전 비교 — 글쓰기·코딩·번역 성능 실험
-- url: https://j2gblog.tistory.com/13
-- category: 소프트웨어 비교
-- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/13.jpg
-- desc: Claude가 직접 ChatGPT와 자신을 비교한 글. 글쓰기·코딩·번역 성능 실험 결과와 플랜 추천까지.
-- keywords: ChatGPT, Claude, AI비교, 코딩AI, 글쓰기AI, 번역AI, AI도구
-
 ### 2026 ISA 변경사항과 가입 전 체크리스트 — 한 번에 정리
 - url: https://j2gblog.tistory.com/21
 - category: 절세, 연금

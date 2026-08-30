@@ -112,51 +112,18 @@ class ThreadsPublisher:
         payload: dict[str, Any] = {
             "media_type": "TEXT",
             "text": text,
+            "auto_publish_text": "true",
             "access_token": self.access_token,
         }
         if parent_id:
             payload["reply_to_id"] = parent_id
         if topic_tag:
             payload["topic_tag"] = topic_tag
-        container = self._request("POST", f"/{self.user_id}/threads", data=payload)
-        creation_id = str(container.get("id") or "")
-        if not creation_id:
-            raise ThreadsAPIError("Threads container response did not include an id")
-
-        self._wait_until_ready(creation_id)
-
-        published = self._request(
-            "POST",
-            f"/{self.user_id}/threads_publish",
-            data={"creation_id": creation_id, "access_token": self.access_token},
-        )
+        published = self._request("POST", f"/{self.user_id}/threads", data=payload)
         media_id = str(published.get("id") or "")
         if not media_id:
-            raise ThreadsAPIError("Threads publish response did not include an id")
+            raise ThreadsAPIError("Threads auto-publish response did not include an id")
         return media_id
-
-    def _wait_until_ready(self, creation_id: str) -> None:
-        for attempt in range(10):
-            container = self._request(
-                "GET",
-                f"/{creation_id}",
-                params={
-                    "fields": "status,error_message",
-                    "access_token": self.access_token,
-                },
-            )
-            status = str(container.get("status") or "").upper()
-            if status == "FINISHED":
-                return
-            if status in {"ERROR", "EXPIRED"}:
-                detail = str(container.get("error_message") or "unknown container error")
-                raise ThreadsAPIError(f"Threads container {status}: {detail}")
-            if attempt < 9:
-                self.sleep(3)
-        raise ThreadsAPIError(
-            "Threads container was not ready after 30 seconds",
-            retryable=True,
-        )
 
     def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         last_error = ""

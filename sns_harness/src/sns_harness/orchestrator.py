@@ -65,7 +65,16 @@ class HarnessOrchestrator:
                 continue
 
             existing = self.queue.find_by_tistory_id(source_post.tistory_id)
-            if existing and existing.source_hash == source_post.source_hash:
+            retry_hold = bool(
+                backfill
+                and existing
+                and existing.status is QueueStatus.HOLD
+            )
+            if (
+                existing
+                and existing.source_hash == source_post.source_hash
+                and not retry_hold
+            ):
                 stats["unchanged"] += 1
                 continue
             if existing and existing.status is QueueStatus.PUBLISHED:

@@ -107,6 +107,34 @@ def test_unpublished_source_change_regenerates_and_resets_draft() -> None:
     assert writer.calls == 1
 
 
+def test_backfill_retries_unchanged_hold_item() -> None:
+    post = make_source()
+    draft = ThreadsDraft(format="single", posts=[f"조건 확인 {post.url}"])
+    writer = FakeWriter(draft)
+    queue = FakeQueue(Existing(post.source_hash, QueueStatus.HOLD))
+    orchestrator = HarnessOrchestrator(FakeSource(post), writer, FakeReviewer(), queue)
+
+    result = orchestrator.sync(backfill=30, now=datetime.now(UTC))
+
+    assert result["updated"] == 1
+    assert queue.replaced == 1
+    assert writer.calls == 1
+
+
+def test_normal_sync_does_not_retry_unchanged_hold_item() -> None:
+    post = make_source()
+    draft = ThreadsDraft(format="single", posts=[f"조건 확인 {post.url}"])
+    writer = FakeWriter(draft)
+    queue = FakeQueue(Existing(post.source_hash, QueueStatus.HOLD))
+    orchestrator = HarnessOrchestrator(FakeSource(post), writer, FakeReviewer(), queue)
+
+    result = orchestrator.sync(now=datetime.now(UTC))
+
+    assert result["unchanged"] == 1
+    assert queue.replaced == 0
+    assert writer.calls == 0
+
+
 def test_dry_run_has_no_openai_or_queue_writes() -> None:
     post = make_source()
     writer = FakeWriter(ThreadsDraft(format="single", posts=[f"조건 확인 {post.url}"]))

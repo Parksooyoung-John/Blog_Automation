@@ -54,6 +54,18 @@ def test_novel_number_is_rejected() -> None:
     assert any("300만" in issue for issue in issues)
 
 
+def test_number_comparison_ignores_trailing_sentence_punctuation() -> None:
+    post = source().model_copy(
+        update={"content": "금융감독원 1332 경찰청 112 체크리스트 4 항목"}
+    )
+    draft = ThreadsDraft(
+        format="single",
+        posts=[f"금융감독원 1332, 경찰청 112, 체크리스트 4. {post.url}"],
+    )
+
+    assert validate_draft_against_source(draft, post) == []
+
+
 def test_post_has_480_grapheme_safety_limit() -> None:
     with pytest.raises(ValidationError):
         ThreadsDraft(

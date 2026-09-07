@@ -135,9 +135,12 @@ def validate_draft_against_source(draft: ThreadsDraft, source: SourcePost) -> li
     if foreign_links:
         issues.append("draft contains a link other than the canonical source URL")
 
-    source_numbers = set(NUMBER_RE.findall(source.title + "\n" + source.content))
+    source_numbers = {
+        value.rstrip(".,")
+        for value in NUMBER_RE.findall(source.title + "\n" + source.content)
+    }
     without_urls = URL_RE.sub("", combined)
-    draft_numbers = set(NUMBER_RE.findall(without_urls))
+    draft_numbers = {value.rstrip(".,") for value in NUMBER_RE.findall(without_urls)}
     novel_numbers = sorted(draft_numbers - source_numbers)
     if novel_numbers:
         issues.append("draft contains numbers absent from source: " + ", ".join(novel_numbers))

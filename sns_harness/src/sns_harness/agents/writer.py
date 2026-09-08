@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from openai import OpenAI
+from pydantic import ValidationError
 
 from sns_harness.models import SourcePost, ThreadsDraft, strict_json_schema
 
@@ -23,18 +24,30 @@ class ThreadsWriter:
             "tags": source.tags,
             "content": source.content[:30_000],
         }
-        response = self.client.responses.create(
-            model=self.model,
-            instructions=self.instructions,
-            input=json.dumps(payload, ensure_ascii=False),
-            store=False,
-            text={
-                "format": {
-                    "type": "json_schema",
-                    "name": "threads_draft",
-                    "strict": True,
-                    "schema": strict_json_schema(ThreadsDraft),
-                }
-            },
-        )
-        return ThreadsDraft.model_validate_json(response.output_text)
+        last_error: ValidationError | None = None
+        for attempt in range(3):
+            request_payload = {
+                **payload,
+                "generation_attempt": attempt + 1,
+                "previous_validation_error": str(last_error) if last_error else "",
+            }
+            response = self.client.responses.create(
+                model=self.model,
+                instructions=self.instructions,
+                input=json.dumps(request_payload, ensure_ascii=False),
+                store=False,
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "threads_draft",
+                        "strict": True,
+                        "schema": strict_json_schema(ThreadsDraft),
+                    }
+                },
+            )
+            try:
+                return ThreadsDraft.model_validate_json(response.output_text)
+            except ValidationError as exc:
+                last_error = exc
+        assert last_error is not None
+        raise last_error

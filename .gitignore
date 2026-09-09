@@ -1,5 +1,7 @@
 .env
 .env.txt
+Treads_acess_token.env
+.claude/settings.local.json
 _workspace/
 thumb_*.png
 _thumbs/

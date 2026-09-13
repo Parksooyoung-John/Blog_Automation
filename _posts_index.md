@@ -8,6 +8,13 @@
 
 ---
 
+### 고향사랑기부 20만 원이 손익 경계선인 이유
+- url: https://j2gblog.tistory.com/166
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/166.jpg
+- desc: 10만 원 기부는 세액공제 10만 원과 답례품 3만 원이 돌아오고, 44% 구간 덕에 20만 원까지는 합계가 기부액을 넘습니다. 30만 원부터는 4만 9,500원이 순지출입니다.
+- keywords: 고향사랑기부 세액공제, 고향사랑기부금 44%, 답례품 30%, 결정세액, 특별재난지역 33%
+
 ### 전세대출 갱신, 대출금 10% 안 갚으면 금리가 오른다
 - url: https://j2gblog.tistory.com/164
 - category: 대출금리

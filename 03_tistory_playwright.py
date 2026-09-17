@@ -357,7 +357,8 @@ def login_tistory(page: Page):
     page.wait_for_load_state("networkidle")
 
     # 로그인 성공 확인
-    if "tistory.com" in page.url:
+    # 로그인 페이지(www.tistory.com/auth/login)에 머물러도 "tistory.com"이 들어가므로 auth/login을 따로 배제
+    if "tistory.com" in page.url and "auth/login" not in page.url:
         print("  ✅ 로그인 완료")
     else:
         raise Exception("로그인 실패 - 이메일/비밀번호 확인")

@@ -8,6 +8,27 @@
 
 ---
 
+### 추석 연휴 카드값·대출 만기는 28일, 주식 판 돈은 29일에 들어온다
+- url: https://j2gblog.tistory.com/169
+- category: 대출금리
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/169.jpg
+- desc: 연휴에 걸린 카드대금·대출 만기·자동이체는 연체이자 없이 28일로 밀리고, 23일에 판 주식 대금은 29일에 들어옵니다. 연휴 전 현금이 필요하면 21일까지 매도해야 합니다.
+- keywords: 추석 연휴 카드대금, 추석 대출 만기, 주식 매도대금 T+2, 주택연금 선지급, 예금 만기 28일
+
+### 근로장려금 5월에 못 받았다면, 12월 1일까지 신청해도 95%는 나온다
+- url: https://j2gblog.tistory.com/168
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/168.jpg
+- desc: 기한 후 신청은 12월 1일까지, 산정액의 95%가 신청일로부터 4개월 안에 지급됩니다. 재산 1억 7천만 원을 넘으면 50%로 줄어 5% 감액보다 영향이 큽니다.
+- keywords: 근로장려금 기한 후 신청, 근로장려금 95%, 근로장려금 재산 기준, 자녀장려금, 반기신청
+
+### 부모님 차로 추석 교대운전, 내 보험의 다른차 특약은 적용되지 않는다
+- url: https://j2gblog.tistory.com/167
+- category: 보험비교
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/167.jpg
+- desc: 부모님 소유 차는 다른자동차 운전담보 특약에서 제외됩니다. 단기운전자 확대특약은 가입한 날 24시부터 보장되고 사고 시 할증은 차 주인 보험에 붙습니다.
+- keywords: 추석 교대운전 보험, 단기운전자 확대특약, 다른자동차 운전담보 특약, 원데이 자동차보험, 자동차보험 할증
+
 ### 고향사랑기부 20만 원이 손익 경계선인 이유
 - url: https://j2gblog.tistory.com/166
 - category: 절세연금

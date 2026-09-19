@@ -8,6 +8,13 @@
 
 ---
 
+### 예금·적금 이자계산기, 세후 실수령액까지 한 번에
+- url: https://j2gblog.tistory.com/172
+- category: 예금금리
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/172.jpg
+- desc: 금액·금리·기간을 넣으면 세후 수령액이 바로 나오는 계산기입니다. 1,000만 원을 연 3.5%로 1년 맡기면 세후 296,100원, 같은 돈을 적금으로 나눠 넣으면 160,387원입니다.
+- keywords: 예금이자계산기, 적금계산기, 단리 월복리 차이, 이자소득세 15.4%, 조합예탁금 1.4%
+
 ### 추석 연휴 카드값·대출 만기는 28일, 주식 판 돈은 29일에 들어온다
 - url: https://j2gblog.tistory.com/169
 - category: 대출금리

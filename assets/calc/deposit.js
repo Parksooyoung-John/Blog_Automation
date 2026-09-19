@@ -6,7 +6,10 @@
   var root = document.getElementById('jg-calc-deposit');
   if (!root) return;
 
-  var TAX = { normal: 0.154, pref: 0.095, free: 0 };
+  // 일반과세 15.4%(소득세 14% + 지방소득세 1.4%)
+  // 조합예탁금 1.4%: 상호금융 조합원 예탁금 3,000만원 한도, 이자소득세 면제·농특세만 부담
+  // 비과세 0%: 비과세종합저축(5,000만원 한도) 등
+  var TAX = { normal: 0.154, coop: 0.014, free: 0 };
   var S = {
     wrap: 'border:1px solid #e3e6ea;border-radius:12px;padding:18px;margin:20px 0;background:#fbfcfd;font-size:15px;line-height:1.6;',
     tab: 'flex:1;padding:10px;border:1px solid #d7dbe0;background:#fff;cursor:pointer;font-size:15px;font-weight:700;',
@@ -95,7 +98,7 @@
     box.appendChild(field('기간(개월)', num('jg-months', 12)));
     box.appendChild(field('이자방식', sel('jg-method', [['simple', '단리'], ['compound', '월복리']])));
     box.appendChild(field('과세', sel('jg-tax', [
-      ['normal', '일반과세 15.4%'], ['pref', '세금우대 9.5%'], ['free', '비과세 0%']
+      ['normal', '일반과세 15.4%'], ['coop', '조합예탁금 1.4%'], ['free', '비과세 0%']
     ])));
 
     var out = el('div', S.out);

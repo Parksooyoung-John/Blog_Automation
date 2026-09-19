@@ -8,6 +8,27 @@
 
 ---
 
+### 실업급여 조건, 6개월 일했는데 180일이 안 되는 이유
+- url: https://j2gblog.tistory.com/179
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/179.jpg
+- desc: 피보험단위기간 180일은 보수를 받은 날만 셉니다. 주 5일 근무에 유급주휴 1일이면 주 6일씩 쌓여 약 7개월이 필요합니다. 자발적 퇴사도 별표2의 정당한 사유에 해당하면 받을 수 있습니다.
+- keywords: 실업급여조건, 피보험단위기간 180일, 자발적 퇴사 실업급여, 정당한 이직 사유, 수급자격 제한
+
+### 실업급여 신청 순서, 고용센터 방문일이 신청일이 된다
+- url: https://j2gblog.tistory.com/178
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/178.jpg
+- desc: 실업급여는 퇴사일이 아니라 고용센터 신청일부터 계산되고 7일은 대기기간입니다. 이직확인서는 요청일부터 10일 이내 제출 의무이며, 워크넷 구직등록과 온라인 교육을 먼저 끝내야 접수됩니다.
+- keywords: 실업급여신청, 실업급여 신청방법, 이직확인서 10일, 워크넷 구직등록, 수급자격 신청일
+
+### 실업급여 받는 동안 해야 할 일과 일찍 취업하면 받는 돈
+- url: https://j2gblog.tistory.com/177
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/177.jpg
+- desc: 소정급여일수가 240일이어도 이직일 다음 날부터 12개월이 지나면 남은 일수는 사라집니다. 절반 이상 남기고 재취업하면 남은 일수의 절반을 조기재취업수당으로 받습니다(150일이면 510만 7,500원).
+- keywords: 실업급여 수급기간, 실업인정, 재취업활동, 조기재취업수당, 부정수급
+
 ### 실업급여 계산기, 월급 300만 원과 200만 원이 같은 금액인 이유
 - url: https://j2gblog.tistory.com/176
 - category: 절세연금

@@ -8,6 +8,13 @@
 
 ---
 
+### 실업급여 계산기, 월급 300만 원과 200만 원이 같은 금액인 이유
+- url: https://j2gblog.tistory.com/176
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/176.jpg
+- desc: 2026년 구직급여는 상한 68,100원과 하한 66,048원의 차이가 2,052원뿐입니다. 월급 334만~344만 원 구간만 급여에 비례하고 나머지는 전부 상한이나 하한이라, 총액은 소정급여일수가 가릅니다.
+- keywords: 실업급여계산기, 실업급여금액, 구직급여 상한액 68100원, 소정급여일수, 피보험단위기간 180일
+
 ### 저축은행 예금 금리가 은행보다 높은 이유와 맡기기 전 볼 숫자 두 개
 - url: https://j2gblog.tistory.com/175
 - category: 예금금리

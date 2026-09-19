@@ -8,6 +8,27 @@
 
 ---
 
+### 저축은행 예금 금리가 은행보다 높은 이유와 맡기기 전 볼 숫자 두 개
+- url: https://j2gblog.tistory.com/175
+- category: 예금금리
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/175.jpg
+- desc: 1,000만 원을 연 3.2%와 3.9%에 맡기면 세후 이자가 270,720원과 329,940원입니다. 예금자보호는 원금과 이자를 합쳐 1억 원까지이며, BIS 8%·고정이하여신 8% 기준으로 안전성을 봅니다.
+- keywords: 저축은행예금, 저축은행금리비교, 예금자보호 1억, BIS 자기자본비율, 88클럽
+
+### 적금 금리 4%인데 이자가 절반처럼 느껴지는 이유
+- url: https://j2gblog.tistory.com/174
+- category: 예금금리
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/174.jpg
+- desc: 월 50만 원씩 12개월 연 4% 적금의 세전 이자는 130,000원, 같은 600만 원을 예금에 넣으면 240,000원입니다. 적금은 평균 예치 기간이 6.5개월이라 이자가 절반 수준입니다.
+- keywords: 적금금리, 적금이자계산, 저축은행적금, 적금 예금 차이, 풍차돌리기
+
+### 예금 금리 비교를 세후로 하면 순위가 바뀐다
+- url: https://j2gblog.tistory.com/173
+- category: 예금금리
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/173.jpg
+- desc: 연 3.9% 일반과세는 세후 329,940원, 연 3.5% 조합예탁금은 345,100원입니다. 금리가 0.4%p 낮은 쪽이 더 받습니다. 우대금리 충족 여부는 그보다 큰 변수입니다.
+- keywords: 예금금리비교, 정기예금금리비교, 세후이자, 조합예탁금 1.4%, 비과세종합저축
+
 ### 예금·적금 이자계산기, 세후 실수령액까지 한 번에
 - url: https://j2gblog.tistory.com/172
 - category: 예금금리

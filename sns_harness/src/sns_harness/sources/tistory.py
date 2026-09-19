@@ -9,6 +9,8 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from sns_harness.models import SourcePost
 
@@ -26,6 +28,16 @@ class TistorySource:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.session = session or requests.Session()
+        if session is None:
+            retry = Retry(
+                total=4,
+                backoff_factor=1,
+                status_forcelist=(429, 500, 502, 503, 504),
+                allowed_methods=("GET",),
+            )
+            adapter = HTTPAdapter(max_retries=retry)
+            self.session.mount("http://", adapter)
+            self.session.mount("https://", adapter)
         self.session.headers.setdefault(
             "User-Agent", "j2g-sns-harness/0.1 (+https://j2gblog.tistory.com)"
         )
@@ -57,7 +69,8 @@ class TistorySource:
     def _discover_from_home(self, needed: int, existing: set[str]) -> list[str]:
         found: list[str] = []
         page = 1
-        while len(found) < needed and page <= 5:
+        empty_pages = 0
+        while len(found) < needed:
             url = self.base_url if page == 1 else f"{self.base_url}/?page={page}"
             try:
                 response = self.session.get(url, timeout=self.timeout)
@@ -65,12 +78,17 @@ class TistorySource:
             except requests.RequestException:
                 break
             soup = BeautifulSoup(response.text, "html.parser")
+            found_on_page = False
             for anchor in soup.select("a[href]"):
                 canonical = self._numeric_url(urljoin(self.base_url, anchor.get("href", "")))
                 if canonical and canonical not in existing and canonical not in found:
                     found.append(canonical)
+                    found_on_page = True
                     if len(found) >= needed:
                         break
+            empty_pages = 0 if found_on_page else empty_pages + 1
+            if empty_pages >= 2:
+                break
             page += 1
         return found
 

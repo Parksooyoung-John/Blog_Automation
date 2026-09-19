@@ -8,3 +8,4 @@ _thumbs/
 debug_*.png
 __pycache__/
 *.pyc
+.auth/

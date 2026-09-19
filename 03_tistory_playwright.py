@@ -341,27 +341,27 @@ def insert_coupang_links(html: str) -> str:
 # PLAYWRIGHT 티스토리 자동화
 # ═══════════════════════════════════════════════════════
 
+def _editor_ready(page: Page) -> bool:
+    """글쓰기 화면이 실제로 열리는지로 로그인 성립을 판정한다."""
+    page.goto(f"https://{TISTORY_BLOG}.tistory.com/manage/newpost", wait_until="domcontentloaded")
+    page.wait_for_timeout(2500)
+    return page.locator('textarea#title, input#title, [placeholder*="제목"]').count() > 0
+
+
 def login_tistory(page: Page):
-    """카카오 계정으로 티스토리 로그인"""
-    print("  🔐 티스토리 로그인중...")
-    page.goto("https://www.tistory.com/auth/login", wait_until="networkidle")
+    """저장된 세션(.auth/tistory_state.json)으로 로그인 상태를 확인한다.
 
-    # 카카오 로그인 버튼 클릭
-    page.click('a.btn_login.link_kakao_id')
-    page.wait_for_load_state("networkidle")
-
-    # 카카오 이메일/비밀번호 입력
-    page.fill('input[name="loginId"]', TISTORY_ID)
-    page.fill('input[name="password"]', TISTORY_PW)
-    page.click('button[type="submit"]')
-    page.wait_for_load_state("networkidle")
-
-    # 로그인 성공 확인
-    # 로그인 페이지(www.tistory.com/auth/login)에 머물러도 "tistory.com"이 들어가므로 auth/login을 따로 배제
-    if "tistory.com" in page.url and "auth/login" not in page.url:
-        print("  ✅ 로그인 완료")
-    else:
-        raise Exception("로그인 실패 - 이메일/비밀번호 확인")
+    2026-09부터 카카오가 자동 로그인에 캡차를 띄워 아이디·비밀번호 입력 방식은
+    신뢰할 수 없다. 사람이 tistory_login_once.py로 한 번 로그인해 저장한 세션을 쓴다.
+    """
+    print("  🔐 티스토리 로그인 확인중...")
+    if _editor_ready(page):
+        print("  ✅ 저장된 세션으로 로그인 상태 확인")
+        return
+    raise Exception(
+        "티스토리 로그인 세션이 없거나 만료됐습니다.\n"
+        "     python -X utf8 tistory_login_once.py 를 실행해 브라우저에서 직접 로그인하세요."
+    )
 
 
 def post_to_tistory(page: Page, title: str, html_content: str,
@@ -603,9 +603,11 @@ def process_all():
             headless=_headless,
             slow_mo=500,      # 각 동작 간 0.5초 딜레이 (안정성)
         )
+        _auth = os.path.join(os.path.dirname(__file__), ".auth", "tistory_state.json")
         context = browser.new_context(
             viewport={"width": 1280, "height": 900},
             locale="ko-KR",
+            **({"storage_state": _auth} if os.path.exists(_auth) else {}),
         )
         page = context.new_page()
 

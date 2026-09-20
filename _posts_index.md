@@ -8,6 +8,20 @@
 
 ---
 
+### 근로장려금 대상, 소득보다 먼저 걸리는 건 재산 2억 4천만 원이다
+- url: https://j2gblog.tistory.com/181
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/181.jpg
+- desc: 소득이 기준 안이어도 가구원 재산 합계가 2억 4천만 원을 넘으면 탈락합니다. 전세보증금·자동차가 포함되고 대출은 차감되지 않습니다. 배우자 총급여 300만 원이 가구 유형을 가릅니다.
+- keywords: 근로장려금대상, 근로장려금기준, 가구유형 단독 홑벌이 맞벌이, 재산요건 2.4억, 업종별 조정률
+
+### 근로장려금 조회, 안내문이 안 왔어도 신청할 수 있다
+- url: https://j2gblog.tistory.com/180
+- category: 절세연금
+- thumb: https://cdn.jsdelivr.net/gh/Parksooyoung-John/Blog_Automation@main/assets/thumbnails/180.jpg
+- desc: 안내문은 대상자 명단이 아니라 자료로 추정한 안내입니다. 안내문이 없으면 ARS는 막히지만 홈택스·손택스 직접입력신청으로 접수됩니다. 기한 후 신청 마감은 12월 1일입니다.
+- keywords: 근로장려금조회, 근로장려금 금액조회, 근로장려금 신청방법, 개별인증번호, 자녀장려금
+
 ### 실업급여 조건, 6개월 일했는데 180일이 안 되는 이유
 - url: https://j2gblog.tistory.com/179
 - category: 절세연금

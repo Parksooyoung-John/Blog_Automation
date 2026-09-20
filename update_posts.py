@@ -29,19 +29,24 @@ NEW_TITLES = json.loads(_TITLES_FILE.read_text(encoding="utf-8")) if _TITLES_FIL
 # 블록쿼트 삭제 버그 복구 — 신규 발행 /145, /146 (2026-07-17)
 # 메타 필드 노출 버그 수정 — /145, /146 (2026-07-17)
 # onepass 배치 1 — 제목·도입부 1회 완결 수정 (2026-08-23)
-UPDATE_POSTS = [45, 47]
+UPDATE_POSTS = [180]
 
 
 def login(page: Page):
-    page.goto("https://www.tistory.com/auth/login", wait_until="networkidle")
-    page.click("a.btn_login.link_kakao_id")
-    page.wait_for_load_state("networkidle")
-    page.fill('input[name="loginId"]', TISTORY_ID)
-    page.fill('input[name="password"]', TISTORY_PW)
-    page.click('button[type="submit"]')
-    page.wait_for_load_state("networkidle")
-    page.wait_for_timeout(2000)
-    print(f"✅ 로그인 완료 (현재: {page.url})")
+    """저장된 세션(.auth/tistory_state.json)으로 로그인 상태를 확인한다.
+
+    2026-09부터 카카오가 자동 로그인에 캡차를 띄워 아이디·비밀번호 입력 방식은 쓸 수 없다.
+    tistory_login_once.py로 사람이 한 번 로그인해 저장한 세션을 재사용한다(03과 동일).
+    """
+    page.goto(f"https://{TISTORY_BLOG}.tistory.com/manage/newpost", wait_until="domcontentloaded")
+    page.wait_for_timeout(2500)
+    if page.locator('textarea#title, input#title, [placeholder*="제목"]').count():
+        print("✅ 저장된 세션으로 로그인 상태 확인")
+        return
+    raise Exception(
+        "티스토리 로그인 세션이 없거나 만료됐습니다.\n"
+        "     python -X utf8 tistory_login_once.py 를 실행해 브라우저에서 직접 로그인하세요."
+    )
 
 
 def update_post(page: Page, post_num: int) -> bool:
@@ -173,7 +178,12 @@ def main():
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=False, slow_mo=200)
-        context = browser.new_context(viewport={"width": 1280, "height": 900}, locale="ko-KR")
+        _auth = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".auth", "tistory_state.json")
+        context = browser.new_context(
+            viewport={"width": 1280, "height": 900},
+            locale="ko-KR",
+            **({"storage_state": _auth} if os.path.exists(_auth) else {}),
+        )
         page = context.new_page()
 
         login(page)

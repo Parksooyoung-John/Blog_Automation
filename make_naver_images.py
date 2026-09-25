@@ -78,6 +78,14 @@ CARDS = {
       <div class='row'><span class='tag'>하한</span><span class='txt'>평균임금의 60%가 이보다 낮아도</span><span class='num'>66,048원</span></div>
       <p class='foot'>월급 200만 원과 300만 원의 하루 금액이 같습니다. 총액은 소정급여일수가 가릅니다.</p>
     """),
+    "08_근로장려금_제외대상": card_html("""
+      <h2>소득·재산을 통과해도 탈락하는 경우</h2>
+      <p class='sub'>근로장려금 신청 제외 대상 · 국세청 신청자격</p>
+      <div class='row'><span class='tag'>전문직</span><span class='txt'>본인이나 배우자가 변호사·세무사·의사·약사 등</span></div>
+      <div class='row'><span class='tag'>부양가족</span><span class='txt'>다른 사람의 부양가족으로 등록되어 있는 경우</span></div>
+      <div class='row'><span class='tag'>고소득</span><span class='txt'>월 평균 근로소득 500만 원 이상인 상용근로자</span></div>
+      <p class='foot'>사회초년생은 두 번째가 자주 걸립니다. 부모님 연말정산에 올라가 있으면 본인 소득과 무관하게 제외됩니다.</p>
+    """),
 }
 
 

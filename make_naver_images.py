@@ -6,6 +6,7 @@
     python -X utf8 make_naver_images.py
 결과: assets/naver_img/*.png
 """
+import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -106,14 +107,60 @@ CARDS = {
 }
 
 
-def shoot_cards(page):
+def find_overflow(page) -> list:
+    """글자가 칸을 넘쳤는지 본다.
+
+    2026-09 실업급여 막대 도식에서 라벨이 두 줄로 넘쳐 깨진 적이 있다. PNG는 정상적으로
+    생성되므로 사람이 열어보지 않으면 모른다. 줄바꿈이 허용된 요소(.foot, .sub, .seg)는 뺀다.
+    """
+    return page.evaluate("""
+        () => {
+            const out = [];
+            const card = document.querySelector('.card');
+            // 칸보다 긴 글자는 .card를 가로로 밀어낸다 (.card 폭은 고정)
+            if (card && card.scrollWidth > card.clientWidth + 1) {
+                out.push(`가로 넘침 ${card.scrollWidth}px > ${card.clientWidth}px`);
+            }
+            // overflow:hidden 칸(.bar 등)에서는 넘친 글자가 그냥 잘려나간다.
+            // scrollHeight로는 위아래로 삐져나간 경우를 못 잡아서 실제 좌표를 비교한다.
+            document.querySelectorAll('.card *').forEach(box => {
+                if (getComputedStyle(box).overflow === 'visible') return;
+                const b = box.getBoundingClientRect();
+                // 잘려나가는 것은 대개 태그 없는 텍스트 노드라 Range로 재야 잡힌다
+                const walk = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+                const range = document.createRange();
+                let node;
+                while ((node = walk.nextNode())) {
+                    if (!node.textContent.trim()) continue;
+                    range.selectNodeContents(node);
+                    const r = range.getBoundingClientRect();
+                    if (r.height === 0) continue;
+                    if (r.top < b.top - 1 || r.bottom > b.bottom + 1 ||
+                        r.left < b.left - 1 || r.right > b.right + 1) {
+                        out.push('잘림: ' + node.textContent.trim().slice(0, 24));
+                    }
+                }
+            });
+            return out;
+        }
+    """)
+
+
+def shoot_cards(page) -> list:
+    broken = []
     for name, html in CARDS.items():
         page.set_viewport_size({"width": W, "height": 700})
         page.set_content(html)
         page.wait_for_timeout(400)
+        over = find_overflow(page)
         el = page.query_selector(".card")
         el.screenshot(path=str(OUT / f"{name}.png"))
-        print("  카드:", name)
+        if over:
+            broken.append((name, over))
+            print("  카드:", name, "⚠ 글자 넘침:", " / ".join(over))
+        else:
+            print("  카드:", name)
+    return broken
 
 
 def shoot_calc(page, js_file: str, container_id: str, fills: list, out_name: str):
@@ -144,7 +191,7 @@ def main():
         b = pw.chromium.launch(headless=True)
         page = b.new_page(device_scale_factor=2)  # 선명하게
 
-        shoot_cards(page)
+        broken = shoot_cards(page)
 
         shoot_calc(page, "deposit.js", "jg-calc-deposit",
                    [("#jg-amt", "10000000", "fill"), ("#jg-rate", "3.5", "fill"),

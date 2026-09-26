@@ -20,7 +20,8 @@ BAR_W = 85
 BAR_BOTTOM = 699
 BARS = [(324, 460), (457, 379), (590, 299)]   # (왼쪽 x, 위쪽 y)
 
-OUT = Path("_workspace/naver/profile_a")
+SRC = Path("_workspace/naver/profile_a")   # Higgsfield 원본(추적 안 함)
+OUT = Path("assets/naver_img")
 
 
 def draw() -> Image.Image:
@@ -48,5 +49,6 @@ if __name__ == "__main__":
     img = draw()
     img.save(OUT / "프로필_최종_1000.png")
     img.resize((160, 160), Image.LANCZOS).save(OUT / "프로필_최종_160.png")
-    preview(img, OUT / "프로필_2번_1000.png", OUT / "프로필_최종_40px비교.png")
+    if (SRC / "프로필_2번_1000.png").exists():
+        preview(img, SRC / "프로필_2번_1000.png", SRC / "프로필_최종_40px비교.png")
     print("완료:", OUT)

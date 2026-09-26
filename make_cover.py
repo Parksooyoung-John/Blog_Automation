@@ -103,11 +103,12 @@ def naver_preview(img: Image.Image) -> Image.Image:
 
 
 if __name__ == "__main__":
-    out = Path("_workspace/naver/cover_c/커버_최종.png")
-    img = build()
-    img.save(out)
-    naver_preview(img).save(out.with_name("커버_최종_앱미리보기.png"))
+    out = Path("assets/naver_img")
+    prev = Path("_workspace/naver/cover_c")     # 확인용은 커밋하지 않는다
+    img, band = build(), None
+    img.save(out / "커버_최종.png")
     band = with_band(img)
-    band.save(out.with_name("커버_최종_하단밴드.png"))
-    naver_preview(band).save(out.with_name("커버_최종_하단밴드_앱미리보기.png"))
+    band.save(out / "커버_최종_하단밴드.png")
+    naver_preview(img).save(prev / "커버_최종_앱미리보기.png")
+    naver_preview(band).save(prev / "커버_최종_하단밴드_앱미리보기.png")
     print(out, img.size)

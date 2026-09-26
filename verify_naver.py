@@ -6,6 +6,7 @@
 
     python -X utf8 verify_naver.py            # 최근 글 전체
     python -X utf8 verify_naver.py 224423197601
+    python -X utf8 verify_naver.py --selftest
 """
 import datetime
 import re
@@ -57,7 +58,10 @@ def expected_category(title: str) -> str:
 
 
 def inspect(log_no: str) -> dict:
-    html = _get(f"https://m.blog.naver.com/{BLOG}/{log_no}").text
+    return parse(_get(f"https://m.blog.naver.com/{BLOG}/{log_no}").text)
+
+
+def parse(html: str) -> dict:
     i = html.find("se-main-container")
     j = html.find("{&#034;title&#034;", i)
     body = html[i:j] if j > i else html[i:i + 60000]
@@ -85,6 +89,39 @@ def title_shape(title: str) -> str:
     """제목 구조 지문 — 쉼표 유무 + 마지막 어절(종결)."""
     tail = title.replace("?", "").split()[-1]
     return ("쉼표+" if "," in title else "") + tail
+
+
+def selftest():
+    """네이버가 내려주는 형태 그대로 넣어 파싱이 맞는지 본다.
+
+    gsTagName 대신 baLogData의 tagNames를 읽어 "태그 없음"으로 오판한 적이 있다.
+    필드 이름이 바뀌면 여기서 먼저 깨져야 한다.
+    """
+    html = (
+        '<meta name="robots" content="index,follow"/>'
+        '<div class="se-main-container">'
+        '<div class="se-component se-image se-l-default"><img src="x.png"></div>'
+        '<div class="se-component se-quotation se-l-quotation_line">소제목 하나</div>'
+        '<div class="se-component se-text">본문 문장입니다.</div>'
+        '<div class="se-component se-quotation se-l-quotation_line">소제목 둘</div>'
+        '<div class="se-component se-oglink"><a href="https://blog.naver.com/education_blog/224422755053">링크</a></div>'
+        '</div>{&#034;title&#034;:&#034;끝&#034;}'
+        'var gsTagName = "근로장려금,홈택스,절세"; var x = 1;'
+        '"tagNames":"",'
+    )
+    r = parse(html)
+    assert r["tags"] == ["근로장려금", "홈택스", "절세"], r["tags"]
+    assert r["images"] == 1, r["images"]
+    assert r["subheads"] == 2, r["subheads"]
+    assert r["inlinks"] == 1, r["inlinks"]
+    assert r["tistory"] == 0, r["tistory"]
+    assert "본문 문장입니다." in html and r["chars"] > 10, r["chars"]
+
+    assert expected_category("실업급여 조건 2026, 6개월 다녔는데") == "실업급여·고용보험"
+    assert expected_category("2026 근로장려금 대상 기준") == "근로장려금·자녀장려금"
+    assert title_shape("가, 나 하는 이유") == title_shape("다, 라 되는 이유")
+    assert title_shape("가, 나 하는 이유") != title_shape("다, 라 되는 순서")
+    print("selftest ok")
 
 
 def main(argv):
@@ -153,4 +190,7 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    if "--selftest" in sys.argv:
+        selftest()
+    else:
+        sys.exit(main(sys.argv[1:]))

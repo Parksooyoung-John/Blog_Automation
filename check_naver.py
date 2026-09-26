@@ -6,7 +6,7 @@ def parts(p):
     tags = re.findall(r'#[가-힣A-Za-z0-9]+', b)
     b2 = re.sub(r'^제목:.*$', '', b, flags=re.M)
     b2 = re.sub(r'^#[가-힣A-Za-z0-9]+.*$', '', b2, flags=re.M)
-    c = re.sub(r'\[(이미지|경험 한 줄):[^\]]*\]', '', b2)
+    c = re.sub(r'\[(이미지|경험 한 줄)[^\]]*\]', '', b2)
     c = re.sub(r'^-{3,}$', '', c, flags=re.M)
     return n, b2, c, tags
 
@@ -20,13 +20,16 @@ for f in glob.glob('_workspace/02_blog_post_*.md'):
 T = sents(tis)
 
 allok = True
-for p in sorted(glob.glob('_workspace/naver/*.md')):
+for p in sorted(glob.glob('content/naver/*.md')):
     n, b, c, tags = parts(p)
-    title = re.search(r'^제목: (.+)$', n, flags=re.M).group(1)
+    m = re.search(r'^제목: (.+)$', n, flags=re.M)
+    if not m:
+        continue
+    title = m.group(1)
     ln = len(c.strip())
     h = len(re.findall(r'^## ', b, flags=re.M))
-    img = len(re.findall(r'\[이미지:', b))
-    exp = len(re.findall(r'\[경험 한 줄:', b))
+    img = len(re.findall(r'\[이미지', b))
+    exp = len(re.findall(r'\[경험 한 줄', b))
     dup = sents(c) & T
     ok = 800 <= ln <= 1600 and 3 <= h <= 5 and img >= 2 and exp >= 1 and 8 <= len(tags) <= 12 and not dup
     allok &= ok

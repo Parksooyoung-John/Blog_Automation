@@ -2,7 +2,7 @@
 
 마크다운 기호를 지워 에디터에 그대로 붙여넣을 수 있게 만든다.
 
-    python -X utf8 naver_paste.py _workspace/naver/02_실업급여-조건.md
+    python -X utf8 naver_paste.py content/naver/02_실업급여-조건.md
     python -X utf8 naver_paste.py --selftest
 """
 import re

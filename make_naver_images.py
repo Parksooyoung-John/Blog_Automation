@@ -86,6 +86,23 @@ CARDS = {
       <div class='row'><span class='tag'>고소득</span><span class='txt'>월 평균 근로소득 500만 원 이상인 상용근로자</span></div>
       <p class='foot'>사회초년생은 두 번째가 자주 걸립니다. 부모님 연말정산에 올라가 있으면 본인 소득과 무관하게 제외됩니다.</p>
     """),
+    "09_근로장려금_신청경로": card_html("""
+      <h2>안내문이 없어도 신청되는 경로</h2>
+      <p class='sub'>근로장려금 신청 방법 4가지 · 국세청</p>
+      <div class='row'><span class='tag'>모바일</span><span class='txt'>안내문 문자의 링크로 접속</span><span class='num' style='color:#e03131;'>안내문 필요</span></div>
+      <div class='row'><span class='tag'>ARS</span><span class='txt'>1544-9944, 인증번호 8자리 입력</span><span class='num' style='color:#e03131;'>안내문 필요</span></div>
+      <div class='row'><span class='tag'>홈택스</span><span class='txt'>손택스 포함, 본인인증만 하면 됨</span><span class='num' style='color:#1b64da;'>불필요</span></div>
+      <div class='row'><span class='tag'>세무서</span><span class='txt'>신분증 지참 방문</span><span class='num' style='color:#1b64da;'>불필요</span></div>
+      <p class='foot'>ARS에서 막히는 이유는 입력할 인증번호가 없기 때문입니다. 홈택스로 가면 됩니다.</p>
+    """),
+    "10_근로장려금_미입금": card_html("""
+      <h2>신청했는데 입금이 없다면</h2>
+      <p class='sub'>지급일이 지난 뒤 확인하는 순서</p>
+      <div class='row'><span class='tag'>계좌</span><span class='txt'>본인 명의 계좌가 정확히 등록됐는지</span></div>
+      <div class='row'><span class='tag'>체납</span><span class='txt'>국세 체납이 있으면 환급액의 30% 한도로 먼저 충당</span></div>
+      <div class='row'><span class='tag'>요건</span><span class='txt'>요건 미달로 제외됐는지, 사유가 화면에 표시됨</span></div>
+      <p class='foot'>셋 다 홈택스 조회 화면에서 확인됩니다. 애매하면 장려금 상담센터 1566-3636.</p>
+    """),
 }
 
 

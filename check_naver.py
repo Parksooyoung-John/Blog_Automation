@@ -17,6 +17,9 @@ import tempfile
 
 PLACEHOLDERS = r'\[(이미지|경험 한 줄|내부 링크)[^\]]*\]'
 VOLUME_CSV = '_workspace/keywords_volume.csv'   # 네이버 검색광고 API 실측 (gitignore됨)
+# 없어진 서비스명 → 현재 이름. 2026-09-28 4편이 2024년 고용24로 통합된 '워크넷'을
+# 현행 서비스처럼 안내한 채 발행됐다. `옛 워크넷`처럼 과거형으로 밝힌 표기는 허용한다.
+STALE_TERMS = {'워크넷': '고용24'}
 
 
 def parts(path):
@@ -68,13 +71,15 @@ def measure(path, tistory, volumes=None):
         "tags": tags,
         "vol": {t: volumes.get(t.lstrip('#')) for t in tags} if volumes else {},
         "dup": sents(c) & tistory,
+        "stale": [f"{k}→{v}" for k, v in STALE_TERMS.items()
+                  if re.search(f'(?<!옛 ){k}', c)],
     }
 
 
 def passes(r):
     return (800 <= r["chars"] <= 1600 and 3 <= r["heads"] <= 5 and r["images"] >= 2
             and r["exp"] >= 1 and r["links"] >= 1 and 8 <= len(r["tags"]) <= 12
-            and not r["dup"])
+            and not r["dup"] and not r["stale"])
 
 
 def selftest():
@@ -82,7 +87,7 @@ def selftest():
     doc = (
         "제목: 테스트 제목\n\n---\n\n"
         "[이미지 ①: `assets/x.png` — 제작 완료]\n\n"
-        "도입 문단입니다. 충분히 길게 씁니다.\n\n"
+        "도입 문단입니다. 고용24 구직등록(옛 워크넷)을 합니다.\n\n"
         "[경험 한 줄 ①]\n\n"
         "## 소제목 하나\n\n본문입니다.\n\n"
         "[이미지 ②: **직접 캡처 필요** — 어쩌고]\n\n"
@@ -107,6 +112,11 @@ def selftest():
     assert r["heads"] == 3, f"소제목 {r['heads']}"
     assert len(r["tags"]) == 10, f"태그 {len(r['tags'])}"
     # 플레이스홀더·태그·작성 메모가 글자수에 섞이면 안 된다 (본문은 100자 남짓)
+    assert r["stale"] == [], f"옛 워크넷 표기까지 잡았다: {r['stale']}"
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "t.md")
+        open(path, "w", encoding="utf-8").write(doc.replace("(옛 워크넷)", " 워크넷"))
+        assert measure(path, set())["stale"] == ["워크넷→고용24"], "현행처럼 쓴 워크넷을 놓쳤다"
     assert r["chars"] < 120, f"플레이스홀더가 글자수에 섞였다: {r['chars']}"
     print("selftest ok")
 
@@ -136,6 +146,8 @@ def main():
             line = ' '.join(f'{t}({v:,})' for t, v in top)
             print(f'       검색량 상위: {line}'
                   + (f' · 나머지 {unknown}개는 CSV 미수록(미확인)' if unknown else ''))
+        for t in r["stale"]:
+            print('         옛 명칭:', t)
         for d in list(r["dup"])[:3]:
             print('         중복:', d[:55])
     print('\n전체 통과' if allok else '\n확인 필요')

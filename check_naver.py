@@ -8,6 +8,7 @@
 고정하고 있어서, 이미지·경험을 0으로 세고 분량은 플레이스홀더까지 포함해 부풀려 잡았다.
 오류를 내지 않고 조용히 틀린 값을 보고했다. `--selftest`가 그 재발을 막는다.
 """
+import csv
 import glob
 import os
 import re
@@ -15,6 +16,7 @@ import sys
 import tempfile
 
 PLACEHOLDERS = r'\[(이미지|경험 한 줄|내부 링크)[^\]]*\]'
+VOLUME_CSV = '_workspace/keywords_volume.csv'   # 네이버 검색광고 API 실측 (gitignore됨)
 
 
 def parts(path):
@@ -33,7 +35,25 @@ def sents(x):
     return {s.strip() for s in re.split(r'[.!?]\s|\n', x) if len(s.strip()) >= 12}
 
 
-def measure(path, tistory):
+def load_volumes() -> dict:
+    """태그가 실제로 검색되는 말인지 보려고 검색량을 읽는다.
+
+    2026-09-27 4편 작성에서 태그 10개 중 4개가 검색되지 않는 조합어였다
+    (워크넷구직등록·수급자격신청·실업급여첫입금). 본문에서 그럴듯하게 만들어낸
+    말이라 눈으로는 안 걸러진다.
+
+    ⚠ 이 CSV는 시드에서 확장한 집합이지 전체 키워드 사전이 아니다. `홈택스`처럼
+    검색량이 큰 말도 들어 있지 않다. 따라서 **"CSV에 없음"을 "검색량 0"으로
+    읽으면 안 되고**, 통과/실패 기준으로도 쓰지 않는다. 후보를 비교할 때
+    참고하는 용도다.
+    """
+    if not os.path.exists(VOLUME_CSV):
+        return {}
+    with open(VOLUME_CSV, encoding='utf-8-sig') as f:
+        return {r['keyword']: int(r['total']) for r in csv.DictReader(f) if r.get('total')}
+
+
+def measure(path, tistory, volumes=None):
     n, b, c, tags = parts(path)
     m = re.search(r'^제목: (.+)$', n, flags=re.M)
     if not m:
@@ -46,6 +66,7 @@ def measure(path, tistory):
         "exp": len(re.findall(r'\[경험 한 줄', b)),
         "links": len(re.findall(r'\[내부 링크', b)),
         "tags": tags,
+        "vol": {t: volumes.get(t.lstrip('#')) for t in tags} if volumes else {},
         "dup": sents(c) & tistory,
     }
 
@@ -93,9 +114,12 @@ def selftest():
 def main():
     tistory = sents("".join(open(f, encoding='utf-8').read()
                             for f in glob.glob('_workspace/02_blog_post_*.md')))
+    volumes = load_volumes()
+    if not volumes:
+        print(f'⚠ {VOLUME_CSV} 없음 — 태그 검색량 검사를 건너뜁니다\n')
     allok = True
     for p in sorted(glob.glob('content/naver/*.md')):
-        r = measure(p, tistory)
+        r = measure(p, tistory, volumes)
         if r is None:          # 제목 줄이 없으면 원고가 아니다(메모·프롬프트 파일)
             continue
         ok = passes(r)
@@ -105,6 +129,13 @@ def main():
               f" / 경험 {r['exp']} / 내부링크 {r['links']}"
               f" / 태그 {len(r['tags'])} / 티스토리 중복 {len(r['dup'])}")
         print(f"       제목: {r['title']}")
+        known = {t: v for t, v in r["vol"].items() if v}
+        if known:
+            top = sorted(known.items(), key=lambda x: -x[1])[:4]
+            unknown = len(r["vol"]) - len(known)
+            line = ' '.join(f'{t}({v:,})' for t, v in top)
+            print(f'       검색량 상위: {line}'
+                  + (f' · 나머지 {unknown}개는 CSV 미수록(미확인)' if unknown else ''))
         for d in list(r["dup"])[:3]:
             print('         중복:', d[:55])
     print('\n전체 통과' if allok else '\n확인 필요')

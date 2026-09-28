@@ -104,6 +104,23 @@ CARDS = {
       <div class='row'><span class='tag'>요건</span><span class='txt'>요건 미달로 제외됐는지, 사유가 화면에 표시됨</span></div>
       <p class='foot'>셋 다 홈택스 조회 화면에서 확인됩니다. 애매하면 장려금 상담센터 1566-3636.</p>
     """),
+    "11_실업급여_신청3단계": card_html("""
+      <h2>실업급여 신청은 세 단계뿐</h2>
+      <p class='sub'>앞의 둘을 끝내야 센터에서 접수된다</p>
+      <div class='row'><span class='tag'>1단계</span><span class='txt'>워크넷 구직등록 — 구직신청 버튼까지 눌러야 인정</span><span class='num'>집에서</span></div>
+      <div class='row'><span class='tag'>2단계</span><span class='txt'>수급자격 온라인 교육 — 1시간 안팎</span><span class='num'>집에서</span></div>
+      <div class='row'><span class='tag'>3단계</span><span class='txt'>수급자격 신청 — 이 날이 모든 날짜의 기준</span><span class='num'>센터에서</span></div>
+      <p class='foot'>이직확인서는 회사 몫입니다. 안 나왔다고 3단계를 미룰 필요는 없습니다.</p>
+    """),
+    "12_실업급여_첫입금": card_html("""
+      <h2>첫 입금까지 걸리는 시간</h2>
+      <p class='sub'>수급자격 신청일을 0일로 놓고</p>
+      <div class='row'><span class='tag'>0일</span><span class='txt'>고용센터 방문, 수급자격 신청</span><span class='num'>기준일</span></div>
+      <div class='row'><span class='tag'>+7일</span><span class='txt'>대기기간 — 이 기간은 지급되지 않음</span><span class='num'>0원</span></div>
+      <div class='row'><span class='tag'>+14일</span><span class='txt'>1차 실업인정일</span><span class='num'>8일분</span></div>
+      <div class='row'><span class='tag'>3주 안팎</span><span class='txt'>첫 입금, 상한액 기준</span><span class='num'>544,800원</span></div>
+      <p class='foot'>첫 달은 한 달치가 아닙니다. 두 번째 회차부터 4주 단위로 커집니다.</p>
+    """),
 }
 
 

@@ -9,3 +9,7 @@ debug_*.png
 __pycache__/
 *.pyc
 .auth/
+
+# 공유마당·Pexels에서 내려받은 대표 사진 원본(장당 10MB 안팎) — 출처는 원고에 남는다
+assets/naver_img/*.jpg
+assets/naver_img/*.JPG

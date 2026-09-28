@@ -73,7 +73,19 @@ def measure(path, tistory, volumes=None):
         "dup": sents(c) & tistory,
         "stale": [f"{k}→{v}" for k, v in STALE_TERMS.items()
                   if re.search(f'(?<!옛 ){k}', c)],
+        "cover_kw": (re.findall(r'^- 대표사진 검색어:\s*(.+?)\s*$', n, flags=re.M) or [None])[0],
     }
+
+
+def same_cover_kw(results: dict) -> list:
+    """대표사진 검색어가 같은 원고 쌍. 2026-09-28 1·3편이 같은 검색어라
+    suggest_cover.py 후보 12장이 똑같이 나왔다 — 같은 사진을 두 글에 쓰게 된다."""
+    seen, pairs = {}, []
+    for name, kw in results.items():
+        if kw and kw in seen:
+            pairs.append((seen[kw], name))
+        seen.setdefault(kw, name)
+    return pairs
 
 
 def passes(r):
@@ -99,6 +111,7 @@ def selftest():
         "[경험 한 줄 ②]\n\n"
         "#태그1 #태그2 #태그3 #태그4 #태그5 #태그6 #태그7 #태그8 #태그9 #태그10\n\n"
         "---\n\n## 작성 메모 (발행 시 삭제)\n\n- 메모는 세지 않는다\n"
+        "- 대표사진 검색어: 퇴사, 취업 | job interview\n"
     )
     with tempfile.TemporaryDirectory() as d:
         path = os.path.join(d, "t.md")
@@ -118,6 +131,8 @@ def selftest():
         open(path, "w", encoding="utf-8").write(doc.replace("(옛 워크넷)", " 워크넷"))
         assert measure(path, set())["stale"] == ["워크넷→고용24"], "현행처럼 쓴 워크넷을 놓쳤다"
     assert r["chars"] < 120, f"플레이스홀더가 글자수에 섞였다: {r['chars']}"
+    assert r["cover_kw"] == "퇴사, 취업 | job interview", r["cover_kw"]
+    assert same_cover_kw({"01": "a | x", "02": "b | y", "03": "a | x", "04": None, "05": None}) == [("01", "03")]
     print("selftest ok")
 
 
@@ -128,10 +143,12 @@ def main():
     if not volumes:
         print(f'⚠ {VOLUME_CSV} 없음 — 태그 검색량 검사를 건너뜁니다\n')
     allok = True
+    cover_kws = {}
     for p in sorted(glob.glob('content/naver/*.md')):
         r = measure(p, tistory, volumes)
         if r is None:          # 제목 줄이 없으면 원고가 아니다(메모·프롬프트 파일)
             continue
+        cover_kws[os.path.basename(p)] = r["cover_kw"]
         ok = passes(r)
         allok &= ok
         print(('OK   ' if ok else 'CHECK'), os.path.basename(p))
@@ -150,6 +167,9 @@ def main():
             print('         옛 명칭:', t)
         for d in list(r["dup"])[:3]:
             print('         중복:', d[:55])
+    for a, b in same_cover_kw(cover_kws):
+        allok = False
+        print(f'CHECK 대표사진 검색어가 같다: {a} = {b} — 후보가 똑같이 나온다')
     print('\n전체 통과' if allok else '\n확인 필요')
     return 0 if allok else 1
 

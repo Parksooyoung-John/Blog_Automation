@@ -1,0 +1,9 @@
+{
+  "result": {
+    "items": [
+      {"logNo": "102", "titleWithInspectMessage": "둘째 글 중복"},
+      {"logNo": "103", "titleWithInspectMessage": "셋째 글"}
+    ],
+    "totalCount": 3
+  }
+}

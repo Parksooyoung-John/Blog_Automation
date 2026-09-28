@@ -1,6 +1,6 @@
-# Tistory → Threads SNS Harness
+# Naver → Threads SNS Harness
 
-`j2gblog.tistory.com`의 게시물을 읽어 Threads 계정 `money.ybrief`용 초안을 만들고,
+네이버 블로그 `education_blog`의 공개 게시물을 읽어 Threads 계정 `money.ybrief`용 초안을 만들고,
 별도 Notion 승인 큐에서 승인된 글만 예약 시각에 공식 Threads API로 게시하는 Python 패키지입니다.
 
 ## 안전 경계
@@ -8,7 +8,9 @@
 - LLM은 초안 생성과 검수만 수행하며 Notion이나 Threads에 직접 쓰지 않습니다.
 - `초안`을 사용자가 `승인`으로 변경하기 전에는 게시되지 않습니다.
 - 게시 완료 글의 원문이 바뀌어도 재게시하지 않습니다.
-- 기존 `블로그자동화` 발행 DB와 코드를 사용하거나 수정하지 않습니다.
+- 기존 티스토리 게시 기록과 `TistorySource`는 호환성을 위해 보존하지만 자동 수집·예약·게시
+  대상에서는 제외합니다.
+- 네이버는 공개 글을 읽기만 하며 네이버 작성·수정·삭제 기능은 제공하지 않습니다.
 
 ## 설치
 
@@ -28,10 +30,10 @@ Copy-Item .env.example .env
 ## 운영 명령
 
 ```powershell
-# 첫 도입 시 최신 10건을 승인 큐에 생성
+# 네이버 최신 10건을 승인 큐에 생성
 .\.venv\Scripts\python.exe -m sns_harness sync --backfill 10
 
-# 이후 최근 48시간에 발행된 신규 글만 동기화
+# 네이버 신규 글 동기화(--source naver가 기본값)
 .\.venv\Scripts\python.exe -m sns_harness sync
 
 # 승인된 항목의 빈 예약시각을 배정하고, 도래한 항목 최대 1건 게시
@@ -41,5 +43,9 @@ Copy-Item .env.example .env
 .\.venv\Scripts\python.exe -m sns_harness sync --dry-run
 .\.venv\Scripts\python.exe -m sns_harness publish-due --dry-run
 ```
+
+GitHub Actions 정기·수동 동기화는 네이버만 수집합니다. 초안에는 해당 네이버 원문의 canonical
+URL이 포함되며, 사람이 상태를 `승인`으로 바꾼 네이버 항목만 예약·게시됩니다. 기존
+`--source tistory` CLI 선택지는 과거 데이터 점검 호환용으로만 남아 있습니다.
 
 운영 준비와 장애 복구는 [RUNBOOK](docs/RUNBOOK.md)을 따릅니다.

@@ -26,8 +26,14 @@ class QueueStatus(StrEnum):
     ERROR = "오류"
 
 
+class SourceKind(StrEnum):
+    TISTORY = "tistory"
+    NAVER = "naver"
+
+
 class SourcePost(BaseModel):
-    tistory_id: str
+    source: SourceKind = SourceKind.TISTORY
+    source_id: str
     url: str
     title: str
     content: str
@@ -36,6 +42,25 @@ class SourcePost(BaseModel):
     description: str = ""
     image_url: str | None = None
     tags: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_legacy_tistory_id(cls, value: Any) -> Any:
+        if isinstance(value, dict) and "source_id" not in value and "tistory_id" in value:
+            value = dict(value)
+            value["source_id"] = value["tistory_id"]
+        return value
+
+    @property
+    def source_key(self) -> str:
+        if self.source is SourceKind.NAVER:
+            return f"naver:{self.source_id}"
+        return self.source_id
+
+    @property
+    def tistory_id(self) -> str:
+        """Compatibility accessor for the original Tistory-only interface."""
+        return self.source_id
 
     @property
     def source_hash(self) -> str:
@@ -95,7 +120,7 @@ class QueueItem(BaseModel):
     page_id: str
     status: QueueStatus
     source_url: str
-    tistory_id: str
+    source_key: str
     source_hash: str
     title: str
     draft: ThreadsDraft
@@ -104,6 +129,19 @@ class QueueItem(BaseModel):
     threads_ids: list[str] = Field(default_factory=list)
     retry_count: int = 0
     error: str = ""
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_legacy_tistory_id(cls, value: Any) -> Any:
+        if isinstance(value, dict) and "source_key" not in value and "tistory_id" in value:
+            value = dict(value)
+            value["source_key"] = value["tistory_id"]
+        return value
+
+    @property
+    def tistory_id(self) -> str:
+        """Compatibility accessor for callers that still use the legacy name."""
+        return self.source_key
 
 
 URL_RE = re.compile(r"https?://\S+")

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "j2g-sns-harness"
 version = "0.1.0"
-description = "Tistory to Threads approval-first publishing harness"
+description = "Tistory and Naver to Threads approval-first publishing harness"
 requires-python = ">=3.11"
 dependencies = [
   "beautifulsoup4>=4.12,<5",

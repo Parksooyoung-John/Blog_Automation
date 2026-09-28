@@ -37,6 +37,11 @@ PROPERTY_TYPES = {
     "재시도횟수": "number",
 }
 
+NAVER_SOURCE_FILTER = {
+    "property": "TistoryID",
+    "rich_text": {"starts_with": "naver:"},
+}
+
 
 class NotionQueue:
     def __init__(
@@ -76,11 +81,15 @@ class NotionQueue:
                 )
         return errors
 
-    def find_by_tistory_id(self, tistory_id: str) -> QueueItem | None:
+    def find_by_source_key(self, source_key: str) -> QueueItem | None:
         pages = self._query(
-            {"property": "TistoryID", "rich_text": {"equals": tistory_id}}, page_size=1
+            {"property": "TistoryID", "rich_text": {"equals": source_key}}, page_size=1
         )
         return self._to_item(pages[0]) if pages else None
+
+    def find_by_tistory_id(self, tistory_id: str) -> QueueItem | None:
+        """Compatibility wrapper for the legacy Tistory-only interface."""
+        return self.find_by_source_key(tistory_id)
 
     def create(self, source: SourcePost, review: ReviewResult) -> QueueItem:
         status = QueueStatus.DRAFT if review.approved else QueueStatus.HOLD
@@ -111,6 +120,7 @@ class NotionQueue:
                 "and": [
                     {"property": "상태", "select": {"equals": QueueStatus.APPROVED.value}},
                     {"property": "예약시각", "date": {"is_empty": True}},
+                    NAVER_SOURCE_FILTER,
                 ]
             },
             sorts=[{"timestamp": "created_time", "direction": "ascending"}],
@@ -119,7 +129,12 @@ class NotionQueue:
 
     def occupied_schedule_times(self, after: datetime) -> set[datetime]:
         pages = self._query(
-            {"property": "예약시각", "date": {"on_or_after": after.isoformat()}},
+            {
+                "and": [
+                    {"property": "예약시각", "date": {"on_or_after": after.isoformat()}},
+                    NAVER_SOURCE_FILTER,
+                ]
+            },
         )
         result: set[datetime] = set()
         for page in pages:
@@ -148,6 +163,7 @@ class NotionQueue:
                         ]
                     },
                     {"property": "예약시각", "date": {"on_or_before": now.isoformat()}},
+                    NAVER_SOURCE_FILTER,
                 ]
             },
             sorts=[{"property": "예약시각", "direction": "ascending"}],
@@ -156,7 +172,7 @@ class NotionQueue:
         return [self._to_item(page) for page in pages[:limit]]
 
     def claim(self, item: QueueItem) -> bool:
-        current = self.find_by_tistory_id(item.tistory_id)
+        current = self.find_by_source_key(item.source_key)
         if not current:
             return False
         if current.status is QueueStatus.PUBLISHING:
@@ -208,7 +224,7 @@ class NotionQueue:
             "이름": self._title(source.title),
             "상태": self._select(status.value),
             "원문URL": {"url": source.url},
-            "TistoryID": self._rich(source.tistory_id),
+            "TistoryID": self._rich(source.source_key),
             "원문발행일": {"date": {"start": source.published_at.isoformat()}},
             "원문해시": self._rich(source.source_hash),
             "형식": self._select(draft.format.value),
@@ -269,7 +285,7 @@ class NotionQueue:
             page_id=page["id"],
             status=QueueStatus(self._select_name(props.get("상태", {}))),
             source_url=str(props.get("원문URL", {}).get("url") or ""),
-            tistory_id=self._plain(props.get("TistoryID", {})),
+            source_key=self._plain(props.get("TistoryID", {})),
             source_hash=self._plain(props.get("원문해시", {})),
             title=self._plain(props.get("이름", {})),
             draft=ThreadsDraft(

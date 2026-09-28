@@ -64,7 +64,10 @@ class HarnessOrchestrator:
                 stats["skipped"] += 1
                 continue
 
-            existing = self.queue.find_by_tistory_id(source_post.tistory_id)
+            finder = getattr(self.queue, "find_by_source_key", None)
+            if finder is None:
+                finder = self.queue.find_by_tistory_id
+            existing = finder(source_post.source_key)
             retry_hold = bool(
                 backfill
                 and existing

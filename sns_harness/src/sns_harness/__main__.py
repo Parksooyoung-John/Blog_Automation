@@ -13,17 +13,20 @@ from sns_harness.config import Settings, get_settings
 from sns_harness.orchestrator import HarnessOrchestrator
 from sns_harness.publishers.threads import ThreadsPublisher
 from sns_harness.queues.notion import NotionQueue
+from sns_harness.sources.naver import NaverSource
+from sns_harness.sources.router import PublishSourceRouter
 from sns_harness.sources.tistory import TistorySource
 
 
 def parser() -> argparse.ArgumentParser:
-    root = argparse.ArgumentParser(description="Tistory to Threads publishing harness")
+    root = argparse.ArgumentParser(description="Blog to Threads publishing harness")
     commands = root.add_subparsers(dest="command", required=True)
 
     validate = commands.add_parser("validate-config")
     validate.add_argument("--for-command", choices=("sync", "publish", "all"), default="all")
 
     sync = commands.add_parser("sync")
+    sync.add_argument("--source", choices=("tistory", "naver"), default="naver")
     sync.add_argument("--backfill", type=int, default=None, metavar="N")
     sync.add_argument("--dry-run", action="store_true")
 
@@ -88,10 +91,16 @@ def main(argv: list[str] | None = None) -> int:
 
     queue = notion_queue(settings)
     if args.command == "sync":
-        source = TistorySource(
-            settings.blog_base_url,
-            timeout=settings.request_timeout_seconds,
-        )
+        if args.source == "naver":
+            source = NaverSource(
+                settings.naver_blog_id,
+                timeout=settings.request_timeout_seconds,
+            )
+        else:
+            source = TistorySource(
+                settings.blog_base_url,
+                timeout=settings.request_timeout_seconds,
+            )
         writer = None
         reviewer = None
         if not args.dry_run:
@@ -112,9 +121,15 @@ def main(argv: list[str] | None = None) -> int:
             dry_run=args.dry_run,
         )
     else:
-        source = TistorySource(
-            settings.blog_base_url,
-            timeout=settings.request_timeout_seconds,
+        source = PublishSourceRouter(
+            TistorySource(
+                settings.blog_base_url,
+                timeout=settings.request_timeout_seconds,
+            ),
+            NaverSource(
+                settings.naver_blog_id,
+                timeout=settings.request_timeout_seconds,
+            ),
         )
         orchestrator = HarnessOrchestrator(source, None, None, queue)
         publisher = ThreadsPublisher(

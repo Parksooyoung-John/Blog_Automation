@@ -36,6 +36,31 @@ h2 {{ font-size: 30px; color: #1a1a1a; margin-bottom: 6px; letter-spacing: -0.5p
 .seg b {{ font-size: 18px; font-weight: 700; }}
 .legend {{ display: flex; gap: 22px; font-size: 15px; color: #555; margin-top: 4px; }}
 .legend i {{ display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; }}
+
+/* 계산 흐름(공식) 카드 — 단계를 화살표로 잇는다 */
+.flow {{ display: flex; align-items: stretch; gap: 10px; margin: 18px 0 8px; }}
+.flow .step {{ flex: 1; border-radius: 16px; padding: 22px 14px; text-align: center;
+               background: linear-gradient(180deg, #f8fafc 0%, #eef1f5 100%);
+               border: 1px solid #e8ebef; }}
+.flow .step .k {{ font-size: 13px; font-weight: 700; color: #1b64da; letter-spacing: .3px; }}
+.flow .step .v {{ font-size: 23px; font-weight: 800; color: #1a1a1a; margin-top: 8px; line-height: 1.25; }}
+.flow .step .d {{ font-size: 13px; color: #868e96; margin-top: 6px; }}
+.flow .arrow {{ display: flex; align-items: center; font-size: 24px; color: #ced4da; font-weight: 700; }}
+.range {{ display: flex; gap: 12px; margin: 4px 0 14px; }}
+.range .pill {{ flex: 1; border-radius: 14px; padding: 16px 18px; color: #fff; }}
+.range .pill .t {{ font-size: 14px; opacity: .9; font-weight: 600; }}
+.range .pill .n {{ font-size: 26px; font-weight: 800; margin-top: 4px; }}
+.range .gap {{ text-align: center; align-self: center; font-size: 14px; color: #999; min-width: 90px; }}
+
+/* 예시 비교 카드 — 세 금액을 나란히 */
+.exgrid {{ display: flex; gap: 14px; margin: 6px 0 10px; }}
+.exgrid .ex {{ flex: 1; border-radius: 16px; padding: 20px 16px; background: #fff;
+               border: 1px solid #eceef1; box-shadow: 0 3px 14px rgba(20,30,50,.06); }}
+.exgrid .ex .badge {{ display: inline-block; padding: 5px 12px; border-radius: 20px;
+                       font-size: 13px; font-weight: 700; color: #fff; }}
+.exgrid .ex .pay {{ font-size: 15px; color: #868e96; margin-top: 12px; }}
+.exgrid .ex .amt {{ font-size: 25px; font-weight: 800; color: #1a1a1a; margin-top: 3px; }}
+.exgrid .ex .note {{ font-size: 12.5px; color: #adb5bd; margin-top: 10px; line-height: 1.5; }}
 """
 
 
@@ -120,6 +145,48 @@ CARDS = {
       <div class='row'><span class='tag'>+14일</span><span class='txt'>1차 실업인정일</span><span class='num'>8일분</span></div>
       <div class='row'><span class='tag'>3주 안팎</span><span class='txt'>첫 입금, 상한액 기준</span><span class='num'>544,800원</span></div>
       <p class='foot'>첫 달은 한 달치가 아닙니다. 두 번째 회차부터 4주 단위로 커집니다.</p>
+    """),
+    "13_실업급여계산_공식": card_html("""
+      <h2>구직급여, 계산기는 이렇게 돌아갑니다</h2>
+      <p class='sub'>이직 전 3개월 평균임금 → 60% → 상하한 조정, 세 단계뿐</p>
+      <div class='flow'>
+        <div class='step'><div class='k'>STEP 1</div><div class='v'>3개월 총급여<br>÷ 91일</div><div class='d'>평균임금일액</div></div>
+        <div class='arrow'>→</div>
+        <div class='step'><div class='k'>STEP 2</div><div class='v'>× 60%</div><div class='d'>구직급여 기본값</div></div>
+        <div class='arrow'>→</div>
+        <div class='step'><div class='k'>STEP 3</div><div class='v'>상·하한<br>사이로 조정</div><div class='d'>최종 하루 금액</div></div>
+      </div>
+      <div class='range'>
+        <div class='pill' style='background:#4263eb;'><div class='t'>이보다 낮으면 올림</div><div class='n'>하한 66,048원</div></div>
+        <div class='gap'>차이<br><b>2,052원</b></div>
+        <div class='pill' style='background:#f76707;'><div class='t'>이보다 높으면 내림</div><div class='n'>상한 68,100원</div></div>
+      </div>
+      <p class='foot'>하한은 2026년 최저임금 10,320원 × 80% × 8시간으로 정해집니다.</p>
+    """),
+    "14_실업급여계산_예시표": card_html("""
+      <h2>월급별로 어디에 걸리는지</h2>
+      <p class='sub'>같은 공식, 다른 결과 · 세 가지 월급으로 계산</p>
+      <div class='exgrid'>
+        <div class='ex'>
+          <span class='badge' style='background:#4263eb;'>하한 적용</span>
+          <div class='pay'>월 300만 원</div>
+          <div class='amt'>66,048원 / 일</div>
+          <div class='note'>60% 계산값 59,341원이<br>하한보다 낮아 올림</div>
+        </div>
+        <div class='ex'>
+          <span class='badge' style='background:#12b886;'>그대로 적용</span>
+          <div class='pay'>월 340만 원</div>
+          <div class='amt'>67,253원 / 일</div>
+          <div class='note'>상·하한 사이라<br>계산값 그대로</div>
+        </div>
+        <div class='ex'>
+          <span class='badge' style='background:#f76707;'>상한 적용</span>
+          <div class='pay'>월 500만 원</div>
+          <div class='amt'>68,100원 / 일</div>
+          <div class='note'>60% 계산값 98,901원이<br>상한보다 높아 내림</div>
+        </div>
+      </div>
+      <p class='foot'>300만 원 × 180일 = 11,888,640원. 같은 월급도 가입기간에 따라 수백만 원 차이 납니다.</p>
     """),
 }
 

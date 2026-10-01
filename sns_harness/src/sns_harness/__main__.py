@@ -40,6 +40,10 @@ def parser() -> argparse.ArgumentParser:
     daily.add_argument("--hook", default="")
     daily.add_argument("--operator-note", default="")
     daily.add_argument("--dry-run", action="store_true")
+    auto = commands.add_parser("generate-daily-auto")
+    auto.add_argument("--type", choices=("재테크팁", "질문형"), required=True)
+    auto.add_argument("--slot", required=True, choices=("08:30", "12:30", "16:30", "21:30"))
+    auto.add_argument("--dry-run", action="store_true")
 
     sync = commands.add_parser("sync")
     sync.add_argument("--source", choices=("tistory", "naver"), default="naver")
@@ -132,6 +136,33 @@ def main(argv: list[str] | None = None) -> int:
             publish_slot=args.slot, topic=args.topic, hook_type=args.hook,
             operator_note=args.operator_note,
         )
+        print(json.dumps(
+            {"page_id": item.page_id, "status": item.status.value}, ensure_ascii=False
+        ))
+        return 0
+
+    if args.command == "generate-daily-auto":
+        mode = "generate-daily-auto" if not args.dry_run else "setup-daily-schema"
+        missing = settings.missing_for(mode)
+        if missing:
+            print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
+            return 2
+        source = NaverSource(settings.naver_blog_id, timeout=settings.request_timeout_seconds)
+        url = source.discover(limit=1)[0]
+        post = source.fetch(url)
+        if args.dry_run:
+            print(json.dumps(
+                {"source": post.url, "type": args.type, "slot": args.slot},
+                ensure_ascii=False,
+            ))
+            return 0
+        writer = ThreadsWriter(settings.openai_api_key, settings.openai_model,
+                               settings.prompt_dir / "threads_writer.md")
+        draft = writer.generate_daily(post, args.type)
+        item = notion_queue(settings).create_daily_candidate(
+            title=f"{args.type} · {post.title}", text=draft.text,
+            content_type=args.type, publish_slot=args.slot, topic=draft.topic,
+            hook_type=draft.hook_type.value,)
         print(json.dumps(
             {"page_id": item.page_id, "status": item.status.value}, ensure_ascii=False
         ))

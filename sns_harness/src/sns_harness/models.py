@@ -227,6 +227,12 @@ class ProductDraftContent(BaseModel):
         return value.strip()
 
 
+class DailyDraft(BaseModel):
+    text: str = Field(min_length=1, max_length=480)
+    topic: str = Field(default="", max_length=100)
+    hook_type: HookType = HookType.CURIOSITY
+
+
 class ReviewResult(BaseModel):
     approved: bool
     issues: list[str] = Field(default_factory=list)

@@ -1,0 +1,82 @@
+name: Blog SNS sync
+
+on:
+  schedule:
+    - cron: "0 23,3,7,12 * * *"
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: "Number of latest posts to backfill; leave empty for normal sync"
+        required: false
+        type: string
+      dry_run:
+        description: "Discover candidates without OpenAI or Notion writes"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: blog-sns-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: sns_harness
+    env:
+      BLOG_BASE_URL: https://j2gblog.tistory.com
+      BLOG_ACCOUNT_LABEL: money.ybrief
+      NAVER_BLOG_ID: education_blog
+      OPENAI_MODEL: gpt-5.4-mini
+      TZ: Asia/Seoul
+      DEFAULT_SLOTS: 08:30,12:30,16:30,21:30
+      SYNC_LOOKBACK_HOURS: "48"
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      NOTION_SNS_DATABASE_ID: ${{ secrets.NOTION_SNS_DATABASE_ID }}
+      BACKFILL: ${{ inputs.backfill }}
+      DRY_RUN: ${{ inputs.dry_run }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: sns_harness/pyproject.toml
+      - run: python -m pip install .
+      - name: Sync Naver posts
+        shell: bash
+        run: |
+          args=()
+          if [[ -n "${BACKFILL:-}" ]]; then
+            [[ "$BACKFILL" =~ ^[0-9]+$ ]] || { echo "backfill must be a positive integer"; exit 2; }
+            args+=(--backfill "$BACKFILL")
+          fi
+          if [[ "${DRY_RUN:-false}" == "true" ]]; then
+            args+=(--dry-run)
+          fi
+          python -m sns_harness sync --source naver "${args[@]}"
+      - name: Prepare requested product drafts
+        shell: bash
+        run: |
+          args=()
+          if [[ "${DRY_RUN:-false}" == "true" ]]; then
+            args+=(--dry-run)
+          fi
+          python -m sns_harness prepare-sales "${args[@]}"
+      - name: Generate daily draft
+        if: env.DRY_RUN != 'true'
+        shell: bash
+        run: |
+          hour=$(TZ=Asia/Seoul date +%H)
+          if [[ "$hour" == "08" ]]; then
+            python -m sns_harness generate-daily-auto --type 재테크팁 --slot 08:30
+          elif [[ "$hour" == "16" ]]; then
+            python -m sns_harness generate-daily-auto --type 질문형 --slot 16:30
+          fi

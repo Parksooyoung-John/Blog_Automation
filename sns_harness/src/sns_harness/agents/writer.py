@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from sns_harness.models import (
     URL_RE,
+    DailyDraft,
     ProductDraftContent,
     ProductOffer,
     SourcePost,
@@ -24,6 +25,20 @@ class ThreadsWriter:
         self.sales_instructions = prompt_path.with_name("sales_writer.md").read_text(
             encoding="utf-8"
         )
+        self.daily_instructions = prompt_path.with_name("daily_writer.md").read_text(
+            encoding="utf-8"
+        )
+
+    def generate_daily(self, source: SourcePost, content_type: str) -> DailyDraft:
+        payload = {"content_type": content_type, "title": source.title,
+                   "published_at": source.published_at.isoformat(),
+                   "description": source.description, "content": source.content[:30000]}
+        response = self.client.responses.create(
+            model=self.model, instructions=self.daily_instructions,
+            input=json.dumps(payload, ensure_ascii=False), store=False,
+            text={"format": {"type": "json_schema", "name": "daily_draft",
+                              "strict": True, "schema": strict_json_schema(DailyDraft)}})
+        return DailyDraft.model_validate_json(response.output_text)
 
     def generate(self, source: SourcePost) -> ThreadsDraft:
         payload = {

@@ -147,9 +147,18 @@ class HarnessOrchestrator:
         if not items:
             return 0
         occupied = self.queue.occupied_schedule_times(now)
-        allocated = next_available_slots(now, occupied, slots, len(items), timezone)
-        for item, scheduled_at in zip(items, allocated, strict=True):
+        slot_by_type = {
+            "재테크팁": "08:30",
+            "블로그정보": "12:30",
+            "질문형": "16:30",
+            "운영글": "21:30",
+        }
+        for item in items:
+            preferred = item.publish_slot or slot_by_type.get(item.content_type.value, "12:30")
+            allowed = (preferred,) if preferred in slots else ("12:30",)
+            scheduled_at = next_available_slots(now, occupied, allowed, 1, timezone)[0]
             self.queue.set_schedule(item.page_id, scheduled_at)
+            occupied.add(scheduled_at)
         return len(items)
 
     def prepare_sales(self, *, dry_run: bool = False) -> dict[str, int]:
@@ -239,11 +248,22 @@ class HarnessOrchestrator:
                 item,
                 save_progress=lambda value: self.queue.save_progress(item.page_id, value),
             )
-            self.queue.complete(item.page_id, ids, now)
+            verification = publisher.verify_published(ids[0])
+            self.queue.complete_verified(
+                item.page_id, ids, now, verification["permalink"]
+            )
         except Exception as exc:
             if getattr(exc, "retryable", False):
                 self.queue.retry(item, str(exc))
             else:
                 self.queue.fail(item, str(exc))
             raise
-        return {"scheduled": scheduled, "published": 1, "due": 1}
+        return {
+            "scheduled": scheduled,
+            "published": 1,
+            "due": 1,
+            "checked": 1,
+            "blocked": 0,
+            "failed": 0,
+            "permalink": verification["permalink"],
+        }

@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: 블로그/블로그자동화/sns_harness
+        working-directory: sns_harness
     env:
       TZ: Asia/Seoul
       DEFAULT_SLOTS: 08:30,12:30,16:30,21:30
@@ -41,8 +41,14 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: 블로그/블로그자동화/sns_harness/pyproject.toml
+          cache-dependency-path: sns_harness/pyproject.toml
       - run: python -m pip install .
+      - name: Verify harness version
+        shell: bash
+        run: |
+          version=$(python -c 'import sns_harness; print(sns_harness.__version__)')
+          echo "Harness version: $version"
+          [[ "$version" == "0.2.0" ]] || { echo "Unexpected harness version"; exit 2; }
       - name: Publish one due item
         shell: bash
         run: |
@@ -50,4 +56,9 @@ jobs:
           if [[ "${DRY_RUN:-false}" == "true" ]]; then
             args+=(--dry-run)
           fi
-          python -m sns_harness publish-due "${args[@]}"
+          result=$(python -m sns_harness publish-due "${args[@]}")
+          echo "$result"
+          echo "### Threads publish result" >> "$GITHUB_STEP_SUMMARY"
+          echo '\`\`\`json' >> "$GITHUB_STEP_SUMMARY"
+          echo "$result" >> "$GITHUB_STEP_SUMMARY"
+          echo '\`\`\`' >> "$GITHUB_STEP_SUMMARY"

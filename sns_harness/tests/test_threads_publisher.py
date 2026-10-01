@@ -32,6 +32,36 @@ class FakeSession:
         raise AssertionError((method, url, kwargs))
 
 
+def test_verifies_permalink_and_expected_username() -> None:
+    class VerificationSession(FakeSession):
+        def request(self, method, url, **kwargs):
+            if method == "GET" and url.endswith("/media-1"):
+                return FakeResponse({
+                    "id": "media-1",
+                    "permalink": "https://www.threads.com/@mone.ybrief/post/example",
+                    "username": "mone.ybrief",
+                })
+            return super().request(method, url, **kwargs)
+
+    publisher = ThreadsPublisher("user", "token", session=VerificationSession())
+    result = publisher.verify_published("media-1")
+    assert result["username"] == "mone.ybrief"
+
+
+def test_rejects_post_published_to_unexpected_username() -> None:
+    class WrongAccountSession(FakeSession):
+        def request(self, method, url, **kwargs):
+            return FakeResponse({
+                "id": "media-1",
+                "permalink": "https://www.threads.com/@wrong/post/example",
+                "username": "wrong",
+            })
+
+    publisher = ThreadsPublisher("user", "token", session=WrongAccountSession())
+    with pytest.raises(ThreadsAPIError, match="username mismatch"):
+        publisher.verify_published("media-1")
+
+
 def item(existing_ids=None) -> QueueItem:
     return QueueItem(
         page_id="page",

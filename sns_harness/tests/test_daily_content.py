@@ -1,9 +1,12 @@
+from datetime import UTC, datetime
+
 from sns_harness.models import (
     ContentType,
     HookType,
     QueueItem,
     QueueStatus,
     ThreadsDraft,
+    manual_source_key,
     validate_content_contract,
 )
 
@@ -45,3 +48,11 @@ def test_operator_with_note_and_edit_is_valid() -> None:
         )
     )
     assert issues == []
+
+
+def test_manual_source_key_is_stable_and_namespaced() -> None:
+    created_at = datetime(2026, 10, 2, tzinfo=UTC)
+    first = manual_source_key("질문형", "ISA 질문", created_at)
+    second = manual_source_key("질문형", "ISA 질문", created_at)
+    assert first == second
+    assert first.startswith("manual:2026-10-02:질문형:")

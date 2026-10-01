@@ -171,6 +171,16 @@ def grapheme_len(value: str) -> int:
     return len(regex.findall(r"\X", value))
 
 
+def manual_source_key(content_type: str, text: str, created_at: datetime) -> str:
+    digest = hashlib.sha256(text.strip().encode("utf-8")).hexdigest()[:12]
+    return f"manual:{created_at.date().isoformat()}:{content_type}:{digest}"
+
+
+def draft_content_hash(draft: ThreadsDraft) -> str:
+    value = "\n\n".join(post.strip() for post in draft.posts)
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
 class ThreadsDraft(BaseModel):
     format: PostFormat
     posts: list[str]

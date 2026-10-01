@@ -2,7 +2,7 @@ name: Blog SNS sync
 
 on:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "0 23,3,7,12 * * *"
   workflow_dispatch:
     inputs:
       backfill:
@@ -28,13 +28,14 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: 블로그/블로그자동화/sns_harness
+        working-directory: sns_harness
     env:
       BLOG_BASE_URL: https://j2gblog.tistory.com
       BLOG_ACCOUNT_LABEL: money.ybrief
+      NAVER_BLOG_ID: education_blog
       OPENAI_MODEL: gpt-5.4-mini
       TZ: Asia/Seoul
-      DEFAULT_SLOTS: 08:30,18:30
+      DEFAULT_SLOTS: 08:30,12:30,16:30,21:30
       SYNC_LOOKBACK_HOURS: "48"
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
@@ -49,9 +50,15 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: 블로그/블로그자동화/sns_harness/pyproject.toml
+          cache-dependency-path: sns_harness/pyproject.toml
       - run: python -m pip install .
-      - name: Sync Tistory posts
+      - name: Verify harness version
+        shell: bash
+        run: |
+          version=$(python -c 'import sns_harness; print(sns_harness.__version__)')
+          echo "Harness version: $version"
+          [[ "$version" == "0.2.0" ]] || { echo "Unexpected harness version"; exit 2; }
+      - name: Sync Naver posts
         shell: bash
         run: |
           args=()
@@ -62,7 +69,22 @@ jobs:
           if [[ "${DRY_RUN:-false}" == "true" ]]; then
             args+=(--dry-run)
           fi
-          python -m sns_harness sync "${args[@]}"
+          python -m sns_harness sync --source naver "${args[@]}"
+      - name: Retry error drafts
+        if: env.DRY_RUN != 'true'
+        run: python -m sns_harness sync --source naver --retry-errors
+      - name: Generate daily draft
+        if: env.DRY_RUN != 'true'
+        shell: bash
+        run: |
+          hour=$(TZ=Asia/Seoul date +%H)
+          if [[ "$hour" == "08" ]]; then
+            python -m sns_harness generate-daily-auto --type 재테크팁 --slot 08:30
+          elif [[ "$hour" == "16" ]]; then
+            python -m sns_harness generate-daily-auto --type 질문형 --slot 16:30
+          elif [[ "$hour" == "21" ]]; then
+            python -m sns_harness generate-daily-auto --type 운영글 --slot 21:30
+          fi
           if [[ "${DRY_RUN:-false}" != "true" ]]; then
             python -m sns_harness sync --retry-errors
           fi

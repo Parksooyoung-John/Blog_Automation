@@ -22,12 +22,14 @@ class ThreadsPublisher:
         user_id: str,
         access_token: str,
         *,
+        expected_username: str = "mone.ybrief",
         timeout: float = 20,
         session: requests.Session | None = None,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self.user_id = user_id
         self.access_token = access_token
+        self.expected_username = expected_username
         self.timeout = timeout
         self.session = session or requests.Session()
         self.sleep = sleep
@@ -101,6 +103,27 @@ class ThreadsPublisher:
             if str(row.get("text") or "").strip() == text.strip():
                 return str(row["id"])
         return None
+
+    def verify_published(self, media_id: str) -> dict[str, str]:
+        payload = self._request(
+            "GET",
+            f"/{media_id}",
+            params={
+                "fields": "id,permalink,username,timestamp",
+                "access_token": self.access_token,
+            },
+        )
+        permalink = str(payload.get("permalink") or "")
+        username = str(payload.get("username") or "")
+        if str(payload.get("id") or "") != media_id:
+            raise ThreadsAPIError("Threads verification returned a different post id")
+        if username != self.expected_username:
+            raise ThreadsAPIError(
+                f"Threads verification username mismatch: {username!r}"
+            )
+        if not permalink:
+            raise ThreadsAPIError("Threads verification response has no permalink")
+        return {"id": media_id, "permalink": permalink, "username": username}
 
     def _create_and_publish(
         self,

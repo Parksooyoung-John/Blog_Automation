@@ -246,6 +246,7 @@ def main(argv: list[str] | None = None) -> int:
         publisher = ThreadsPublisher(
             settings.threads_user_id,
             settings.threads_access_token,
+            expected_username=settings.blog_account_label,
             timeout=settings.request_timeout_seconds,
         )
         result = orchestrator.publish_due(
@@ -283,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
         result = orchestrator.prepare_sales(dry_run=args.dry_run)
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     if args.command == "publish-due" and not args.dry_run:
-        if result.get("published", 0) != 1:
+        if result.get("due", 0) > result.get("published", 0):
             return 1
     return 0
 

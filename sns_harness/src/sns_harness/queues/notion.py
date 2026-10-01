@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import requests
@@ -12,6 +12,8 @@ from sns_harness.models import (
     ReviewResult,
     SourcePost,
     ThreadsDraft,
+    draft_content_hash,
+    manual_source_key,
     threads_ids_from_text,
     threads_ids_to_text,
 )
@@ -41,9 +43,11 @@ PROPERTY_TYPES = {
     "추천근거": "rich_text",
     "광고고지": "rich_text",
     "상품해시": "rich_text",
+    "게시물URL": "url",
 }
 
 DAILY_PROPERTY_DEFINITIONS = {
+    "게시물URL": {"url": {}},
     "콘텐츠유형": {
         "select": {"options": [{"name": n} for n in ("블로그정보", "재테크팁", "질문형", "운영글")]}
     },
@@ -184,14 +188,17 @@ class NotionQueue:
     def create_daily_candidate(self, *, title: str, text: str, content_type: str,
                                publish_slot: str, topic: str = "", hook_type: str = "",
                                operator_note: str = "") -> QueueItem:
+        draft = ThreadsDraft(format=PostFormat.SINGLE, posts=[text], topic_tag=topic or None)
+        source_key = manual_source_key(content_type, text, datetime.now(UTC))
         properties = {
             "이름": self._title(title), "상태": self._select(QueueStatus.DRAFT.value),
-            "원문URL": {"url": None}, "TistoryID": self._rich(""),
+            "원문URL": {"url": None}, "TistoryID": self._rich(source_key),
             "형식": self._select(PostFormat.SINGLE.value), "첫게시물": self._rich(text),
             "주제태그": self._rich(topic), "ThreadsIDs": self._rich("[]"),
             "오류": self._rich(""), "재시도횟수": {"number": 0},
             "콘텐츠유형": self._select(content_type), "게시슬롯": self._rich(publish_slot),
-            "원문키": self._rich(""), "주제": self._rich(topic),
+            "원문키": self._rich(source_key), "주제": self._rich(topic),
+            "원문해시": self._rich(draft_content_hash(draft)),
             "블로그링크사용": {"checkbox": False}, "운영메모": self._rich(operator_note),
             "자동생성여부": {"checkbox": True},
             "사람수정필요": {"checkbox": content_type == "운영글"},
@@ -325,14 +332,26 @@ class NotionQueue:
         self._patch(page_id, {"ThreadsIDs": self._rich(threads_ids_to_text(threads_ids))})
 
     def complete(self, page_id: str, threads_ids: list[str], published_at: datetime) -> None:
+        self.complete_verified(page_id, threads_ids, published_at, "")
+
+    def complete_verified(
+        self,
+        page_id: str,
+        threads_ids: list[str],
+        published_at: datetime,
+        permalink: str,
+    ) -> None:
+        properties = {
+            "상태": self._select(QueueStatus.PUBLISHED.value),
+            "ThreadsIDs": self._rich(threads_ids_to_text(threads_ids)),
+            "게시시각": {"date": {"start": published_at.isoformat()}},
+            "오류": self._rich(""),
+        }
+        if permalink:
+            properties["게시물URL"] = {"url": permalink}
         self._patch(
             page_id,
-            {
-                "상태": self._select(QueueStatus.PUBLISHED.value),
-                "ThreadsIDs": self._rich(threads_ids_to_text(threads_ids)),
-                "게시시각": {"date": {"start": published_at.isoformat()}},
-                "오류": self._rich(""),
-            },
+            properties,
         )
 
     def fail(self, item: QueueItem, message: str) -> None:

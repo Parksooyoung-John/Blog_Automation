@@ -206,6 +206,15 @@ class NotionQueue:
         response.raise_for_status()
         return self._to_item(response.json())
 
+    def pending_operator_notes(self) -> list[QueueItem]:
+        pages = self._query({
+            "and": [
+                {"property": "운영메모", "rich_text": {"is_not_empty": True}},
+                {"property": "상태", "select": {"equals": QueueStatus.DRAFT.value}},
+            ]
+        })
+        return [self._to_item(page) for page in pages]
+
     def replace_draft(self, page_id: str, source: SourcePost, review: ReviewResult) -> None:
         status = QueueStatus.DRAFT if review.approved else QueueStatus.HOLD
         properties = self._draft_properties(source, review.reviewed_draft, status)
@@ -368,6 +377,15 @@ class NotionQueue:
             "ThreadsIDs": self._rich("[]"),
             "오류": self._rich(""),
             "재시도횟수": {"number": 0},
+            "콘텐츠유형": self._select("블로그정보"),
+            "게시슬롯": self._rich("12:30"),
+            "원문키": self._rich(source.source_key),
+            "주제": self._rich(draft.topic_tag or ""),
+            "블로그링크사용": {"checkbox": True},
+            "자동생성여부": {"checkbox": True},
+            "사람수정필요": {"checkbox": False},
+            "중복검사키": self._rich(f"블로그정보:{source.source_key}"),
+            "성과판정": self._select("미측정"),
         }
 
     def _query(

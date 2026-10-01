@@ -41,7 +41,7 @@ def parser() -> argparse.ArgumentParser:
     daily.add_argument("--operator-note", default="")
     daily.add_argument("--dry-run", action="store_true")
     auto = commands.add_parser("generate-daily-auto")
-    auto.add_argument("--type", choices=("재테크팁", "질문형"), required=True)
+    auto.add_argument("--type", choices=("재테크팁", "질문형", "운영글"), required=True)
     auto.add_argument("--slot", required=True, choices=("08:30", "12:30", "16:30", "21:30"))
     auto.add_argument("--dry-run", action="store_true")
 
@@ -147,6 +147,26 @@ def main(argv: list[str] | None = None) -> int:
         if missing:
             print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
             return 2
+        queue = notion_queue(settings)
+        if args.type == "운영글":
+            notes = queue.pending_operator_notes()
+            if not notes:
+                print(json.dumps({"created": 0, "reason": "운영메모 없음"}, ensure_ascii=False))
+                return 0
+            if args.dry_run:
+                print(json.dumps({"candidates": len(notes), "type": args.type}, ensure_ascii=False))
+                return 0
+            created = []
+            for note in notes:
+                item = queue.create_daily_candidate(
+                    title=f"운영글 · {note.title}", text=note.operator_note,
+                    content_type=args.type, publish_slot=args.slot,
+                    topic=note.topic, hook_type="경험/공감",
+                    operator_note=note.operator_note,
+                )
+                created.append(item.page_id)
+            print(json.dumps({"created": len(created), "page_ids": created}, ensure_ascii=False))
+            return 0
         source = NaverSource(settings.naver_blog_id, timeout=settings.request_timeout_seconds)
         url = source.discover(limit=1)[0]
         post = source.fetch(url)
@@ -159,7 +179,7 @@ def main(argv: list[str] | None = None) -> int:
         writer = ThreadsWriter(settings.openai_api_key, settings.openai_model,
                                settings.prompt_dir / "threads_writer.md")
         draft = writer.generate_daily(post, args.type)
-        item = notion_queue(settings).create_daily_candidate(
+        item = queue.create_daily_candidate(
             title=f"{args.type} · {post.title}", text=draft.text,
             content_type=args.type, publish_slot=args.slot, topic=draft.topic,
             hook_type=draft.hook_type.value,)

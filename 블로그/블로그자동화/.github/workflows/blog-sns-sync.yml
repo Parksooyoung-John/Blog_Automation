@@ -79,4 +79,6 @@ jobs:
             python -m sns_harness generate-daily-auto --type 재테크팁 --slot 08:30
           elif [[ "$hour" == "16" ]]; then
             python -m sns_harness generate-daily-auto --type 질문형 --slot 16:30
+          elif [[ "$hour" == "21" ]]; then
+            python -m sns_harness generate-daily-auto --type 운영글 --slot 21:30
           fi

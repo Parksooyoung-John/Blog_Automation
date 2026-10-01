@@ -41,6 +41,22 @@ class Readiness(StrEnum):
     AFFILIATE_CHANNEL_ONLY = "affiliate-channel-only"
 
 
+class ContentType(StrEnum):
+    BLOG_INFO = "블로그정보"
+    MONEY_TIP = "재테크팁"
+    QUESTION = "질문형"
+    OPERATOR = "운영글"
+
+
+class HookType(StrEnum):
+    CURIOSITY = "궁금증"
+    NUMBER = "숫자"
+    MISTAKE = "실수"
+    COMPARISON = "비교"
+    QUESTION = "질문"
+    EMPATHY = "경험/공감"
+
+
 class OfficialSource(BaseModel):
     claim: str = Field(min_length=1, max_length=500)
     url: str = Field(min_length=1, max_length=2000)
@@ -243,6 +259,16 @@ class QueueItem(BaseModel):
     official_sources: list[OfficialSource] = Field(default_factory=list)
     readiness: Readiness = Readiness.READY
     readiness_reason: str = ""
+    content_type: ContentType = ContentType.BLOG_INFO
+    publish_slot: str = ""
+    topic: str = ""
+    hook_type: HookType | None = None
+    blog_link_used: bool = False
+    operator_note: str = ""
+    auto_generated: bool = True
+    human_edit_required: bool = False
+    dedupe_key: str = ""
+    performance_judgement: str = ""
 
     @model_validator(mode="before")
     @classmethod
@@ -398,6 +424,29 @@ def classify_readiness(
     if not source.official_sources or source.information_date is None:
         return Readiness.INSUFFICIENT_EVIDENCE, "공식 출처와 정보 기준일이 필요합니다."
     return Readiness.READY, "필수 근거와 금융 주제 조건을 충족했습니다."
+
+
+def validate_content_contract(item: QueueItem) -> list[str]:
+    """Validate non-blog daily content before it can be approved."""
+    text = "\n".join(item.draft.posts)
+    issues: list[str] = []
+    if item.content_type is ContentType.MONEY_TIP and not 100 <= grapheme_len(text) <= 220:
+        issues.append("재테크팁은 100~220자여야 합니다.")
+    if item.content_type is ContentType.QUESTION:
+        if not 80 <= grapheme_len(text) <= 180:
+            issues.append("질문형은 80~180자여야 합니다.")
+        if text.count("?") + text.count("？") != 1:
+            issues.append("질문형은 질문을 정확히 1개 포함해야 합니다.")
+        if URL_RE.search(text):
+            issues.append("질문형에는 링크를 넣을 수 없습니다.")
+    if item.content_type is ContentType.OPERATOR:
+        if not item.operator_note.strip():
+            issues.append("운영글은 운영메모가 필요합니다.")
+        if not item.human_edit_required:
+            issues.append("운영글은 사람 수정이 필요합니다.")
+        if URL_RE.search(text):
+            issues.append("운영글에는 기본적으로 링크를 넣을 수 없습니다.")
+    return issues
 
 
 def threads_ids_to_text(ids: list[str]) -> str:

@@ -27,7 +27,7 @@ jobs:
         working-directory: 블로그/블로그자동화/sns_harness
     env:
       TZ: Asia/Seoul
-      DEFAULT_SLOTS: 08:30,18:30
+      DEFAULT_SLOTS: 08:30,12:30,16:30,21:30
       NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
       NOTION_SNS_DATABASE_ID: ${{ secrets.NOTION_SNS_DATABASE_ID }}
       THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}

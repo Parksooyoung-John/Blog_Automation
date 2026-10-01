@@ -30,6 +30,9 @@ Copy-Item .env.example .env
 
 ## 운영 명령
 
+기본 예약 슬롯은 KST 08:30(재테크팁), 12:30(블로그정보), 16:30(질문형),
+21:30(운영글)입니다. 운영글은 운영메모와 사람 수정이 없으면 승인할 수 없습니다.
+
 ```powershell
 # 네이버 최신 10건을 승인 큐에 생성
 .\.venv\Scripts\python.exe -m sns_harness sync --backfill 10

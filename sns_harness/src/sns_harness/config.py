@@ -33,7 +33,9 @@ class Settings(BaseSettings):
     threads_user_id: str = ""
     threads_access_token: str = ""
     timezone: str = Field("Asia/Seoul", alias="TZ")
-    default_slots: Annotated[tuple[str, ...], NoDecode] = ("08:30", "18:30")
+    default_slots: Annotated[tuple[str, ...], NoDecode] = (
+        "08:30", "12:30", "16:30", "21:30"
+    )
     sync_lookback_hours: int = 48
     request_timeout_seconds: float = 20.0
     prompt_dir: Path = Field(default_factory=_default_prompt_dir)

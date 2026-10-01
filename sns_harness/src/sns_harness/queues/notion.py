@@ -181,6 +181,31 @@ class NotionQueue:
         response.raise_for_status()
         return self._to_item(response.json())
 
+    def create_daily_candidate(self, *, title: str, text: str, content_type: str,
+                               publish_slot: str, topic: str = "", hook_type: str = "",
+                               operator_note: str = "") -> QueueItem:
+        properties = {
+            "이름": self._title(title), "상태": self._select(QueueStatus.DRAFT.value),
+            "원문URL": {"url": None}, "TistoryID": self._rich(""),
+            "형식": self._select(PostFormat.SINGLE.value), "첫게시물": self._rich(text),
+            "주제태그": self._rich(topic), "ThreadsIDs": self._rich("[]"),
+            "오류": self._rich(""), "재시도횟수": {"number": 0},
+            "콘텐츠유형": self._select(content_type), "게시슬롯": self._rich(publish_slot),
+            "원문키": self._rich(""), "주제": self._rich(topic),
+            "블로그링크사용": {"checkbox": False}, "운영메모": self._rich(operator_note),
+            "자동생성여부": {"checkbox": True},
+            "사람수정필요": {"checkbox": content_type == "운영글"},
+            "중복검사키": self._rich(f"{content_type}:{topic}:{text[:80]}"),
+            "성과판정": self._select("미측정"),
+        }
+        if hook_type:
+            properties["Hook유형"] = self._select(hook_type)
+        response = self.session.post(f"{self.base_url}/pages",
+            json={"parent": {"database_id": self.database_id}, "properties": properties},
+            timeout=self.timeout)
+        response.raise_for_status()
+        return self._to_item(response.json())
+
     def replace_draft(self, page_id: str, source: SourcePost, review: ReviewResult) -> None:
         status = QueueStatus.DRAFT if review.approved else QueueStatus.HOLD
         properties = self._draft_properties(source, review.reviewed_draft, status)

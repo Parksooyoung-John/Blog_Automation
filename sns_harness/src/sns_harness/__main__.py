@@ -31,6 +31,16 @@ def parser() -> argparse.ArgumentParser:
 
     commands.add_parser("setup-daily-schema")
 
+    daily = commands.add_parser("generate-daily")
+    daily.add_argument("--type", choices=("재테크팁", "질문형", "운영글"), required=True)
+    daily.add_argument("--text", required=True)
+    daily.add_argument("--title", default="MoneyBrief 하루 콘텐츠")
+    daily.add_argument("--slot", required=True, choices=("08:30", "12:30", "16:30", "21:30"))
+    daily.add_argument("--topic", default="")
+    daily.add_argument("--hook", default="")
+    daily.add_argument("--operator-note", default="")
+    daily.add_argument("--dry-run", action="store_true")
+
     sync = commands.add_parser("sync")
     sync.add_argument("--source", choices=("tistory", "naver"), default="naver")
     sync.add_argument("--backfill", type=int, default=None, metavar="N")
@@ -101,6 +111,30 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         added = notion_queue(settings).ensure_daily_schema()
         print(json.dumps({"added": added}, ensure_ascii=False, sort_keys=True))
+        return 0
+
+    if args.command == "generate-daily":
+        missing = settings.missing_for("setup-daily-schema")
+        if missing:
+            print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
+            return 2
+        if args.type == "운영글" and not args.operator_note:
+            print("운영글은 --operator-note가 필요합니다.", file=sys.stderr)
+            return 2
+        if args.dry_run:
+            print(json.dumps(
+                {"dry_run": True, "type": args.type, "slot": args.slot},
+                ensure_ascii=False,
+            ))
+            return 0
+        item = notion_queue(settings).create_daily_candidate(
+            title=args.title, text=args.text, content_type=args.type,
+            publish_slot=args.slot, topic=args.topic, hook_type=args.hook,
+            operator_note=args.operator_note,
+        )
+        print(json.dumps(
+            {"page_id": item.page_id, "status": item.status.value}, ensure_ascii=False
+        ))
         return 0
 
     if args.command == "sync":

@@ -188,6 +188,61 @@ CARDS = {
       </div>
       <p class='foot'>300만 원 × 180일 = 11,888,640원. 같은 월급도 가입기간에 따라 수백만 원 차이 납니다.</p>
     """),
+    "15_국민연금_수령나이표": card_html("""
+      <h2>출생연도별 국민연금 수령나이</h2>
+      <p class='sub'>노령연금 지급개시연령 · 국민연금법 제61조</p>
+      <div class='row'><span class='tag'>~1952년생</span><span class='txt'>60세부터</span></div>
+      <div class='row'><span class='tag'>1953~56년생</span><span class='txt'>61세부터</span></div>
+      <div class='row'><span class='tag'>1957~60년생</span><span class='txt'>62세부터</span></div>
+      <div class='row'><span class='tag'>1961~64년생</span><span class='txt'>63세부터</span></div>
+      <div class='row'><span class='tag'>1965~68년생</span><span class='txt'>64세부터</span></div>
+      <div class='row'><span class='tag'>1969년생~</span><span class='txt'>65세부터</span></div>
+      <p class='foot'>출생연도가 늦을수록 수령 나이가 1세씩 늦춰지도록 단계적으로 조정됩니다.</p>
+    """),
+    "16_국민연금_조기연기비교": card_html("""
+      <h2>조기수령·연기수령, 5년 기준 얼마나 차이날까</h2>
+      <p class='sub'>기본연금액 월 100만 원일 때 · 1년당 조기 6% 감액, 연기 7.2% 가산</p>
+      <div class='exgrid'>
+        <div class='ex'>
+          <span class='badge' style='background:#e03131;'>5년 조기</span>
+          <div class='pay'>30% 감액</div>
+          <div class='amt'>70만 원</div>
+          <div class='note'>당겨 받는 대신<br>평생 감액 적용</div>
+        </div>
+        <div class='ex'>
+          <span class='badge' style='background:#495057;'>정상 수령</span>
+          <div class='pay'>기준 금액</div>
+          <div class='amt'>100만 원</div>
+          <div class='note'>출생연도별<br>수령나이 도달 시</div>
+        </div>
+        <div class='ex'>
+          <span class='badge' style='background:#1b64da;'>5년 연기</span>
+          <div class='pay'>36% 가산</div>
+          <div class='amt'>136만 원</div>
+          <div class='note'>늦게 받는 대신<br>평생 가산 적용</div>
+        </div>
+      </div>
+      <p class='foot'>한 번 정해진 감액·가산율은 평생 유지되고, 취소나 재조정은 되지 않습니다.</p>
+    """),
+    "17_지역가입자_건보료계산흐름": card_html("""
+      <h2>지역가입자 건강보험료, 이렇게 더합니다</h2>
+      <p class='sub'>소득보험료 + 재산보험료 = 월 보험료</p>
+      <div class='flow'>
+        <div class='step'><div class='k'>소득</div><div class='v'>연소득<br>× 7.19%</div><div class='d'>소득보험료</div></div>
+        <div class='arrow'>+</div>
+        <div class='step'><div class='k'>재산</div><div class='v'>재산 점수<br>× 211.5원</div><div class='d'>재산보험료</div></div>
+        <div class='arrow'>=</div>
+        <div class='step'><div class='k'>합산</div><div class='v'>월<br>보험료</div><div class='d'>최저 20,160원</div></div>
+      </div>
+      <p class='foot'>재산은 기본공제 1억 원을 뺀 금액부터 점수가 매겨지고, 자동차는 2024년 2월부터 빠졌습니다.</p>
+    """),
+    "18_직장가입자_지역가입자_비교": card_html("""
+      <h2>직장가입자 vs 지역가입자, 계산이 다릅니다</h2>
+      <p class='sub'>보는 항목 자체가 다르다</p>
+      <div class='row'><span class='tag'>직장가입자</span><span class='txt'>보수월액 × 보험료율, 회사와 절반씩</span></div>
+      <div class='row'><span class='tag'>지역가입자</span><span class='txt'>소득보험료 + 재산보험료, 전액 본인 부담</span></div>
+      <p class='foot'>소득만 보던 직장가입자에서 은퇴 등으로 전환되면, 집이 있다는 이유로 보험료가 늘어날 수 있습니다.</p>
+    """),
 }
 
 

@@ -13,3 +13,7 @@ __pycache__/
 # 공유마당·Pexels에서 내려받은 대표 사진 원본(장당 10MB 안팎) — 출처는 원고에 남는다
 assets/naver_img/*.jpg
 assets/naver_img/*.JPG
+assets/naver_img/*.jpeg
+assets/naver_img/*.JPEG
+assets/naver_img/*.png
+!assets/naver_img/[0-9][0-9]_*.png

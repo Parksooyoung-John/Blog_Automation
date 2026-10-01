@@ -24,8 +24,12 @@ def parser() -> argparse.ArgumentParser:
 
     validate = commands.add_parser("validate-config")
     validate.add_argument(
-        "--for-command", choices=("sync", "publish", "prepare-sales", "all"), default="all"
+        "--for-command",
+        choices=("sync", "publish", "prepare-sales", "setup-daily-schema", "all"),
+        default="all",
     )
+
+    commands.add_parser("setup-daily-schema")
 
     sync = commands.add_parser("sync")
     sync.add_argument("--source", choices=("tistory", "naver"), default="naver")
@@ -50,7 +54,11 @@ def notion_queue(settings: Settings) -> NotionQueue:
 
 
 def validate(settings: Settings, command: str) -> int:
-    commands = ("sync", "publish", "prepare-sales") if command == "all" else (command,)
+    commands = (
+        ("sync", "publish", "prepare-sales", "setup-daily-schema")
+        if command == "all"
+        else (command,)
+    )
     missing = sorted({name for item in commands for name in settings.missing_for(item)})
     if missing:
         print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
@@ -85,6 +93,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "validate-config":
         return validate(settings, args.for_command)
+
+    if args.command == "setup-daily-schema":
+        missing = settings.missing_for("setup-daily-schema")
+        if missing:
+            print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
+            return 2
+        added = notion_queue(settings).ensure_daily_schema()
+        print(json.dumps({"added": added}, ensure_ascii=False, sort_keys=True))
+        return 0
 
     if args.command == "sync":
         mode = "sync-dry-run" if args.dry_run else "sync"

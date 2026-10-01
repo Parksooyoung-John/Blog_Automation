@@ -69,6 +69,10 @@ class Settings(BaseSettings):
 
     def missing_for(self, command: str) -> list[str]:
         required = {
+            "setup-daily-schema": {
+                "NOTION_API_KEY": self.notion_api_key,
+                "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
+            },
             "sync": {
                 "OPENAI_API_KEY": self.openai_api_key,
                 "NOTION_API_KEY": self.notion_api_key,

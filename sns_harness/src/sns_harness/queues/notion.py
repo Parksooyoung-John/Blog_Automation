@@ -43,6 +43,42 @@ PROPERTY_TYPES = {
     "상품해시": "rich_text",
 }
 
+DAILY_PROPERTY_DEFINITIONS = {
+    "콘텐츠유형": {
+        "select": {"options": [{"name": n} for n in ("블로그정보", "재테크팁", "질문형", "운영글")]}
+    },
+    "게시슬롯": {"rich_text": {}},
+    "원문키": {"rich_text": {}},
+    "주제": {"rich_text": {}},
+    "Hook유형": {
+        "select": {
+            "options": [
+                {"name": n}
+                for n in ("궁금증", "숫자", "실수", "비교", "질문", "경험/공감")
+            ]
+        }
+    },
+    "블로그링크사용": {"checkbox": {}},
+    "운영메모": {"rich_text": {}},
+    "자동생성여부": {"checkbox": {}},
+    "사람수정필요": {"checkbox": {}},
+    "중복검사키": {"rich_text": {}},
+    "성과판정": {
+        "select": {
+            "options": [
+                {"name": n}
+                for n in (
+                    "미측정",
+                    "reach-only",
+                    "conversion-candidate",
+                    "underperforming",
+                    "repeatable",
+                )
+            ]
+        }
+    },
+}
+
 NAVER_SOURCE_FILTER = {
     "property": "TistoryID",
     "rich_text": {"starts_with": "naver:"},
@@ -86,6 +122,26 @@ class NotionQueue:
                     f"got {actual[name].get('type')}"
                 )
         return errors
+
+    def ensure_daily_schema(self) -> list[str]:
+        response = self.session.get(
+            f"{self.base_url}/databases/{self.database_id}", timeout=self.timeout
+        )
+        response.raise_for_status()
+        actual = response.json().get("properties", {})
+        missing = {
+            name: definition
+            for name, definition in DAILY_PROPERTY_DEFINITIONS.items()
+            if name not in actual
+        }
+        if missing:
+            response = self.session.patch(
+                f"{self.base_url}/databases/{self.database_id}",
+                json={"properties": missing},
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+        return sorted(missing)
 
     def find_by_source_key(self, source_key: str) -> QueueItem | None:
         pages = self._query(
@@ -354,6 +410,16 @@ class NotionQueue:
             recommendation_basis=self._plain(props.get("추천근거", {})),
             disclosure=self._plain(props.get("광고고지", {})),
             product_hash=self._plain(props.get("상품해시", {})),
+            content_type=self._select_name(props.get("콘텐츠유형", {})) or "블로그정보",
+            publish_slot=self._plain(props.get("게시슬롯", {})),
+            topic=self._plain(props.get("주제", {})),
+            hook_type=self._select_name(props.get("Hook유형", {})) or None,
+            blog_link_used=bool(props.get("블로그링크사용", {}).get("checkbox", False)),
+            operator_note=self._plain(props.get("운영메모", {})),
+            auto_generated=bool(props.get("자동생성여부", {}).get("checkbox", False)),
+            human_edit_required=bool(props.get("사람수정필요", {}).get("checkbox", False)),
+            dedupe_key=self._plain(props.get("중복검사키", {})),
+            performance_judgement=self._select_name(props.get("성과판정", {})) or "미측정",
         )
 
     @staticmethod

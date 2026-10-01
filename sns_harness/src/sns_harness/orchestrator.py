@@ -3,7 +3,10 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import Protocol
 
+from pydantic import ValidationError
+
 from sns_harness.models import (
+    ProductOffer,
     QueueStatus,
     ReviewResult,
     SourcePost,
@@ -22,9 +25,15 @@ class Source(Protocol):
 class Writer(Protocol):
     def generate(self, source: SourcePost) -> ThreadsDraft: ...
 
+    def generate_for_product(
+        self, source: SourcePost, product: ProductOffer, existing_draft: ThreadsDraft
+    ) -> ThreadsDraft: ...
+
 
 class Reviewer(Protocol):
-    def review(self, source: SourcePost, draft: ThreadsDraft) -> ReviewResult: ...
+    def review(
+        self, source: SourcePost, draft: ThreadsDraft, product: ProductOffer | None = None
+    ) -> ReviewResult: ...
 
 
 class HarnessOrchestrator:
@@ -46,6 +55,7 @@ class HarnessOrchestrator:
         backfill: int | None = None,
         lookback_hours: int = 48,
         dry_run: bool = False,
+        retry_errors: bool = False,
         now: datetime | None = None,
     ) -> dict[str, int]:
         if self.source is None:
@@ -73,10 +83,12 @@ class HarnessOrchestrator:
                 and existing
                 and existing.status is QueueStatus.HOLD
             )
+            retry_error = bool(retry_errors and existing and existing.status is QueueStatus.ERROR)
             if (
                 existing
                 and existing.source_hash == source_post.source_hash
                 and not retry_hold
+                and not retry_error
             ):
                 stats["unchanged"] += 1
                 continue
@@ -87,6 +99,37 @@ class HarnessOrchestrator:
                 continue
             if dry_run:
                 stats["updated" if existing else "created"] += 1
+                continue
+
+            existing_product = None
+            if existing and getattr(existing, "has_product_input", False):
+                try:
+                    existing_product = existing.to_product_offer()
+                except ValidationError as exc:
+                    self.queue.hold_sales_request(
+                        existing.page_id,
+                        f"상품 정보 검증 실패: {exc}",
+                    )
+                    stats["updated"] += 1
+                    continue
+            if existing and existing_product is not None:
+                draft = self.writer.generate_for_product(  # type: ignore[union-attr]
+                    source_post,
+                    existing_product,
+                    existing.draft,
+                )
+                review = self.reviewer.review(  # type: ignore[union-attr]
+                    source_post,
+                    draft,
+                    existing_product,
+                )
+                self.queue.replace_sales_draft(
+                    existing.page_id,
+                    source_post,
+                    review,
+                    existing_product.product_hash,
+                )
+                stats["updated"] += 1
                 continue
 
             draft = self.writer.generate(source_post)  # type: ignore[union-attr]
@@ -108,6 +151,46 @@ class HarnessOrchestrator:
         for item, scheduled_at in zip(items, allocated, strict=True):
             self.queue.set_schedule(item.page_id, scheduled_at)
         return len(items)
+
+    def prepare_sales(self, *, dry_run: bool = False) -> dict[str, int]:
+        if self.source is None:
+            raise RuntimeError("source adapter is required for product draft preparation")
+        if not dry_run and (self.writer is None or self.reviewer is None):
+            raise RuntimeError("writer and reviewer are required for product draft preparation")
+
+        stats = {"candidates": 0, "prepared": 0, "held": 0, "skipped": 0}
+        for item in self.queue.sales_draft_requests():
+            stats["candidates"] += 1
+            if item.published_at or item.threads_ids:
+                stats["skipped"] += 1
+                continue
+            try:
+                product = item.to_product_offer()
+                if product is None:
+                    raise ValueError("상품 정보가 비어 있습니다.")
+            except (ValidationError, ValueError) as exc:
+                stats["held"] += 1
+                if not dry_run:
+                    self.queue.hold_sales_request(item.page_id, f"상품 정보 검증 실패: {exc}")
+                continue
+            if dry_run:
+                stats["prepared"] += 1
+                continue
+
+            source = self.source.fetch(item.source_url)
+            draft = self.writer.generate_for_product(source, product, item.draft)  # type: ignore[union-attr]
+            review = self.reviewer.review(source, draft, product)  # type: ignore[union-attr]
+            self.queue.replace_sales_draft(
+                item.page_id,
+                source,
+                review,
+                product.product_hash,
+            )
+            if review.approved:
+                stats["prepared"] += 1
+            else:
+                stats["held"] += 1
+        return stats
 
     def publish_due(
         self,
@@ -134,7 +217,17 @@ class HarnessOrchestrator:
             message = "원문이 승인 후 변경되었습니다. 동기화로 초안을 재생성해야 합니다."
             self.queue.fail(item, message)
             raise RuntimeError(message)
-        issues = validate_draft_against_source(item.draft, current_source)
+        try:
+            product = item.to_product_offer()
+        except ValidationError as exc:
+            message = f"게시 직전 상품 정보 검증 실패: {exc}"
+            self.queue.fail(item, message)
+            raise RuntimeError(message) from exc
+        if product is not None and product.product_hash != item.product_hash:
+            message = "상품 정보가 승인 후 변경되었습니다. 판매 초안을 다시 생성해야 합니다."
+            self.queue.fail(item, message)
+            raise RuntimeError(message)
+        issues = validate_draft_against_source(item.draft, current_source, product)
         if issues:
             message = "게시 직전 검증 실패: " + "; ".join(issues)
             self.queue.fail(item, message)

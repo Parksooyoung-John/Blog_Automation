@@ -86,6 +86,15 @@ class Settings(BaseSettings):
                 "NOTION_API_KEY": self.notion_api_key,
                 "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
             },
+            "prepare-sales": {
+                "OPENAI_API_KEY": self.openai_api_key,
+                "NOTION_API_KEY": self.notion_api_key,
+                "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
+            },
+            "prepare-sales-dry-run": {
+                "NOTION_API_KEY": self.notion_api_key,
+                "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
+            },
         }
         return [name for name, value in required.get(command, {}).items() if not value]
 

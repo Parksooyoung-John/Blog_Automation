@@ -23,15 +23,21 @@ def parser() -> argparse.ArgumentParser:
     commands = root.add_subparsers(dest="command", required=True)
 
     validate = commands.add_parser("validate-config")
-    validate.add_argument("--for-command", choices=("sync", "publish", "all"), default="all")
+    validate.add_argument(
+        "--for-command", choices=("sync", "publish", "prepare-sales", "all"), default="all"
+    )
 
     sync = commands.add_parser("sync")
     sync.add_argument("--source", choices=("tistory", "naver"), default="naver")
     sync.add_argument("--backfill", type=int, default=None, metavar="N")
     sync.add_argument("--dry-run", action="store_true")
+    sync.add_argument("--retry-errors", action="store_true")
 
     publish = commands.add_parser("publish-due")
     publish.add_argument("--dry-run", action="store_true")
+
+    prepare_sales = commands.add_parser("prepare-sales")
+    prepare_sales.add_argument("--dry-run", action="store_true")
     return root
 
 
@@ -44,7 +50,7 @@ def notion_queue(settings: Settings) -> NotionQueue:
 
 
 def validate(settings: Settings, command: str) -> int:
-    commands = ("sync", "publish") if command == "all" else (command,)
+    commands = ("sync", "publish", "prepare-sales") if command == "all" else (command,)
     missing = sorted({name for item in commands for name in settings.missing_for(item)})
     if missing:
         print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
@@ -82,6 +88,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "sync":
         mode = "sync-dry-run" if args.dry_run else "sync"
+    elif args.command == "prepare-sales":
+        mode = "prepare-sales-dry-run" if args.dry_run else "prepare-sales"
     else:
         mode = "publish-dry-run" if args.dry_run else "publish"
     missing = settings.missing_for(mode)
@@ -119,8 +127,9 @@ def main(argv: list[str] | None = None) -> int:
             backfill=args.backfill,
             lookback_hours=settings.sync_lookback_hours,
             dry_run=args.dry_run,
+            retry_errors=args.retry_errors,
         )
-    else:
+    elif args.command == "publish-due":
         source = PublishSourceRouter(
             TistorySource(
                 settings.blog_base_url,
@@ -144,7 +153,36 @@ def main(argv: list[str] | None = None) -> int:
             timezone=settings.tz,
             dry_run=args.dry_run,
         )
+    else:
+        source = PublishSourceRouter(
+            TistorySource(
+                settings.blog_base_url,
+                timeout=settings.request_timeout_seconds,
+            ),
+            NaverSource(
+                settings.naver_blog_id,
+                timeout=settings.request_timeout_seconds,
+            ),
+        )
+        writer = None
+        reviewer = None
+        if not args.dry_run:
+            writer = ThreadsWriter(
+                settings.openai_api_key,
+                settings.openai_model,
+                settings.prompt_dir / "threads_writer.md",
+            )
+            reviewer = ComplianceReviewer(
+                settings.openai_api_key,
+                settings.openai_model,
+                settings.prompt_dir / "compliance_reviewer.md",
+            )
+        orchestrator = HarnessOrchestrator(source, writer, reviewer, queue)
+        result = orchestrator.prepare_sales(dry_run=args.dry_run)
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    if args.command == "publish-due" and not args.dry_run:
+        if result.get("published", 0) != 1:
+            return 1
     return 0
 
 

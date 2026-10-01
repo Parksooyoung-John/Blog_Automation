@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: sns_harness
+        working-directory: 블로그/블로그자동화/sns_harness
     env:
       TZ: Asia/Seoul
       DEFAULT_SLOTS: 08:30,18:30
@@ -35,11 +35,13 @@ jobs:
       DRY_RUN: ${{ inputs.dry_run }}
     steps:
       - uses: actions/checkout@v7
+      - name: Print deployed revision
+        run: git rev-parse --short HEAD
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: sns_harness/pyproject.toml
+          cache-dependency-path: 블로그/블로그자동화/sns_harness/pyproject.toml
       - run: python -m pip install .
       - name: Publish one due item
         shell: bash

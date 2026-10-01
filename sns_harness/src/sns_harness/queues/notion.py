@@ -35,6 +35,12 @@ PROPERTY_TYPES = {
     "ThreadsIDs": "rich_text",
     "오류": "rich_text",
     "재시도횟수": "number",
+    "판매플랫폼": "select",
+    "상품명": "rich_text",
+    "상품URL": "url",
+    "추천근거": "rich_text",
+    "광고고지": "rich_text",
+    "상품해시": "rich_text",
 }
 
 NAVER_SOURCE_FILTER = {
@@ -91,6 +97,21 @@ class NotionQueue:
         """Compatibility wrapper for the legacy Tistory-only interface."""
         return self.find_by_source_key(tistory_id)
 
+    def sales_draft_requests(self) -> list[QueueItem]:
+        pages = self._query(
+            {
+                "and": [
+                    {
+                        "property": "상태",
+                        "select": {"equals": QueueStatus.SALES_DRAFT_REQUESTED.value},
+                    },
+                    NAVER_SOURCE_FILTER,
+                ]
+            },
+            sorts=[{"timestamp": "last_edited_time", "direction": "ascending"}],
+        )
+        return [self._to_item(page) for page in pages]
+
     def create(self, source: SourcePost, review: ReviewResult) -> QueueItem:
         status = QueueStatus.DRAFT if review.approved else QueueStatus.HOLD
         properties = self._draft_properties(source, review.reviewed_draft, status)
@@ -110,6 +131,34 @@ class NotionQueue:
         properties["오류"] = self._rich("; ".join(review.issues))
         properties["예약시각"] = {"date": None}
         self._patch(page_id, properties)
+
+    def replace_sales_draft(
+        self,
+        page_id: str,
+        source: SourcePost,
+        review: ReviewResult,
+        product_hash: str,
+    ) -> None:
+        status = QueueStatus.DRAFT if review.approved else QueueStatus.HOLD
+        properties = self._draft_properties(source, review.reviewed_draft, status)
+        properties.update(
+            {
+                "오류": self._rich("; ".join(review.issues)),
+                "예약시각": {"date": None},
+                "상품해시": self._rich(product_hash),
+            }
+        )
+        self._patch(page_id, properties)
+
+    def hold_sales_request(self, page_id: str, message: str) -> None:
+        self._patch(
+            page_id,
+            {
+                "상태": self._select(QueueStatus.HOLD.value),
+                "예약시각": {"date": None},
+                "오류": self._rich(message[:1900]),
+            },
+        )
 
     def update_source_hash(self, page_id: str, source_hash: str) -> None:
         self._patch(page_id, {"원문해시": self._rich(source_hash)})
@@ -202,6 +251,7 @@ class NotionQueue:
             {
                 "상태": self._select(QueueStatus.ERROR.value),
                 "오류": self._rich(message[:1900]),
+                "예약시각": {"date": None},
                 "재시도횟수": {"number": item.retry_count + 1},
             },
         )
@@ -298,6 +348,12 @@ class NotionQueue:
             threads_ids=threads_ids_from_text(self._plain(props.get("ThreadsIDs", {}))),
             retry_count=int(props.get("재시도횟수", {}).get("number") or 0),
             error=self._plain(props.get("오류", {})),
+            product_platform=self._select_name(props.get("판매플랫폼", {})),
+            product_name=self._plain(props.get("상품명", {})),
+            product_url=str(props.get("상품URL", {}).get("url") or ""),
+            recommendation_basis=self._plain(props.get("추천근거", {})),
+            disclosure=self._plain(props.get("광고고지", {})),
+            product_hash=self._plain(props.get("상품해시", {})),
         )
 
     @staticmethod

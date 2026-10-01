@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Tistory → Threads SNS Harness",
+    "output": "sns-harness.architecture.html",
+    "quality_profile": "showcase",
+    "viewBox": [1380, 640],
+    "views": [
+      {
+        "id": "sync-path",
+        "label": "초안 생성 경로",
+        "focus": ["tistory", "sync_action", "source_adapter", "writer_reviewer", "openai", "notion_queue"],
+        "note": "새 글을 정규화하고 생성·검수한 뒤 Notion 승인 큐에 저장합니다."
+      },
+      {
+        "id": "approval-gate",
+        "label": "사람 승인 게이트",
+        "focus": ["operator", "notion_queue"],
+        "note": "운영자가 문구와 예약시각을 확인하고 상태를 승인으로 바꿉니다."
+      },
+      {
+        "id": "publish-path",
+        "label": "예약 게시 경로",
+        "focus": ["publish_action", "orchestrator", "source_adapter", "notion_queue", "threads_publisher", "threads_api"],
+        "note": "예약 항목을 선점하고 원문을 재검증한 뒤 공식 Threads API로 게시합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "tistory",
+      "type": "external",
+      "label": "Tistory 블로그",
+      "sublabel": "RSS · 홈페이지 · 개별 글",
+      "pos": [60, 260],
+      "size": [170, 72]
+    },
+    {
+      "id": "sync_action",
+      "type": "cloud",
+      "label": "GitHub Actions",
+      "sublabel": "blog-sns-sync · 매시 17분",
+      "tag": "sync",
+      "pos": [300, 70],
+      "size": [180, 72]
+    },
+    {
+      "id": "source_adapter",
+      "type": "backend",
+      "label": "TistorySource",
+      "sublabel": "발견 · 파싱 · 해시",
+      "pos": [310, 260],
+      "size": [170, 72]
+    },
+    {
+      "id": "writer_reviewer",
+      "type": "backend",
+      "label": "Writer + Reviewer",
+      "sublabel": "초안 생성 · 규칙 검수",
+      "pos": [580, 260],
+      "size": [190, 72]
+    },
+    {
+      "id": "openai",
+      "type": "external",
+      "label": "OpenAI Responses API",
+      "sublabel": "Structured Outputs · store=false",
+      "pos": [570, 70],
+      "size": [210, 72]
+    },
+    {
+      "id": "notion_queue",
+      "type": "database",
+      "label": "Notion SNS 큐",
+      "sublabel": "초안 · 승인 · 예약 · 결과",
+      "pos": [850, 260],
+      "size": [190, 72]
+    },
+    {
+      "id": "operator",
+      "type": "external",
+      "label": "운영자",
+      "sublabel": "문구 확인 · 승인",
+      "pos": [860, 70],
+      "size": [170, 72]
+    },
+    {
+      "id": "publish_action",
+      "type": "cloud",
+      "label": "GitHub Actions",
+      "sublabel": "blog-sns-publish · 15분 주기",
+      "tag": "publish-due",
+      "pos": [100, 520],
+      "size": [190, 72]
+    },
+    {
+      "id": "orchestrator",
+      "type": "security",
+      "label": "HarnessOrchestrator",
+      "sublabel": "예약 · 선점 · 게시 전 검증",
+      "pos": [430, 520],
+      "size": [210, 72]
+    },
+    {
+      "id": "threads_publisher",
+      "type": "backend",
+      "label": "ThreadsPublisher",
+      "sublabel": "쿼터 · 재시도 · 부분 복구",
+      "pos": [790, 520],
+      "size": [200, 72]
+    },
+    {
+      "id": "threads_api",
+      "type": "external",
+      "label": "Meta Threads API",
+      "sublabel": "컨테이너 생성 · 순차 게시",
+      "pos": [1150, 520],
+      "size": [200, 72]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "동기화 런타임 · GitHub-hosted runner",
+      "wraps": ["sync_action", "source_adapter", "writer_reviewer"],
+      "pad": 22
+    },
+    {
+      "kind": "region",
+      "label": "게시 런타임 · GitHub-hosted runner",
+      "wraps": ["publish_action", "orchestrator", "threads_publisher"],
+      "pad": 22
+    },
+    {
+      "kind": "security-group",
+      "label": "사람 승인 경계",
+      "wraps": ["operator", "notion_queue"],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "sync_trigger",
+      "from": "sync_action",
+      "to": "source_adapter",
+      "label": "시간당 sync 실행",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "discover_posts",
+      "from": "tistory",
+      "to": "source_adapter",
+      "label": "RSS · HTML",
+      "variant": "default"
+    },
+    {
+      "id": "normalized_post",
+      "from": "source_adapter",
+      "to": "writer_reviewer",
+      "label": "SourcePost · 해시",
+      "variant": "emphasis"
+    },
+    {
+      "id": "structured_generation",
+      "from": "writer_reviewer",
+      "to": "openai",
+      "label": "Responses API · JSON Schema",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "queue_draft",
+      "from": "writer_reviewer",
+      "to": "notion_queue",
+      "label": "초안 또는 보류",
+      "variant": "emphasis"
+    },
+    {
+      "id": "human_approval",
+      "from": "operator",
+      "to": "notion_queue",
+      "label": "검토 후 승인",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "publish_trigger",
+      "from": "publish_action",
+      "to": "orchestrator",
+      "label": "15분마다 publish-due",
+      "variant": "emphasis"
+    },
+    {
+      "id": "approved_due",
+      "from": "orchestrator",
+      "to": "notion_queue",
+      "label": "조회 · 예약 · 선점 · 상태 기록",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "claimed_publish",
+      "from": "orchestrator",
+      "to": "threads_publisher",
+      "label": "검증된 게시 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "official_publish",
+      "from": "threads_publisher",
+      "to": "threads_api",
+      "label": "쿼터 · TEXT · 답글",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "승인과 예약",
+      "items": [
+        "승인되지 않은 콘텐츠는 게시 대상이 아님",
+        "예약시각이 비어 있으면 08:30 / 18:30 슬롯 자동 배정"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "검증과 복구",
+      "items": [
+        "길이·숫자·금지 표현을 검사하고 게시 직전 원문을 재검증",
+        "TistoryID·원문해시·ThreadsIDs로 중복 방지 및 부분 실패 재개"
+      ]
+    }
+  ]
+}

@@ -210,10 +210,10 @@ class HarnessOrchestrator:
             return {"scheduled": scheduled, "published": 0, "due": 0}
 
         item = due[0]
-        if self.source is None:
-            raise RuntimeError("source adapter is required for publish-time validation")
-        current_source = self.source.fetch(item.source_url)
-        if current_source.source_hash != item.source_hash:
+        current_source = (
+            self.source.fetch(item.source_url) if item.source_url and self.source else None
+        )
+        if current_source is not None and current_source.source_hash != item.source_hash:
             message = "원문이 승인 후 변경되었습니다. 동기화로 초안을 재생성해야 합니다."
             self.queue.fail(item, message)
             raise RuntimeError(message)

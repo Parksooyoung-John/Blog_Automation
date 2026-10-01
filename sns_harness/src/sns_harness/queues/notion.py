@@ -250,7 +250,6 @@ class NotionQueue:
                 "and": [
                     {"property": "상태", "select": {"equals": QueueStatus.APPROVED.value}},
                     {"property": "예약시각", "date": {"is_empty": True}},
-                    NAVER_SOURCE_FILTER,
                 ]
             },
             sorts=[{"timestamp": "created_time", "direction": "ascending"}],
@@ -262,7 +261,6 @@ class NotionQueue:
             {
                 "and": [
                     {"property": "예약시각", "date": {"on_or_after": after.isoformat()}},
-                    NAVER_SOURCE_FILTER,
                 ]
             },
         )
@@ -293,7 +291,6 @@ class NotionQueue:
                         ]
                     },
                     {"property": "예약시각", "date": {"on_or_before": now.isoformat()}},
-                    NAVER_SOURCE_FILTER,
                 ]
             },
             sorts=[{"property": "예약시각", "direction": "ascending"}],
@@ -302,6 +299,9 @@ class NotionQueue:
         return [self._to_item(page) for page in pages[:limit]]
 
     def claim(self, item: QueueItem) -> bool:
+        if not item.source_key:
+            self._patch(item.page_id, {"상태": self._select(QueueStatus.PUBLISHING.value)})
+            return True
         current = self.find_by_source_key(item.source_key)
         if not current:
             return False

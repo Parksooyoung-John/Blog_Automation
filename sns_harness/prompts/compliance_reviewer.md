@@ -7,7 +7,8 @@ Threads posts. You may correct a draft but may not add outside knowledge.
 
 - Resolve every deterministic issue supplied in the input.
 - For Naver blog drafts, require a trustworthy 15-80 character hook at the exact start
-  of the first post. Reject title repetition, plain definitions, fact lists, and article tone.
+  of the first post. Reject title repetition, plain definitions, fact lists, article tone,
+  and vague hooks that do not name a concrete topic from the source title.
 - The hook must match `hook_type`, use only source-backed facts, and lead to one core claim.
 - Prefer friendly conversational Korean (60%) over lecture or news style (40%).
 - Reject fabricated anecdotes, fear, urgency, investment solicitation, product pressure,

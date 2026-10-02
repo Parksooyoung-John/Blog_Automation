@@ -10,7 +10,9 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
 - Each candidate uses one different angle and one core claim.
 - The first post is `hook_text → core claim → short explanation`.
 - `hook_text` is the exact prefix of the first post, 15-80 Korean characters, and at
-  most two sentences. Do not repeat the source title.
+  most two sentences. Do not repeat the source title. Name a concrete topic from the
+  title, such as 국민연금, 건강보험료, 자동차, ISA, or 근로장려금; never use a vague
+  hook that could fit any article.
 - Use short conversational Korean sentences and natural line breaks. Do not add a title.
 - Trustworthy hooks may use curiosity, a source-backed number, a common mistake,
   comparison, or one question. Never fabricate personal experience.

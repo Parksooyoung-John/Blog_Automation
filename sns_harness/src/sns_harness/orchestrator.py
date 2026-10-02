@@ -6,6 +6,7 @@ from typing import Protocol
 from pydantic import ValidationError
 
 from sns_harness.models import (
+    HookType,
     ProductOffer,
     QueueStatus,
     ReviewResult,
@@ -48,6 +49,33 @@ class HarnessOrchestrator:
         self.writer = writer
         self.reviewer = reviewer
         self.queue = queue
+
+    def _generate_blog_review(
+        self, source: SourcePost, now: datetime
+    ) -> ReviewResult:
+        policy = getattr(self.queue, "blog_generation_policy", None)
+        hook_types = (
+            HookType.CURIOSITY,
+            HookType.MISTAKE,
+            HookType.QUESTION,
+        )
+        include_link = True
+        if policy is not None:
+            context = policy(now)
+            hook_types = tuple(context["hook_types"])
+            include_link = bool(context["include_link"])
+        candidate_generator = getattr(self.writer, "generate_candidates", None)
+        if candidate_generator is None:
+            candidates = [self.writer.generate(source)]  # type: ignore[union-attr]
+        else:
+            candidates = candidate_generator(
+                source,
+                hook_types=hook_types,
+                include_link=include_link,
+            )
+        reviews = [self.reviewer.review(source, draft) for draft in candidates]  # type: ignore[union-attr]
+        approved = [review for review in reviews if review.approved]
+        return max(approved or reviews, key=lambda review: review.quality_score)
 
     def sync(
         self,
@@ -132,8 +160,7 @@ class HarnessOrchestrator:
                 stats["updated"] += 1
                 continue
 
-            draft = self.writer.generate(source_post)  # type: ignore[union-attr]
-            review = self.reviewer.review(source_post, draft)  # type: ignore[union-attr]
+            review = self._generate_blog_review(source_post, current)
             if existing:
                 self.queue.replace_draft(existing.page_id, source_post, review)
                 stats["updated"] += 1
@@ -141,6 +168,32 @@ class HarnessOrchestrator:
                 self.queue.create(source_post, review)
                 stats["created"] += 1
         return stats
+
+    def regenerate_blog_hooks(
+        self, *, dry_run: bool = False, now: datetime | None = None
+    ) -> dict[str, object]:
+        if self.source is None or self.writer is None or self.reviewer is None:
+            raise RuntimeError("source, writer, and reviewer are required")
+        current = now or datetime.now(UTC)
+        items = self.queue.unpublished_blog_items()
+        results: list[dict[str, object]] = []
+        for item in items:
+            source = self.source.fetch(item.source_url)
+            review = self._generate_blog_review(source, current)
+            draft = review.reviewed_draft
+            results.append(
+                {
+                    "page_id": item.page_id,
+                    "approved": review.approved,
+                    "hook_type": draft.hook_type.value if draft.hook_type else "",
+                    "hook_text": draft.hook_text,
+                    "blog_link_used": draft.blog_link_used,
+                    "issues": review.issues,
+                }
+            )
+            if not dry_run:
+                self.queue.replace_draft(item.page_id, source, review)
+        return {"candidates": len(items), "updated": 0 if dry_run else len(items), "items": results}
 
     def schedule_approved(self, now: datetime, slots: tuple[str, ...], timezone: object) -> int:
         items = self.queue.approved_without_schedule()

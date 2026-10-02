@@ -5,6 +5,7 @@ import json
 import re
 from copy import deepcopy
 from datetime import datetime
+from difflib import SequenceMatcher
 from enum import StrEnum
 from typing import Any
 from urllib.parse import urlparse
@@ -186,6 +187,9 @@ class ThreadsDraft(BaseModel):
     posts: list[str]
     topic_tag: str | None = None
     rationale: str = Field(default="", max_length=500)
+    hook_type: HookType | None = None
+    hook_text: str = Field(default="", max_length=80)
+    blog_link_used: bool = True
 
     @field_validator("posts")
     @classmethod
@@ -214,6 +218,20 @@ class ThreadsDraft(BaseModel):
             raise ValueError("single format requires exactly one post")
         if self.format is PostFormat.THREAD and not 2 <= len(self.posts) <= 5:
             raise ValueError("thread format requires 2-5 posts")
+        return self
+
+
+class BlogDraftCandidates(BaseModel):
+    candidates: list[ThreadsDraft] = Field(min_length=3, max_length=3)
+
+    @model_validator(mode="after")
+    def validate_distinct_hooks(self) -> BlogDraftCandidates:
+        types = [candidate.hook_type for candidate in self.candidates]
+        texts = [candidate.hook_text for candidate in self.candidates]
+        if None in types or len(set(types)) != 3:
+            raise ValueError("blog candidates require three distinct hook types")
+        if len(set(texts)) != 3:
+            raise ValueError("blog candidates require three distinct hook texts")
         return self
 
 
@@ -247,6 +265,7 @@ class ReviewResult(BaseModel):
     approved: bool
     issues: list[str] = Field(default_factory=list)
     reviewed_draft: ThreadsDraft
+    quality_score: int = Field(default=0, ge=0, le=100)
 
 
 class QueueItem(BaseModel):
@@ -347,6 +366,42 @@ SALES_BLOCKED_PHRASES = (
     "사용해 보",
     "효능",
 )
+HOOK_BLOCKED_PHRASES = ("모르면 손해", "무조건", "반드시", "지금 당장")
+BLOG_CTA_PHRASES = ("프로필 블로그", "블로그에 정리", "자세한 내용은 블로그")
+
+
+def _validate_naver_hook(draft: ThreadsDraft, source: SourcePost) -> list[str]:
+    issues: list[str] = []
+    hook = draft.hook_text.strip()
+    if not hook or draft.hook_type is None:
+        return ["Naver blog draft requires hook_text and hook_type"]
+    if not draft.posts[0].startswith(hook):
+        issues.append("hook_text must be the exact prefix of the first post")
+    if not 15 <= grapheme_len(hook) <= 80:
+        issues.append("hook_text must be 15-80 characters")
+    if len([part for part in re.split(r"[.!?？]+", hook) if part.strip()]) > 2:
+        issues.append("hook_text must contain at most two sentences")
+    normalized_hook = re.sub(r"\W+", "", hook).lower()
+    normalized_title = re.sub(r"\W+", "", source.title).lower()
+    if normalized_title and SequenceMatcher(None, normalized_hook, normalized_title).ratio() >= 0.8:
+        issues.append("hook_text must not repeat the source title")
+    if any(phrase in hook for phrase in HOOK_BLOCKED_PHRASES):
+        issues.append("hook_text contains a blocked urgency or fear expression")
+    if draft.hook_type is HookType.QUESTION and not any(mark in hook for mark in ("?", "？")):
+        issues.append("question hook must contain a question mark")
+    if draft.hook_type is HookType.NUMBER and not NUMBER_RE.search(hook):
+        issues.append("number hook must contain a source-backed number")
+    if draft.hook_type is HookType.COMPARISON and not any(
+        marker in hook.lower() for marker in ("vs", "차이", "보다", "둘")
+    ):
+        issues.append("comparison hook must express a comparison")
+    if draft.hook_type is HookType.MISTAKE and not any(
+        marker in hook for marker in ("놓치", "실수", "헷갈", "착각", "잘못", "그냥")
+    ):
+        issues.append("mistake hook must identify a likely mistake or confusion")
+    if draft.hook_type is HookType.EMPATHY:
+        issues.append("blog drafts cannot fabricate experience or empathy hooks")
+    return issues
 
 
 def validate_draft_against_source(
@@ -357,6 +412,9 @@ def validate_draft_against_source(
     issues: list[str] = []
     combined = "\n".join(draft.posts)
     links = [link.rstrip(".,)") for link in URL_RE.findall(combined)]
+
+    if source is not None and source.source is SourceKind.NAVER and product is None:
+        issues.extend(_validate_naver_hook(draft, source))
 
     if source is None:
         if product is not None:
@@ -384,9 +442,14 @@ def validate_draft_against_source(
                     issues.append(f"blocked sales expression: {phrase}")
             if re.search(r"\d[\d,.]*\s*(?:원|%)", URL_RE.sub("", sales_copy)):
                 issues.append("sales reply must not contain price or discount claims")
+    elif not draft.blog_link_used:
+        if source.url in combined or links:
+            issues.append("link-free blog draft must not contain URLs")
+        if any(phrase in combined for phrase in BLOG_CTA_PHRASES):
+            issues.append("link-free blog draft must not contain a blog CTA")
     elif draft.format is PostFormat.SINGLE:
-        if source.url not in draft.posts[0]:
-            issues.append("single post must include the canonical source URL")
+        if source.url not in draft.posts[0] or links.count(source.url) != 1:
+            issues.append("single post must include the canonical source URL once")
     else:
         if len(draft.posts) == 2:
             issues.append("non-product thread requires 3-5 posts")

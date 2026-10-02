@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from sns_harness.models import (
     PostFormat,
     ProductOffer,
+    SourceKind,
     SourcePost,
     ThreadsDraft,
     strict_json_schema,
@@ -90,6 +91,16 @@ def test_manual_content_can_be_validated_without_a_source_post() -> None:
     assert validate_draft_against_source(draft, None) == []
 
 
+def naver_source() -> SourcePost:
+    return SourcePost(
+        source=SourceKind.NAVER,
+        source_id="123",
+        url="https://blog.naver.com/education_blog/123",
+        title="국민연금 수령나이와 조기노령연금 조건",
+        content="국민연금 수령 나이는 출생연도에 따라 다릅니다. 65세만 적용되는 것은 아닙니다.",
+        published_at=datetime.fromisoformat("2026-10-01T12:00:00+09:00"),
+    )
+
 def test_manual_content_rejects_external_links() -> None:
     draft = ThreadsDraft(
         format="single",
@@ -99,6 +110,53 @@ def test_manual_content_rejects_external_links() -> None:
     assert "manual content must not contain links" in validate_draft_against_source(
         draft, None
     )
+
+
+def test_naver_link_free_draft_requires_a_trustworthy_hook() -> None:
+    post = naver_source()
+    hook = "연금 받는 나이, 65세로만 알고 있으면 헷갈릴 수 있음."
+    draft = ThreadsDraft(
+        format="single",
+        posts=[f"{hook}\n출생연도에 따라 수령 나이가 달라짐."],
+        hook_type="실수",
+        hook_text=hook,
+        blog_link_used=False,
+    )
+
+    assert validate_draft_against_source(draft, post) == []
+
+
+def test_naver_draft_rejects_title_repetition_and_blocked_hook() -> None:
+    post = naver_source()
+    draft = ThreadsDraft(
+        format="single",
+        posts=[f"{post.title}\n모르면 손해임."],
+        hook_type="궁금증",
+        hook_text=post.title,
+        blog_link_used=False,
+    )
+
+    issues = validate_draft_against_source(draft, post)
+
+    assert "hook_text must not repeat the source title" in issues
+
+
+def test_naver_link_draft_places_url_once_in_first_reply() -> None:
+    post = naver_source()
+    hook = "연금 받는 나이가 모두 똑같다고 생각했어?"
+    draft = ThreadsDraft(
+        format="thread",
+        posts=[
+            f"{hook}\n출생연도에 따라 달라짐.",
+            f"조건은 여기 정리해뒀음. {post.url}",
+            "내 출생연도 기준을 먼저 확인해보면 됨.",
+        ],
+        hook_type="질문",
+        hook_text=hook,
+        blog_link_used=True,
+    )
+
+    assert validate_draft_against_source(draft, post) == []
 
 
 def test_post_has_480_grapheme_safety_limit() -> None:

@@ -1,6 +1,6 @@
 # Naver → Threads SNS Harness
 
-네이버 블로그 `education_blog`의 공개 게시물을 읽어 Threads 계정 `money.ybrief`용 초안을 만들고,
+네이버 블로그 `education_blog`의 공개 게시물을 읽어 Threads 계정 `mone.ybrief`용 초안을 만들고,
 별도 Notion 승인 큐에서 승인된 글만 예약 시각에 공식 Threads API로 게시하는 Python 패키지입니다.
 
 ## 안전 경계
@@ -42,6 +42,10 @@ Copy-Item .env.example .env
 
 # 오류 항목을 최신 원문으로 재생성하고 초안으로 되돌림
 .\.venv\Scripts\python.exe -m sns_harness sync --retry-errors
+
+# 미게시 네이버 블로그 글을 Hook 강화 기준으로 미리 검토/재생성
+.\.venv\Scripts\python.exe -m sns_harness regenerate-blog-hooks --dry-run
+.\.venv\Scripts\python.exe -m sns_harness regenerate-blog-hooks
 
 # 승인된 항목의 빈 예약시각을 배정하고, 도래한 항목 최대 1건 게시
 .\.venv\Scripts\python.exe -m sns_harness publish-due

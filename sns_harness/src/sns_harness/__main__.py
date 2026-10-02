@@ -51,6 +51,9 @@ def parser() -> argparse.ArgumentParser:
     sync.add_argument("--dry-run", action="store_true")
     sync.add_argument("--retry-errors", action="store_true")
 
+    regenerate = commands.add_parser("regenerate-blog-hooks")
+    regenerate.add_argument("--dry-run", action="store_true")
+
     publish = commands.add_parser("publish-due")
     publish.add_argument("--dry-run", action="store_true")
 
@@ -186,6 +189,32 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(
             {"page_id": item.page_id, "status": item.status.value}, ensure_ascii=False
         ))
+        return 0
+
+    if args.command == "regenerate-blog-hooks":
+        missing = settings.missing_for("sync")
+        if missing:
+            print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
+            return 2
+        queue = notion_queue(settings)
+        source = NaverSource(
+            settings.naver_blog_id,
+            timeout=settings.request_timeout_seconds,
+        )
+        writer = ThreadsWriter(
+            settings.openai_api_key,
+            settings.openai_model,
+            settings.prompt_dir / "threads_writer.md",
+        )
+        reviewer = ComplianceReviewer(
+            settings.openai_api_key,
+            settings.openai_model,
+            settings.prompt_dir / "compliance_reviewer.md",
+        )
+        result = HarnessOrchestrator(source, writer, reviewer, queue).regenerate_blog_hooks(
+            dry_run=args.dry_run
+        )
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0
 
     if args.command == "sync":

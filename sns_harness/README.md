@@ -11,6 +11,7 @@
 - 기존 티스토리 게시 기록과 `TistorySource`는 호환성을 위해 보존하지만 자동 수집·예약·게시
   대상에서는 제외합니다.
 - 네이버는 공개 글을 읽기만 하며 네이버 작성·수정·삭제 기능은 제공하지 않습니다.
+- 상품 제휴 답글은 Notion에서 명시적으로 요청하고 다시 승인한 항목에만 추가됩니다.
 
 ## 설치
 
@@ -29,6 +30,9 @@ Copy-Item .env.example .env
 
 ## 운영 명령
 
+기본 예약 슬롯은 KST 08:30(재테크팁), 12:30(블로그정보), 16:30(질문형),
+21:30(운영글)입니다. 운영글은 운영메모와 사람 수정이 없으면 승인할 수 없습니다.
+
 ```powershell
 # 네이버 최신 10건을 승인 큐에 생성
 .\.venv\Scripts\python.exe -m sns_harness sync --backfill 10
@@ -36,15 +40,33 @@ Copy-Item .env.example .env
 # 네이버 신규 글 동기화(--source naver가 기본값)
 .\.venv\Scripts\python.exe -m sns_harness sync
 
+# 오류 항목을 최신 원문으로 재생성하고 초안으로 되돌림
+.\.venv\Scripts\python.exe -m sns_harness sync --retry-errors
+
 # 승인된 항목의 빈 예약시각을 배정하고, 도래한 항목 최대 1건 게시
 .\.venv\Scripts\python.exe -m sns_harness publish-due
+
+# Notion에서 판매초안요청으로 바꾼 항목의 상품형 초안 생성
+.\.venv\Scripts\python.exe -m sns_harness prepare-sales
 
 # 외부 상태를 바꾸지 않는 후보/게시 대상 확인
 .\.venv\Scripts\python.exe -m sns_harness sync --dry-run
 .\.venv\Scripts\python.exe -m sns_harness publish-due --dry-run
+.\.venv\Scripts\python.exe -m sns_harness prepare-sales --dry-run
 ```
 
-GitHub Actions 정기·수동 동기화는 네이버만 수집합니다. 초안에는 해당 네이버 원문의 canonical
+## 상품 제휴 답글
+
+상품 답글을 붙일 항목에 `판매플랫폼`, `상품명`, `상품URL`, `추천근거`를 입력하고 상태를
+`판매초안요청`으로 변경합니다. 시간별 동기화 또는 수동 `prepare-sales`가 정보 글 1~4개와
+마지막 판매 답글을 생성하고, 기존 예약을 지운 뒤 상태를 `초안`으로 되돌립니다. 전체 문구와
+광고 고지를 확인한 후 다시 `승인`해야 예약됩니다.
+
+v1은 `https://sharelink.toss.im/...`과 `https://link.coupang.com/...` 링크만 허용합니다.
+상품 페이지의 가격·할인·재고는 자동 수집하지 않습니다. 고지문을 직접 바꾸려면 `[광고]`로
+시작하고 수수료 지급 사실을 명확하게 적어야 합니다.
+
+GitHub Actions 정기·수동 동기화는 네이버만 수집한 뒤 판매초안 요청도 처리합니다. 초안에는 해당 네이버 원문의 canonical
 URL이 포함되며, 사람이 상태를 `승인`으로 바꾼 네이버 항목만 예약·게시됩니다. 기존
 `--source tistory` CLI 선택지는 과거 데이터 점검 호환용으로만 남아 있습니다.
 

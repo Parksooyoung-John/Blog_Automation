@@ -19,7 +19,7 @@ def test_writer_retries_invalid_thread_count() -> None:
     )
     invalid = {
         "format": "thread",
-        "posts": ["하나", "둘"],
+        "posts": ["하나", "둘", "셋", "넷", "다섯", "여섯"],
         "topic_tag": "ETF",
         "rationale": "",
     }
@@ -44,4 +44,4 @@ def test_writer_retries_invalid_thread_count() -> None:
     assert result == valid
     assert create.call_count == 2
     second_input = json.loads(create.call_args_list[1].kwargs["input"])
-    assert "thread format requires 3-5 posts" in second_input["previous_validation_error"]
+    assert "thread format requires 2-5 posts" in second_input["previous_validation_error"]

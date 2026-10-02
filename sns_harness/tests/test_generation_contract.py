@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from sns_harness.models import (
     PostFormat,
+    ProductOffer,
     SourcePost,
     ThreadsDraft,
     strict_json_schema,
@@ -27,9 +28,23 @@ def test_single_requires_exactly_one_post() -> None:
         ThreadsDraft(format=PostFormat.SINGLE, posts=["하나", "둘"])
 
 
-def test_thread_requires_three_to_five_posts() -> None:
+def test_thread_requires_two_to_five_posts() -> None:
     with pytest.raises(ValidationError):
-        ThreadsDraft(format=PostFormat.THREAD, posts=["하나", "둘"])
+        ThreadsDraft(format=PostFormat.THREAD, posts=["하나"])
+
+    with pytest.raises(ValidationError):
+        ThreadsDraft(format=PostFormat.THREAD, posts=[str(index) for index in range(6)])
+
+
+def test_two_post_thread_requires_product_context() -> None:
+    draft = ThreadsDraft(
+        format=PostFormat.THREAD,
+        posts=["요약", f"원문 {source().url}"],
+    )
+
+    assert "non-product thread requires 3-5 posts" in validate_draft_against_source(
+        draft, source()
+    )
 
 
 def test_thread_link_only_in_last_reply() -> None:
@@ -83,3 +98,51 @@ def test_openai_schema_is_strict_at_every_object() -> None:
         if definition.get("type") == "object":
             assert definition["additionalProperties"] is False
             assert set(definition["required"]) == set(definition["properties"])
+
+
+def test_product_thread_link_and_disclosure_contract() -> None:
+    product = ProductOffer(
+        platform="토스쉐어",
+        name="취득세 안내서",
+        url="https://sharelink.toss.im/example",
+        recommendation_basis="취득세 조건을 다시 확인할 때 참고할 수 있는 안내서",
+    )
+    draft = ThreadsDraft(
+        format="thread",
+        posts=[
+            "[광고 포함]\n취득세 감면은 조건 확인이 중요합니다.\n"
+            "https://j2gblog.tistory.com/165",
+            f"{product.effective_disclosure}\n조건을 정리할 때 참고해 보세요.\n{product.url}",
+        ],
+    )
+
+    assert validate_draft_against_source(draft, source(), product) == []
+
+
+@pytest.mark.parametrize(
+    ("platform", "url"),
+    [
+        ("토스쉐어", "http://sharelink.toss.im/example"),
+        ("토스쉐어", "https://example.com/product"),
+        ("쿠팡파트너스", "https://sharelink.toss.im/example"),
+    ],
+)
+def test_product_offer_rejects_unapproved_urls(platform: str, url: str) -> None:
+    with pytest.raises(ValidationError):
+        ProductOffer(
+            platform=platform,
+            name="상품",
+            url=url,
+            recommendation_basis="추천 근거",
+        )
+
+
+def test_product_offer_rejects_ambiguous_custom_disclosure() -> None:
+    with pytest.raises(ValidationError):
+        ProductOffer(
+            platform="쿠팡파트너스",
+            name="상품",
+            url="https://link.coupang.com/a/example",
+            recommendation_basis="추천 근거",
+            disclosure="[광고] 구매하면 수수료를 받을 수 있습니다.",
+        )

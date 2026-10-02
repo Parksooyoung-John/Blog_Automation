@@ -33,7 +33,9 @@ class Settings(BaseSettings):
     threads_user_id: str = ""
     threads_access_token: str = ""
     timezone: str = Field("Asia/Seoul", alias="TZ")
-    default_slots: Annotated[tuple[str, ...], NoDecode] = ("08:30", "18:30")
+    default_slots: Annotated[tuple[str, ...], NoDecode] = (
+        "08:30", "12:30", "16:30", "21:30"
+    )
     sync_lookback_hours: int = 48
     request_timeout_seconds: float = 20.0
     prompt_dir: Path = Field(default_factory=_default_prompt_dir)
@@ -67,6 +69,15 @@ class Settings(BaseSettings):
 
     def missing_for(self, command: str) -> list[str]:
         required = {
+            "generate-daily-auto": {
+                "OPENAI_API_KEY": self.openai_api_key,
+                "NOTION_API_KEY": self.notion_api_key,
+                "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
+            },
+            "setup-daily-schema": {
+                "NOTION_API_KEY": self.notion_api_key,
+                "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
+            },
             "sync": {
                 "OPENAI_API_KEY": self.openai_api_key,
                 "NOTION_API_KEY": self.notion_api_key,
@@ -83,6 +94,15 @@ class Settings(BaseSettings):
                 "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
             },
             "publish-dry-run": {
+                "NOTION_API_KEY": self.notion_api_key,
+                "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
+            },
+            "prepare-sales": {
+                "OPENAI_API_KEY": self.openai_api_key,
+                "NOTION_API_KEY": self.notion_api_key,
+                "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
+            },
+            "prepare-sales-dry-run": {
                 "NOTION_API_KEY": self.notion_api_key,
                 "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
             },

@@ -45,6 +45,8 @@ def test_validate_reports_notion_connection_failure(monkeypatch, capsys) -> None
 def test_sync_source_defaults_to_naver_and_keeps_tistory_compatibility() -> None:
     assert parser().parse_args(["sync"]).source == "naver"
     assert parser().parse_args(["sync", "--source", "tistory"]).source == "tistory"
+    assert parser().parse_args(["prepare-sales", "--dry-run"]).dry_run is True
+    assert parser().parse_args(["sync", "--retry-errors"]).retry_errors is True
 
 
 def test_naver_dry_run_does_not_create_drafts_or_openai_clients(
@@ -91,3 +93,21 @@ def test_naver_dry_run_does_not_create_drafts_or_openai_clients(
     assert main(["sync", "--source", "naver", "--dry-run"]) == 0
     assert json.loads(capsys.readouterr().out)["created"] == 1
     assert queue.writes == 0
+
+
+def test_prepare_sales_dry_run_does_not_construct_openai_clients(
+    monkeypatch, capsys
+) -> None:
+    class Queue:
+        def sales_draft_requests(self):
+            return []
+
+    monkeypatch.setattr("sns_harness.__main__.get_settings", configured_settings)
+    monkeypatch.setattr("sns_harness.__main__.notion_queue", lambda settings: Queue())
+    monkeypatch.setattr(
+        "sns_harness.__main__.ThreadsWriter",
+        lambda *args, **kwargs: pytest.fail("dry-run must not construct an OpenAI writer"),
+    )
+
+    assert main(["prepare-sales", "--dry-run"]) == 0
+    assert json.loads(capsys.readouterr().out)["candidates"] == 0

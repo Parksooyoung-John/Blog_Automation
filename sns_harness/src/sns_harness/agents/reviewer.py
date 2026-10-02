@@ -7,6 +7,7 @@ from openai import OpenAI
 from pydantic import ValidationError
 
 from sns_harness.models import (
+    ProductOffer,
     ReviewResult,
     SourcePost,
     ThreadsDraft,
@@ -21,9 +22,14 @@ class ComplianceReviewer:
         self.model = model
         self.instructions = prompt_path.read_text(encoding="utf-8")
 
-    def review(self, source: SourcePost, draft: ThreadsDraft) -> ReviewResult:
+    def review(
+        self,
+        source: SourcePost,
+        draft: ThreadsDraft,
+        product: ProductOffer | None = None,
+    ) -> ReviewResult:
         current_draft = draft
-        remaining_issues = validate_draft_against_source(current_draft, source)
+        remaining_issues = validate_draft_against_source(current_draft, source, product)
 
         for attempt in range(3):
             payload = {
@@ -34,6 +40,7 @@ class ComplianceReviewer:
                     "content": source.content[:30_000],
                 },
                 "draft": current_draft.model_dump(mode="json"),
+                "product": product.model_dump(mode="json") if product else None,
                 "deterministic_issues": remaining_issues,
                 "repair_attempt": attempt + 1,
             }
@@ -60,7 +67,8 @@ class ComplianceReviewer:
             current_draft = result.reviewed_draft
             remaining_issues = list(
                 dict.fromkeys(
-                    result.issues + validate_draft_against_source(current_draft, source)
+                    result.issues
+                    + validate_draft_against_source(current_draft, source, product)
                 )
             )
             if not remaining_issues and result.approved:

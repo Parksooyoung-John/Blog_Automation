@@ -29,7 +29,7 @@ class RecordingSession:
         return EmptyQueryResponse()
 
 
-def test_scheduling_and_due_queries_select_only_naver_items() -> None:
+def test_scheduling_and_due_queries_include_manual_daily_items() -> None:
     session = RecordingSession()
     queue = NotionQueue("key", "database", session=session)  # type: ignore[arg-type]
     now = datetime.now(UTC)
@@ -41,4 +41,18 @@ def test_scheduling_and_due_queries_select_only_naver_items() -> None:
     assert len(session.payloads) == 3
     for payload in session.payloads:
         conditions = payload["filter"]["and"]  # type: ignore[index]
-        assert NAVER_SOURCE_FILTER in conditions
+        assert NAVER_SOURCE_FILTER not in conditions
+
+
+def test_sales_draft_query_selects_only_requested_naver_items() -> None:
+    session = RecordingSession()
+    queue = NotionQueue("key", "database", session=session)  # type: ignore[arg-type]
+
+    assert queue.sales_draft_requests() == []
+
+    conditions = session.payloads[0]["filter"]["and"]  # type: ignore[index]
+    assert NAVER_SOURCE_FILTER in conditions
+    assert {
+        "property": "상태",
+        "select": {"equals": "판매초안요청"},
+    } in conditions

@@ -351,14 +351,19 @@ SALES_BLOCKED_PHRASES = (
 
 def validate_draft_against_source(
     draft: ThreadsDraft,
-    source: SourcePost,
+    source: SourcePost | None,
     product: ProductOffer | None = None,
 ) -> list[str]:
     issues: list[str] = []
     combined = "\n".join(draft.posts)
     links = [link.rstrip(".,)") for link in URL_RE.findall(combined)]
 
-    if product is not None:
+    if source is None:
+        if product is not None:
+            issues.append("product draft requires a source post")
+        if links:
+            issues.append("manual content must not contain links")
+    elif product is not None:
         if draft.format is not PostFormat.THREAD or not 2 <= len(draft.posts) <= 5:
             issues.append("product draft must be a 2-5 post thread")
         else:
@@ -391,27 +396,34 @@ def validate_draft_against_source(
         if source.url not in draft.posts[link_post]:
             issues.append("thread must include the canonical source URL in the designated reply")
 
-    allowed_links = {source.url}
-    if product is not None:
-        allowed_links.add(product.url)
-    foreign_links = [link for link in links if link not in allowed_links]
-    if foreign_links:
-        issues.append("draft contains a link outside the approved URLs")
+    if source is not None:
+        allowed_links = {source.url}
+        if product is not None:
+            allowed_links.add(product.url)
+        foreign_links = [link for link in links if link not in allowed_links]
+        if foreign_links:
+            issues.append("draft contains a link outside the approved URLs")
 
-    source_numbers = {
-        value.rstrip(".,")
-        for value in NUMBER_RE.findall(
-            source.title
-            + "\n"
-            + source.content
-            + ("\n" + product.name + "\n" + product.recommendation_basis if product else "")
-        )
-    }
-    without_urls = URL_RE.sub("", combined)
-    draft_numbers = {value.rstrip(".,") for value in NUMBER_RE.findall(without_urls)}
-    novel_numbers = sorted(draft_numbers - source_numbers)
-    if novel_numbers:
-        issues.append("draft contains numbers absent from source: " + ", ".join(novel_numbers))
+        source_numbers = {
+            value.rstrip(".,")
+            for value in NUMBER_RE.findall(
+                source.title
+                + "\n"
+                + source.content
+                + (
+                    "\n" + product.name + "\n" + product.recommendation_basis
+                    if product
+                    else ""
+                )
+            )
+        }
+        without_urls = URL_RE.sub("", combined)
+        draft_numbers = {value.rstrip(".,") for value in NUMBER_RE.findall(without_urls)}
+        novel_numbers = sorted(draft_numbers - source_numbers)
+        if novel_numbers:
+            issues.append(
+                "draft contains numbers absent from source: " + ", ".join(novel_numbers)
+            )
 
     for phrase in BLOCKED_PHRASES:
         if phrase in combined:

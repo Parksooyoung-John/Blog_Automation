@@ -81,6 +81,26 @@ def test_number_comparison_ignores_trailing_sentence_punctuation() -> None:
     assert validate_draft_against_source(draft, post) == []
 
 
+def test_manual_content_can_be_validated_without_a_source_post() -> None:
+    draft = ThreadsDraft(
+        format="single",
+        posts=["ISA 만기 자금은 어떤 기준으로 운용 방향을 정하고 계신가요?"],
+    )
+
+    assert validate_draft_against_source(draft, None) == []
+
+
+def test_manual_content_rejects_external_links() -> None:
+    draft = ThreadsDraft(
+        format="single",
+        posts=["의견이 궁금합니다. https://example.com"],
+    )
+
+    assert "manual content must not contain links" in validate_draft_against_source(
+        draft, None
+    )
+
+
 def test_post_has_480_grapheme_safety_limit() -> None:
     with pytest.raises(ValidationError):
         ThreadsDraft(

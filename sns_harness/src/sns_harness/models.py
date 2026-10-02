@@ -368,6 +368,18 @@ SALES_BLOCKED_PHRASES = (
 )
 HOOK_BLOCKED_PHRASES = ("모르면 손해", "무조건", "반드시", "지금 당장")
 BLOG_CTA_PHRASES = ("프로필 블로그", "블로그에 정리", "자세한 내용은 블로그")
+GENERIC_TITLE_WORDS = {
+    "기준", "계산", "방법", "순서", "이유", "조건", "신청", "조회", "정리"
+}
+
+
+def _topic_words(title: str) -> set[str]:
+    words: set[str] = set()
+    for raw in re.findall(r"[가-힣A-Za-z]{3,}", title):
+        word = re.sub(r"(?:으로|에서|까지|부터|에게|보다|처럼|은|는|이|가|을|를)$", "", raw)
+        if len(word) >= 3 and word not in GENERIC_TITLE_WORDS:
+            words.add(word.lower())
+    return words
 
 
 def _validate_naver_hook(draft: ThreadsDraft, source: SourcePost) -> list[str]:
@@ -385,6 +397,8 @@ def _validate_naver_hook(draft: ThreadsDraft, source: SourcePost) -> list[str]:
     normalized_title = re.sub(r"\W+", "", source.title).lower()
     if normalized_title and SequenceMatcher(None, normalized_hook, normalized_title).ratio() >= 0.8:
         issues.append("hook_text must not repeat the source title")
+    if not any(word in hook.lower() for word in _topic_words(source.title)):
+        issues.append("hook_text must name a concrete topic from the source title")
     if any(phrase in hook for phrase in HOOK_BLOCKED_PHRASES):
         issues.append("hook_text contains a blocked urgency or fear expression")
     if draft.hook_type is HookType.QUESTION and not any(mark in hook for mark in ("?", "？")):

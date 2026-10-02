@@ -58,7 +58,10 @@ def test_rejects_post_published_to_unexpected_username() -> None:
             })
 
     publisher = ThreadsPublisher("user", "token", session=WrongAccountSession())
-    with pytest.raises(ThreadsAPIError, match="username mismatch"):
+    with pytest.raises(
+        ThreadsAPIError,
+        match="actual='wrong', expected='mone.ybrief'",
+    ):
         publisher.verify_published("media-1")
 
 

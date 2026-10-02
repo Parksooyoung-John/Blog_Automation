@@ -119,7 +119,8 @@ class ThreadsPublisher:
             raise ThreadsAPIError("Threads verification returned a different post id")
         if username != self.expected_username:
             raise ThreadsAPIError(
-                f"Threads verification username mismatch: {username!r}"
+                "Threads verification username mismatch: "
+                f"actual={username!r}, expected={self.expected_username!r}"
             )
         if not permalink:
             raise ThreadsAPIError("Threads verification response has no permalink")

@@ -9,3 +9,9 @@ def test_comma_separated_default_slots_from_environment(monkeypatch) -> None:
 
     assert settings.default_slots == ("08:30", "18:30")
     assert settings.tz.key == "Asia/Seoul"
+
+
+def test_default_threads_account_matches_publishing_account() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.blog_account_label == "mone.ybrief"

@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     )
 
     blog_base_url: str = "https://j2gblog.tistory.com"
-    blog_account_label: str = "money.ybrief"
+    blog_account_label: str = "mone.ybrief"
     naver_blog_id: str = "education_blog"
     openai_api_key: str = ""
     openai_model: str = "gpt-5.4-mini"

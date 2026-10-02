@@ -32,6 +32,7 @@ jobs:
       NOTION_SNS_DATABASE_ID: ${{ secrets.NOTION_SNS_DATABASE_ID }}
       THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
       THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+      BLOG_ACCOUNT_LABEL: mone.ybrief
       DRY_RUN: ${{ inputs.dry_run }}
     steps:
       - uses: actions/checkout@v7

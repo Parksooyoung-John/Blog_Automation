@@ -8,7 +8,9 @@ from pydantic import ValidationError
 
 from sns_harness.models import (
     URL_RE,
+    BlogDraftCandidates,
     DailyDraft,
+    HookType,
     ProductDraftContent,
     ProductOffer,
     SourcePost,
@@ -41,6 +43,19 @@ class ThreadsWriter:
         return DailyDraft.model_validate_json(response.output_text)
 
     def generate(self, source: SourcePost) -> ThreadsDraft:
+        return self.generate_candidates(
+            source,
+            hook_types=(HookType.CURIOSITY, HookType.MISTAKE, HookType.QUESTION),
+            include_link=True,
+        )[0]
+
+    def generate_candidates(
+        self,
+        source: SourcePost,
+        *,
+        hook_types: tuple[HookType, HookType, HookType],
+        include_link: bool,
+    ) -> list[ThreadsDraft]:
         payload = {
             "title": source.title,
             "canonical_url": source.url,
@@ -48,8 +63,10 @@ class ThreadsWriter:
             "description": source.description,
             "tags": source.tags,
             "content": source.content[:30_000],
+            "required_hook_types": [hook.value for hook in hook_types],
+            "include_blog_link": include_link,
         }
-        last_error: ValidationError | None = None
+        last_error: Exception | None = None
         for attempt in range(3):
             request_payload = {
                 **payload,
@@ -64,15 +81,23 @@ class ThreadsWriter:
                 text={
                     "format": {
                         "type": "json_schema",
-                        "name": "threads_draft",
+                        "name": "blog_draft_candidates",
                         "strict": True,
-                        "schema": strict_json_schema(ThreadsDraft),
+                        "schema": strict_json_schema(BlogDraftCandidates),
                     }
                 },
             )
             try:
-                return ThreadsDraft.model_validate_json(response.output_text)
-            except ValidationError as exc:
+                candidates = BlogDraftCandidates.model_validate_json(response.output_text)
+                if {draft.hook_type for draft in candidates.candidates} != set(hook_types):
+                    raise ValueError("writer did not use the required hook types")
+                if any(
+                    draft.blog_link_used is not include_link
+                    for draft in candidates.candidates
+                ):
+                    raise ValueError("writer did not follow the blog link policy")
+                return candidates.candidates
+            except (ValidationError, ValueError) as exc:
                 last_error = exc
         assert last_error is not None
         raise last_error

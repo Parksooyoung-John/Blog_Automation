@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import requests
 
 from sns_harness.models import (
+    ContentType,
+    HookType,
     PostFormat,
     QueueItem,
     QueueStatus,
@@ -44,10 +46,12 @@ PROPERTY_TYPES = {
     "광고고지": "rich_text",
     "상품해시": "rich_text",
     "게시물URL": "url",
+    "Hook문구": "rich_text",
 }
 
 DAILY_PROPERTY_DEFINITIONS = {
     "게시물URL": {"url": {}},
+    "Hook문구": {"rich_text": {}},
     "콘텐츠유형": {
         "select": {"options": [{"name": n} for n in ("블로그정보", "재테크팁", "질문형", "운영글")]}
     },
@@ -171,6 +175,70 @@ class NotionQueue:
             sorts=[{"timestamp": "last_edited_time", "direction": "ascending"}],
         )
         return [self._to_item(page) for page in pages]
+
+    def unpublished_blog_items(self) -> list[QueueItem]:
+        pages = self._query(
+            {
+                "and": [
+                    {
+                        "or": [
+                            {
+                                "property": "콘텐츠유형",
+                                "select": {"equals": "블로그정보"},
+                            },
+                            {
+                                "property": "콘텐츠유형",
+                                "select": {"is_empty": True},
+                            },
+                        ]
+                    },
+                    NAVER_SOURCE_FILTER,
+                    {"property": "판매플랫폼", "select": {"is_empty": True}},
+                    {
+                        "or": [
+                            {"property": "상태", "select": {"equals": status.value}}
+                            for status in (
+                                QueueStatus.DRAFT,
+                                QueueStatus.HOLD,
+                                QueueStatus.ERROR,
+                                QueueStatus.APPROVED,
+                            )
+                        ]
+                    },
+                ]
+            },
+            sorts=[{"timestamp": "created_time", "direction": "ascending"}],
+        )
+        return [self._to_item(page) for page in pages]
+
+    def blog_generation_policy(self, now: datetime) -> dict[str, object]:
+        eligible = tuple(hook for hook in HookType if hook is not HookType.EMPATHY)
+        pages = self._query(
+            {"property": "콘텐츠유형", "select": {"equals": ContentType.BLOG_INFO.value}},
+            sorts=[{"timestamp": "created_time", "direction": "descending"}],
+            page_size=9,
+        )
+        cutoff = now - timedelta(days=7)
+        counts = {hook: 0 for hook in eligible}
+        last_hook: HookType | None = None
+        for index, page in enumerate(pages):
+            props = page.get("properties", {})
+            name = self._select_name(props.get("Hook유형", {}))
+            try:
+                hook = HookType(name)
+            except ValueError:
+                continue
+            if index == 0:
+                last_hook = hook
+            created = datetime.fromisoformat(page["created_time"].replace("Z", "+00:00"))
+            if hook in counts and created >= cutoff.astimezone(UTC):
+                counts[hook] += 1
+        ordered = sorted(eligible, key=lambda hook: (hook is last_hook, counts[hook], hook.value))
+        include_link = len(pages) == 9 and not any(
+            bool(page.get("properties", {}).get("블로그링크사용", {}).get("checkbox"))
+            for page in pages
+        )
+        return {"hook_types": tuple(ordered[:3]), "include_link": include_link}
 
     def create(self, source: SourcePost, review: ReviewResult) -> QueueItem:
         status = QueueStatus.DRAFT if review.approved else QueueStatus.HOLD
@@ -400,7 +468,9 @@ class NotionQueue:
             "게시슬롯": self._rich("12:30"),
             "원문키": self._rich(source.source_key),
             "주제": self._rich(draft.topic_tag or ""),
-            "블로그링크사용": {"checkbox": True},
+            "Hook유형": self._select(draft.hook_type.value if draft.hook_type else "궁금증"),
+            "Hook문구": self._rich(draft.hook_text),
+            "블로그링크사용": {"checkbox": draft.blog_link_used},
             "자동생성여부": {"checkbox": True},
             "사람수정필요": {"checkbox": False},
             "중복검사키": self._rich(f"블로그정보:{source.source_key}"),
@@ -460,6 +530,11 @@ class NotionQueue:
                 format=PostFormat(self._select_name(props.get("형식", {}))),
                 posts=posts,
                 topic_tag=self._plain(props.get("주제태그", {})) or None,
+                hook_type=self._select_name(props.get("Hook유형", {})) or None,
+                hook_text=self._plain(props.get("Hook문구", {})),
+                blog_link_used=bool(
+                    props.get("블로그링크사용", {}).get("checkbox", False)
+                ),
             ),
             scheduled_at=scheduled,
             published_at=published,

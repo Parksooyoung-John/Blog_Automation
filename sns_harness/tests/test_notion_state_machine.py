@@ -3,7 +3,14 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from sns_harness.models import QueueItem, QueueStatus, ReviewResult, SourcePost, ThreadsDraft
+from sns_harness.models import (
+    HookType,
+    QueueItem,
+    QueueStatus,
+    ReviewResult,
+    SourcePost,
+    ThreadsDraft,
+)
 from sns_harness.orchestrator import HarnessOrchestrator
 
 
@@ -132,7 +139,76 @@ def test_normal_sync_does_not_retry_unchanged_hold_item() -> None:
 
     assert result["unchanged"] == 1
     assert queue.replaced == 0
-    assert writer.calls == 0
+
+
+def test_regenerate_blog_hooks_resets_each_unpublished_item() -> None:
+    post = make_source()
+    draft = ThreadsDraft(format="single", posts=[f"조건 확인 {post.url}"])
+    writer = FakeWriter(draft)
+    item = Existing("old-hash", QueueStatus.APPROVED)
+    item.source_url = post.url
+
+    class Queue(FakeQueue):
+        def unpublished_blog_items(self):
+            return [item]
+
+    queue = Queue(item)
+    orchestrator = HarnessOrchestrator(FakeSource(post), writer, FakeReviewer(), queue)
+
+    result = orchestrator.regenerate_blog_hooks(now=datetime.now(UTC))
+
+    assert result["candidates"] == 1
+    assert result["updated"] == 1
+    assert queue.replaced == 1
+    assert writer.calls == 1
+
+
+def test_sync_selects_highest_scoring_approved_hook_candidate() -> None:
+    post = make_source()
+    candidates = [
+        ThreadsDraft(
+            format="single",
+            posts=[f"후보 {index} {post.url}"],
+            hook_type=hook_type,
+            hook_text=f"충분히 긴 Hook 후보 문장 {index}입니다.",
+        )
+        for index, hook_type in enumerate(
+            (HookType.CURIOSITY, HookType.MISTAKE, HookType.QUESTION), start=1
+        )
+    ]
+
+    class Writer:
+        def generate_candidates(self, source, *, hook_types, include_link):
+            assert tuple(hook_types) == tuple(draft.hook_type for draft in candidates)
+            return candidates
+
+    class Reviewer:
+        def review(self, source, draft):
+            score = {HookType.CURIOSITY: 70, HookType.MISTAKE: 92, HookType.QUESTION: 80}
+            return ReviewResult(
+                approved=True,
+                reviewed_draft=draft,
+                quality_score=score[draft.hook_type],
+            )
+
+    class Queue(FakeQueue):
+        selected = None
+
+        def blog_generation_policy(self, now):
+            return {
+                "hook_types": tuple(draft.hook_type for draft in candidates),
+                "include_link": True,
+            }
+
+        def create(self, source, review):
+            self.selected = review.reviewed_draft
+
+    queue = Queue()
+    orchestrator = HarnessOrchestrator(FakeSource(post), Writer(), Reviewer(), queue)
+
+    orchestrator.sync(now=datetime.now(UTC))
+
+    assert queue.selected.hook_type is HookType.MISTAKE
 
 
 def test_dry_run_has_no_openai_or_queue_writes() -> None:

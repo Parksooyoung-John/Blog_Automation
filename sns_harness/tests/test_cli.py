@@ -47,6 +47,7 @@ def test_sync_source_defaults_to_naver_and_keeps_tistory_compatibility() -> None
     assert parser().parse_args(["sync", "--source", "tistory"]).source == "tistory"
     assert parser().parse_args(["prepare-sales", "--dry-run"]).dry_run is True
     assert parser().parse_args(["sync", "--retry-errors"]).retry_errors is True
+    assert parser().parse_args(["regenerate-blog-hooks", "--dry-run"]).dry_run is True
 
 
 def test_naver_dry_run_does_not_create_drafts_or_openai_clients(

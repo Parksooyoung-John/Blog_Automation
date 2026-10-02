@@ -114,7 +114,7 @@ def test_manual_content_rejects_external_links() -> None:
 
 def test_naver_link_free_draft_requires_a_trustworthy_hook() -> None:
     post = naver_source()
-    hook = "연금 받는 나이, 65세로만 알고 있으면 헷갈릴 수 있음."
+    hook = "국민연금 받는 나이, 65세로만 알고 있으면 헷갈릴 수 있음."
     draft = ThreadsDraft(
         format="single",
         posts=[f"{hook}\n출생연도에 따라 수령 나이가 달라짐."],
@@ -141,9 +141,25 @@ def test_naver_draft_rejects_title_repetition_and_blocked_hook() -> None:
     assert "hook_text must not repeat the source title" in issues
 
 
+def test_naver_draft_rejects_generic_hook_without_the_topic() -> None:
+    post = naver_source()
+    hook = "2026년 기준 숫자만 보면 계산 구조가 보입니다."
+    draft = ThreadsDraft(
+        format="single",
+        posts=[f"{hook}\n출생연도에 따라 수령 나이가 달라짐."],
+        hook_type="숫자",
+        hook_text=hook,
+        blog_link_used=False,
+    )
+
+    issues = validate_draft_against_source(draft, post)
+
+    assert "hook_text must name a concrete topic from the source title" in issues
+
+
 def test_naver_link_draft_places_url_once_in_first_reply() -> None:
     post = naver_source()
-    hook = "연금 받는 나이가 모두 똑같다고 생각했어?"
+    hook = "국민연금 받는 나이가 모두 똑같다고 생각했어?"
     draft = ThreadsDraft(
         format="thread",
         posts=[

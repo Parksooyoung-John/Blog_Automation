@@ -234,10 +234,11 @@ class NotionQueue:
             if hook in counts and created >= cutoff.astimezone(UTC):
                 counts[hook] += 1
         ordered = sorted(eligible, key=lambda hook: (hook is last_hook, counts[hook], hook.value))
-        include_link = len(pages) == 9 and not any(
+        recent_link_count = sum(
             bool(page.get("properties", {}).get("블로그링크사용", {}).get("checkbox"))
             for page in pages
         )
+        include_link = recent_link_count < 4
         return {"hook_types": tuple(ordered[:3]), "include_link": include_link}
 
     def create(self, source: SourcePost, review: ReviewResult) -> QueueItem:

@@ -235,23 +235,6 @@ class DailyOperationsManager:
         measured: list[QueueItem],
     ) -> list[DataRequest]:
         candidates: list[DataRequest] = []
-        missing_views = max(20 - len(measured), 0)
-        if missing_views:
-            candidates.append(
-                DataRequest(
-                    key="threads-window-views",
-                    title="Threads Insights 자동 수집 권한 확인",
-                    priority=RequestPriority.REQUIRED,
-                    missing_data="24시간 또는 72시간 조회수",
-                    reason="Hook과 콘텐츠 성과 비교에 필요한 최소 표본이 부족합니다. 수치는 "
-                    "공식 Threads Insights API로 자동 수집합니다.",
-                    impact="콘셉트 전환 여부를 판단할 수 없습니다.",
-                    input_location="Meta Developer Console의 Threads 앱 재인증",
-                    minimum_required="threads_manage_insights 권한을 포함한 액세스 토큰",
-                    completion_check=f"자동 수집된 측정 가능 게시물이 {20}건 이상인지 확인",
-                    fallback_scope="예약·오류 상태와 콘텐츠 구성만 진단 가능",
-                )
-            )
         if published and not any(
             metric.blog_views is not None
             for item in published

@@ -14,7 +14,7 @@ from sns_harness.operations.github_status import GitHubActionsStatus
 from sns_harness.operations.manager import DailyOperationsManager
 from sns_harness.operations.models import OperationsSnapshot
 from sns_harness.orchestrator import HarnessOrchestrator
-from sns_harness.publishers.threads import ThreadsPublisher
+from sns_harness.publishers.threads import ThreadsAPIError, ThreadsPublisher
 from sns_harness.queues.notion import NotionQueue
 from sns_harness.queues.operations_notion import OperationsNotionQueue
 from sns_harness.research.naver_datalab import NaverDataLabClient, default_date_range
@@ -68,6 +68,12 @@ def parser() -> argparse.ArgumentParser:
     research.add_argument("--days", type=int, default=30)
     research.add_argument("--keyword", action="append", default=[])
     research.add_argument("--dry-run", action="store_true")
+    metrics = commands.add_parser("metrics")
+    metric_commands = metrics.add_subparsers(dest="metric_operation", required=True)
+    metric_collect = metric_commands.add_parser("collect")
+    metric_collect.add_argument("--window", choices=("24h", "72h", "7d"), required=True)
+    metric_collect.add_argument("--days", type=int, default=14)
+    metric_collect.add_argument("--dry-run", action="store_true")
     operations = commands.add_parser("operations")
     operation_commands = operations.add_subparsers(dest="operation", required=True)
     collect = operation_commands.add_parser("collect")
@@ -132,6 +138,57 @@ def operations_snapshot(settings: Settings, days: int) -> OperationsSnapshot:
         suppressed_request_keys=suppressed,
         previous_verdicts=previous_verdicts,
     )
+
+
+def metric_age_hours(window: str) -> tuple[int, int]:
+    return {"24h": (24, 72), "72h": (72, 168), "7d": (168, 336)}[window]
+
+
+def collect_metrics(
+    settings: Settings, *, window: str, days: int, dry_run: bool
+) -> dict[str, object]:
+    now = datetime.now(UTC)
+    minimum_hours, maximum_hours = metric_age_hours(window)
+    items = notion_queue(settings).operations_items(now - timedelta(days=days))
+    candidates = [
+        item
+        for item in items
+        if item.status.value == "게시완료"
+        and item.threads_ids
+        and item.published_at
+        and minimum_hours <= (now - item.published_at).total_seconds() / 3600 < maximum_hours
+        and window not in item.metrics
+    ]
+    result: dict[str, object] = {
+        "window": window,
+        "candidates": len(candidates),
+        "collected": 0,
+        "skipped": len(items) - len(candidates),
+        "failed": 0,
+        "permission_required": False,
+    }
+    if dry_run:
+        result["dry_run"] = True
+        return result
+
+    queue = notion_queue(settings)
+    publisher = ThreadsPublisher(
+        settings.threads_user_id,
+        settings.threads_access_token,
+        expected_username=settings.blog_account_label,
+        timeout=settings.request_timeout_seconds,
+    )
+    for item in candidates:
+        try:
+            metrics = publisher.post_insights(item.threads_ids[0], window=window)
+            queue.update_metrics(item.page_id, metrics)
+            result["collected"] = int(result["collected"]) + 1
+        except ThreadsAPIError as exc:
+            result["failed"] = int(result["failed"]) + 1
+            if "permission" in str(exc).lower() or "scope" in str(exc).lower():
+                result["permission_required"] = True
+                break
+    return result
 
 
 def validate(settings: Settings, command: str) -> int:
@@ -212,6 +269,20 @@ def main(argv: list[str] | None = None) -> int:
                 for item in snapshots
             ],
         }, ensure_ascii=False))
+        return 0
+
+    if args.command == "metrics":
+        missing = settings.missing_for("metrics")
+        if missing:
+            print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
+            return 2
+        result = collect_metrics(
+            settings,
+            window=args.window,
+            days=args.days,
+            dry_run=args.dry_run,
+        )
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0
 
     if args.command == "operations":

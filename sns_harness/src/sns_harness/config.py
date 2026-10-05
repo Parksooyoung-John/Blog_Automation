@@ -124,6 +124,12 @@ class Settings(BaseSettings):
                 "NOTION_API_KEY": self.notion_api_key,
                 "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
             },
+            "metrics": {
+                "NOTION_API_KEY": self.notion_api_key,
+                "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
+                "THREADS_USER_ID": self.threads_user_id,
+                "THREADS_ACCESS_TOKEN": self.threads_access_token,
+            },
             "operations-schema": {
                 "NOTION_API_KEY": self.notion_api_key,
                 "NOTION_OPERATIONS_DATABASE_ID": self.notion_operations_database_id,

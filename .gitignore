@@ -17,3 +17,6 @@ assets/naver_img/*.jpeg
 assets/naver_img/*.JPEG
 assets/naver_img/*.png
 !assets/naver_img/[0-9][0-9]_*.png
+
+# 상위 Claude_code 저장소의 작업폴더 — 이 저장소 소관이 아니다
+push-work/

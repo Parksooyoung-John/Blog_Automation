@@ -4,7 +4,10 @@
     python -X utf8 trend_scan.py --top 50
     python -X utf8 trend_scan.py --selftest
 
-.env에 NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 필요 (네이버 개발자센터 애플리케이션, 데이터랩 검색어트렌드 사용 설정).
+.env에 NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 필요 — 2026-07-31 이전에 네이버 개발자센터에서 받은 키만 동작한다
+(2027-06-30까지). 그 뒤로 개발자센터는 데이터랩 신규 신청을 받지 않고, 신규 키는 NAVER API HUB(NCP 계정)에서
+받아야 하는데 호스트·경로·헤더가 달라 이 스크립트는 아직 대응하지 않는다. 2026-10-05에 '개발자센터에서
+발급하라'는 안내를 따라갔다가 사용 API 목록에 데이터랩이 없어서 알았다. 키가 없으면 추세 없이 진행한다.
 후보는 keyword_research.gap_data()의 '수요 있는데 안 쓴 주제' 중 NAVER_GUIDE 범위 안의 것만 쓴다.
 
 sns_harness의 NaverDataLabClient를 import하지 않는 이유: 그 모듈이 sns_harness.models를 끌어오고
@@ -93,8 +96,8 @@ def fetch(batch, start, end, cid, secret):
 def scan(top):
     cid, secret = os.getenv("NAVER_CLIENT_ID"), os.getenv("NAVER_CLIENT_SECRET")
     if not (cid and secret):
-        sys.exit("NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 이 .env에 필요합니다 "
-                 "(네이버 개발자센터 > 애플리케이션 > 데이터랩(검색어트렌드) 사용 설정).")
+        sys.exit("NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 이 .env에 없습니다. 개발자센터 신규 발급은 2026-07-31에 "
+                 "종료됐고, NAVER API HUB 키는 이 스크립트가 아직 지원하지 않습니다. 추세 없이 진행하세요.")
     gaps, _, age = gap_data()
     meta = {k: (v, c) for k, v, c in gaps if in_scope(k)}
     cands = list(meta)[:top]

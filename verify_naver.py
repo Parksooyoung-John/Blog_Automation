@@ -37,8 +37,8 @@ def categories() -> list:
     return _get(u).json()["result"]["mylogCategoryList"]
 
 
-def recent(n=10) -> list:
-    u = f"https://m.blog.naver.com/api/blogs/{BLOG}/post-list?categoryNo=0&itemCount={n}&page=1"
+def recent(n=10, page=1) -> list:
+    u = f"https://m.blog.naver.com/api/blogs/{BLOG}/post-list?categoryNo=0&itemCount={n}&page={page}"
     out = []
     for i in _get(u).json()["result"]["items"]:
         kst = datetime.datetime.fromtimestamp(int(i["addDate"]) / 1000, datetime.UTC) \

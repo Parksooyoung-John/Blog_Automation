@@ -22,6 +22,7 @@
 | sns-copywriter | claude-haiku-4-5 | 숏폼·카피, 복잡도 낮음 |
 | presentation-builder | claude-haiku-4-5 | 구조 설계, 패턴 반복 |
 | quality-reviewer | claude-haiku-4-5 | 체크리스트 검증, 판단 작업 |
+| blog-manager | claude-sonnet-4-5 | 상황 판단·액션 선정, 부를 때만 1회 |
 
 ### 실행 모드별 에이전트 수 (토큰 절감)
 - **블로그 전용** (기본): source-analyst + blog-writer + quality-reviewer = **3명**
@@ -85,7 +86,8 @@
 │   ├── blog-writer.md           — 블로그 작가 (SEO 최적화 블로그 포스트)
 │   ├── sns-copywriter.md        — SNS 카피라이터 (플랫폼별 포스트)
 │   ├── presentation-builder.md  — 프레젠테이션 빌더 (슬라이드 구성)
-│   └── quality-reviewer.md      — 품질 검증자 (교차 검증, 메시지 일관성)
+│   ├── quality-reviewer.md      — 품질 검증자 (교차 검증, 메시지 일관성)
+│   └── blog-manager.md          — 매니저 (상황 판정, 오늘 할 일 — 글은 쓰지 않는다)
 ├── skills/
 │   ├── content-repurposer/
 │   │   └── skill.md             — 오케스트레이터 (팀 조율, 워크플로우, 에러핸들링)
@@ -101,9 +103,36 @@
 ## 기획 단계 — 무엇을 쓸지 먼저 정한다
 
 글을 쓰기 전에 `topic-planner` 스킬로 주제를 고른다. 순서: `keyword_research.py gap`(안 쓴 주제) →
-`trend_scan.py`(DataLab 추세, `.env`에 `NAVER_CLIENT_ID/SECRET`) → `content/naver/_calendar.md`.
+`trend_scan.py`(DataLab 추세 — 선택. 개발자센터 신규 키 발급이 2026-07-31 종료돼 키가 없으면 건너뛴다) → `content/naver/_calendar.md`.
 두 스크립트 모두 `--selftest`가 있다(`keyword_research.py selftest`). 검색량 데이터가 30일을 넘으면
 `gap`이 경고한다. 사용자가 직접 주제를 주면 이 단계는 건너뛴다.
+
+## 블로그 매니저 — 판정은 코드가, 전달은 그대로
+
+"매니저 브리핑", "오늘 뭐 해야 돼", "블로그 상황"이라고 하면 `blog-manager` 에이전트를 부른다.
+에이전트는 `python -X utf8 manager.py`를 돌려 발행 현황·방문자·데이터 신선도를 모으고,
+판정과 오늘 할 일(최대 3개)을 보고한다.
+
+**판정 기준은 `manager.py` 상단 상수에만 있다**(2026-10-05 확정, 네이버 블로그 대상).
+
+| 점검 시점 (먼저 오는 쪽) | 7일 평균 일 방문 | 미달 시 |
+|---|---|---|
+| 10편 또는 첫 발행 4주 | 15명 | 경고 |
+| 20편 또는 첫 발행 8주 | 50명 | 전환권고 |
+
+방문자 수치가 7일 넘게 비면 `판정보류`다. 수치는 네이버 방문자 그래프 위젯 엔드포인트에서
+자동으로 받고(위젯이 꺼져 있으면 빈 응답), 안 되면 `--visitors N`(어제 하루 값)으로 넣는다.
+기록은 `content/naver/_metrics.csv`에 쌓인다.
+
+### 규칙 — 매니저도, 메인 세션도 따른다
+
+- **판정을 순화해서 전달하지 않는다.** `전환권고`면 이 블로그가 기준에 미달했다고 말하고
+  중단·컨셉 전환·기한부 연장 중에서 고르게 한다. 같은 컨셉 안의 미세조정을 대안으로 내놓지 않는다.
+- **사용자가 반박해도 새 데이터가 없으면 판정은 그대로다.** 들인 노력·기대·의지는 근거가 아니다.
+- **기준을 바꾸려면** `ADSENSE_PROGRESS.md`에 날짜·이전 값·새 값·사유를 적고
+  `manager.py --selftest`를 같이 고친다. **`경고`·`전환권고`가 뜬 세션에서는 기준을 완화하지 않는다** —
+  결과를 본 뒤에 고치는 기준은 기준이 아니다. 다음 세션에서 다시 논의한다.
+- 수치가 없으면 추정으로 메우지 않는다.
 
 ## 사용법
 

@@ -14,15 +14,15 @@ description: "네이버 블로그 다음 글감을 검색 수요 기반으로 �
 |---|---|---|
 | 검색량 | `_workspace/keywords_volume.csv` | 30일 넘으면 `keyword_research.py volume` 재실행부터 |
 | 안 쓴 주제 | `python -X utf8 keyword_research.py gap` | 티스토리 + `content/naver/` 제목 대조 |
-| 추세 | `python -X utf8 trend_scan.py` → `_workspace/reports/trend_*.md` | `.env`에 `NAVER_CLIENT_ID/SECRET` 필요 |
+| 추세 | `python -X utf8 trend_scan.py` → `_workspace/reports/trend_*.md` | 선택. 키가 없으면 건너뛴다 (개발자센터 신규 발급 2026-07-31 종료, `trend_scan.py` 주석 참조) |
 | 범위·시즌 | `NAVER_GUIDE.md` 「주제 범위」「시즌 캘린더」 | 가져갈 것 / 버릴 것 |
 | 이미 쓴 글 | `content/naver/NN_*.md` 첫 줄 제목, 카테고리 메모 | |
 
 ## 절차
 
 1. **데이터 신선도 확인** — `gap` 출력 맨 위 경고(⚠ N일 전)가 있으면 사용자에게 알리고 재조회 여부를 묻는다. 묻지 않고 넘어가지 않는다.
-2. **추세 리포트 확보** — 오늘 날짜 `trend_*.md`가 없으면 `trend_scan.py`를 돌린다. 키가 없으면 중단하고 필요한 키만 안내한다. 추세 없이 진행할 땐 리포트에 "추세 미반영"을 명시한다.
-3. **1차 후보** — 리포트의 점수(월 검색량 × 경쟁 가중 × 추세 가중) 상위를 시작점으로 한다.
+2. **추세 리포트 확보** — 오늘 날짜 `trend_*.md`가 없으면 `trend_scan.py`를 돌린다. 키가 없으면 **발급을 안내하지 말고** 추세 없이 진행한다 — 사용자가 따라갈 수 있는 발급 경로가 지금은 없다. 이때 후보는 `keyword_research.gap_data()`를 `trend_scan.in_scope()`로 걸러 검색량순으로 뽑고, 캘린더 맨 위에 "추세 미반영"을 명시한다.
+3. **1차 후보** — 리포트의 점수(월 검색량 × 경쟁 가중 × 추세 가중) 상위를 시작점으로 한다. 추세가 없으면 검색량과 경쟁만 본다.
 4. **판단으로 거른다 (숫자가 못 보는 것)**
    - 시즌: 성수기 1~2개월 전인가 (`NAVER_GUIDE.md` 캘린더). 마감이 지난 주제는 뺀다.
    - 글로 해결되는 검색인가: 사이트·로그인을 찾는 검색, 조회 서비스 자체를 원하는 검색은 뺀다.

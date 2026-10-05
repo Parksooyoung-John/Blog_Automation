@@ -243,6 +243,39 @@ CARDS = {
       <div class='row'><span class='tag'>지역가입자</span><span class='txt'>소득보험료 + 재산보험료, 전액 본인 부담</span></div>
       <p class='foot'>소득만 보던 직장가입자에서 은퇴 등으로 전환되면, 집이 있다는 이유로 보험료가 늘어날 수 있습니다.</p>
     """),
+    "19_근로장려금_기한후_감액": card_html("""
+      <h2>기한후 신청하면 10% 깎입니다</h2>
+      <p class='sub'>가구 유형별 최대액 기준 · 신청은 11월 30일까지</p>
+      <div class='exgrid'>
+        <div class='ex'>
+          <span class='badge' style='background:#1b64da;'>단독</span>
+          <div class='pay'>165만 원 →</div>
+          <div class='amt'>148.5만 원</div>
+          <div class='note'>15만 원 5천 원 감액</div>
+        </div>
+        <div class='ex'>
+          <span class='badge' style='background:#12b886;'>홑벌이</span>
+          <div class='pay'>285만 원 →</div>
+          <div class='amt'>256.5만 원</div>
+          <div class='note'>28만 5천 원 감액</div>
+        </div>
+        <div class='ex'>
+          <span class='badge' style='background:#f76707;'>맞벌이</span>
+          <div class='pay'>330만 원 →</div>
+          <div class='amt'>297만 원</div>
+          <div class='note'>33만 원 감액</div>
+        </div>
+      </div>
+      <p class='foot'>소득·재산 요건은 정기신청과 같습니다. 줄어드는 것은 지급액 10%뿐입니다.</p>
+    """),
+    "20_근로장려금_기한후_지급일정": card_html("""
+      <h2>기한후 신청, 입금은 언제 되나</h2>
+      <p class='sub'>신청한 달의 말일부터 4개월 이내 · 세무서 개별 심사</p>
+      <div class='row'><span class='tag'>~11/30</span><span class='txt'>기한후 신청 마감 (12월 1일부터 접수 불가)</span></div>
+      <div class='row'><span class='tag'>10월 신청</span><span class='txt'>10월 말부터 4개월 이내</span><span class='num'>2027년 2월 말까지</span></div>
+      <div class='row'><span class='tag'>11월 신청</span><span class='txt'>11월 말부터 4개월 이내</span><span class='num'>2027년 3월 말까지</span></div>
+      <p class='foot'>정기신청처럼 일괄 지급되지 않고 심사가 끝나는 순서대로 입금됩니다.</p>
+    """),
 }
 
 

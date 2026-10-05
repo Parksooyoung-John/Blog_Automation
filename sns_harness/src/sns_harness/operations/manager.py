@@ -269,21 +269,6 @@ class DailyOperationsManager:
                     fallback_scope="Notion 오류 상태만으로 운영 장애 판단",
                 )
             )
-        if not snapshot.search_trend_available:
-            candidates.append(
-                DataRequest(
-                    key="naver-datalab",
-                    title="네이버 데이터랩 API 연결",
-                    priority=RequestPriority.OPTIONAL,
-                    missing_data="키워드 상대 검색 추세",
-                    reason="다음 주제 후보의 시의성을 비교하기 위해 필요합니다.",
-                    impact="주제 추천은 과거 게시 성과에만 의존합니다.",
-                    input_location="NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET",
-                    minimum_required="최근 30일 키워드 추세",
-                    completion_check="research-topics 명령이 결과를 반환하는지 확인",
-                    fallback_scope="Notion 기록 기반 주제 추천만 가능",
-                )
-            )
         return [
             request
             for request in candidates
@@ -300,6 +285,5 @@ class DailyOperationsManager:
             bool(published) and all(item.hook_type for item in published),
             bool(published) and any(item.metrics for item in published),
             snapshot.github_status_available,
-            snapshot.search_trend_available,
         ]
         return round(sum(checks) / len(checks) * 100)

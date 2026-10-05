@@ -89,12 +89,8 @@ URL이 포함되며, 사람이 상태를 `승인`으로 바꾼 네이버 항목�
 
 ### 기획·성과 확인
 
-네이버 데이터랩의 절대 검색량이나 순위가 아니라 키워드 사이의 상대 추세만 확인합니다.
-`.env`에 `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`을 넣고 실행하세요.
-
-```powershell
-.\.venv\Scripts\python.exe -m sns_harness research-topics --days 30 --keyword "ISA" --keyword "연금저축"
-```
+네이버 데이터랩은 현재 자동화에 사용하지 않습니다. 신규 API 키 발급 제약 때문에
+운영 판단은 Threads 공식 인사이트, 네이버 글의 공식 근거, 최근 게시 성과를 기준으로 합니다.
 
 Notion의 `기획키워드`, `검색의도`, `트렌드지수`, `트렌드방향`, `콘텐츠목표`,
 `Threads조회수`, `24시간조회수`, `72시간조회수`, `7일조회수`, `성과판정` 필드를

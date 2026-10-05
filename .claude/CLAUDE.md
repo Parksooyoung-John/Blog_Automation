@@ -91,10 +91,19 @@
 │   │   └── skill.md             — 오케스트레이터 (팀 조율, 워크플로우, 에러핸들링)
 │   ├── platform-adaptation/
 │   │   └── skill.md             — sns-copywriter+blog-writer 확장 (플랫폼별 DNA, 변환 매트릭스)
-│   └── content-atomization/
-│       └── skill.md             — source-analyst+presentation-builder 확장 (MINE 분석, 원자 분류)
+│   ├── content-atomization/
+│   │   └── skill.md             — source-analyst+presentation-builder 확장 (MINE 분석, 원자 분류)
+│   └── topic-planner/
+│       └── skill.md             — 글 쓰기 전 주제 선정 (gap → trend_scan → _calendar.md)
 └── CLAUDE.md                    — 이 파일
 ```
+
+## 기획 단계 — 무엇을 쓸지 먼저 정한다
+
+글을 쓰기 전에 `topic-planner` 스킬로 주제를 고른다. 순서: `keyword_research.py gap`(안 쓴 주제) →
+`trend_scan.py`(DataLab 추세, `.env`에 `NAVER_CLIENT_ID/SECRET`) → `content/naver/_calendar.md`.
+두 스크립트 모두 `--selftest`가 있다(`keyword_research.py selftest`). 검색량 데이터가 30일을 넘으면
+`gap`이 경고한다. 사용자가 직접 주제를 주면 이 단계는 건너뛴다.
 
 ## 사용법
 

@@ -152,33 +152,67 @@ def volume(chunk_limit=5):
         print(f"   {r['keyword'][:30]:<30} 월 {r['total']:>7,} (모바일 {r['mobile']:>6,}) 경쟁 {r['comp']}")
 
 
-def gap(min_vol=1000):
-    """검색량 표를 라이브 글 목록과 대조해 '기회'와 '이미 다룬 주제'로 나눈다.
+STALE_DAYS = 30
+NAVER_DIR = Path(__file__).parent / "content" / "naver"
+
+
+def _norm(s):
+    import unicodedata
+    return unicodedata.normalize("NFC", s).replace(" ", "")
+
+
+def is_covered(kw, titles):
+    toks = [t for t in kw.split() if len(t) > 1] or [kw]
+    flat = _norm(kw)
+    return any(flat in t or all(_norm(tok) in t for tok in toks) for t in titles)
+
+
+def naver_titles(directory=NAVER_DIR):
+    """content/naver/NN_*.md 첫 줄 '제목: ...'. 태그는 넓어서(#근로장려금 등) 오탐이 커 제목만 쓴다."""
+    out = []
+    for p in sorted(Path(directory).glob("[0-9][0-9]_*.md")):
+        first = p.read_text(encoding="utf-8").splitlines()[0]
+        assert first.startswith("제목:"), f"{p.name}: 첫 줄이 '제목:'이 아님"
+        out.append(first[3:].strip())
+    return out
+
+
+def volume_age_days(path):
+    import datetime
+    return (datetime.datetime.now() - datetime.datetime.fromtimestamp(path.stat().st_mtime)).days
+
+
+def gap_data(min_vol=1000):
+    """검색량 표를 티스토리 라이브 글과 네이버 원고 제목에 대조해 (기회, 이미 다룸, 데이터 경과일)을 돌려준다.
 
     형태소 분석 없이 토큰 포함 여부로만 매칭한다 —
     ponytail: 단순 포함 매칭. 오탐이 늘면 그때 형태소 분석기 도입.
     """
-    import unicodedata
     vol_path = WS / "keywords_volume.csv"
     rows = list(csv.DictReader(open(vol_path, encoding="utf-8-sig")))
     live = json.loads((WS / "live_posts.json").read_text(encoding="utf-8"))
-    titles = [unicodedata.normalize("NFC", p["title"]).replace(" ", "") for p in live]
-
-    def covered(kw):
-        toks = [t for t in kw.split() if len(t) > 1] or [kw]
-        flat = unicodedata.normalize("NFC", kw).replace(" ", "")
-        for t in titles:
-            if flat in t or all(tok in t for tok in toks):
-                return True
-        return False
+    titles = [_norm(p["title"]) for p in live] + [_norm(t) for t in naver_titles()]
 
     hits, gaps = [], []
     for r in rows:
         v = int(r["total"])
         if v < min_vol:
             continue
-        (hits if covered(r["keyword"]) else gaps).append((r["keyword"], v, r["comp"]))
+        (hits if is_covered(r["keyword"], titles) else gaps).append((r["keyword"], v, r["comp"]))
+    return gaps, hits, volume_age_days(vol_path)
 
+
+def gap(min_vol=1000, as_json=False):
+    gaps, hits, age = gap_data(min_vol)
+    if as_json:
+        print(json.dumps({"volume_age_days": age, "min_vol": min_vol,
+                          "gaps": [dict(keyword=k, total=v, comp=c) for k, v, c in gaps],
+                          "covered": [dict(keyword=k, total=v, comp=c) for k, v, c in hits]},
+                         ensure_ascii=False))
+        return
+    if age > STALE_DAYS:
+        print(f"⚠ keywords_volume.csv가 {age}일 전 데이터입니다 (기준 {STALE_DAYS}일). "
+              "keyword_research.py volume 재실행 권장\n")
     print(f"검색량 {min_vol}+ 키워드 {len(hits) + len(gaps)}개 | 이미 다룸 {len(hits)} | 미작성 {len(gaps)}\n")
     print("=== 수요 있는데 안 쓴 주제 TOP 40 ===")
     for k, v, c in gaps[:40]:
@@ -189,11 +223,24 @@ def gap(min_vol=1000):
 
 
 def _demo():
+    import tempfile
     assert _signature("1", "GET", "/x", "s"), "서명 생성 실패"
     assert len(SEEDS) == len(set(SEEDS)), "시드 중복"
+    titles = [_norm("국민연금수령나이 총정리, 조기수령과 연기수령 감액표")]
+    assert is_covered("국민연금수령나이", titles), "붙여쓴 키워드 매칭 실패"
+    assert is_covered("국민연금 수령나이", titles), "띄어쓴 키워드 매칭 실패"
+    assert not is_covered("실업급여", titles), "무관한 키워드가 다룸으로 잡힘"
+    with tempfile.TemporaryDirectory() as d:
+        (Path(d) / "01_x.md").write_text("제목: 테스트 제목\n\n본문", encoding="utf-8")
+        (Path(d) / "_calendar.md").write_text("제목 없음", encoding="utf-8")
+        assert naver_titles(d) == ["테스트 제목"], "네이버 원고 제목 추출 실패"
+    assert len(naver_titles()) >= 1, "content/naver 원고 제목을 하나도 못 읽음"
     print("demo ok")
 
 
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "expand"
-    {"expand": expand, "volume": volume, "gap": gap, "demo": _demo}[cmd]()
+    if cmd == "gap":
+        gap(as_json="--json" in sys.argv[2:])
+    else:
+        {"expand": expand, "volume": volume, "demo": _demo, "selftest": _demo}[cmd]()

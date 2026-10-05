@@ -180,6 +180,7 @@ def collect_metrics(
         expected_username=settings.blog_account_label,
         timeout=settings.request_timeout_seconds,
     )
+    permission_errors = 0
     for item in candidates:
         try:
             metrics = publisher.post_insights(item.threads_ids[0], window=window)
@@ -188,8 +189,8 @@ def collect_metrics(
         except ThreadsAPIError as exc:
             result["failed"] = int(result["failed"]) + 1
             if "permission" in str(exc).lower() or "scope" in str(exc).lower():
-                result["permission_required"] = True
-                break
+                permission_errors += 1
+    result["permission_required"] = bool(candidates) and permission_errors == len(candidates)
     return result
 
 

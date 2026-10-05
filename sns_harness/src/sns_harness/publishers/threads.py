@@ -7,7 +7,7 @@ from typing import Any
 
 import requests
 
-from sns_harness.models import QueueItem
+from sns_harness.models import PostMetrics, QueueItem, SampleStatus
 
 
 class ThreadsAPIError(RuntimeError):
@@ -125,6 +125,35 @@ class ThreadsPublisher:
         if not permalink:
             raise ThreadsAPIError("Threads verification response has no permalink")
         return {"id": media_id, "permalink": permalink, "username": username}
+
+    def post_insights(self, media_id: str, *, window: str) -> PostMetrics:
+        """Read lifetime post insights and label the value by collection window."""
+        payload = self._request(
+            "GET",
+            f"/{media_id}/insights",
+            params={
+                "metric": "views,likes,replies,reposts,quotes,shares",
+                "access_token": self.access_token,
+            },
+        )
+        values: dict[str, int] = {}
+        for row in payload.get("data", []):
+            samples = row.get("values") or []
+            if samples:
+                values[str(row.get("name") or "")] = int(samples[-1].get("value") or 0)
+        if "views" not in values:
+            raise ThreadsAPIError("Threads insights response did not include views")
+        return PostMetrics(
+            window=window,
+            views=values["views"],
+            likes=values.get("likes"),
+            replies=values.get("replies"),
+            reposts=values.get("reposts"),
+            quotes_shares=values.get("quotes", 0) + values.get("shares", 0),
+            source="Threads Insights API",
+            sample_status=SampleStatus.SUFFICIENT,
+            measured_at=datetime.now(UTC),
+        )
 
     def _create_and_publish(
         self,

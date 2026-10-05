@@ -43,7 +43,7 @@ def snapshot(items, **kwargs) -> OperationsSnapshot:
 def test_insufficient_data_never_recommends_pivot():
     result = DailyOperationsManager().evaluate(snapshot([item(i, views=10) for i in range(12)]))
     assert result.verdict is StrategyVerdict.INSUFFICIENT
-    assert result.data_requests[0].minimum_required == "추가 8건"
+    assert "threads_manage_insights" in result.data_requests[0].minimum_required
 
 
 def test_operational_failure_is_separated_from_content_performance():

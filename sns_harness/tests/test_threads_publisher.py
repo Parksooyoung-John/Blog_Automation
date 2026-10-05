@@ -65,6 +65,35 @@ def test_rejects_post_published_to_unexpected_username() -> None:
         publisher.verify_published("media-1")
 
 
+def test_collects_official_post_insights() -> None:
+    class InsightsSession(FakeSession):
+        def request(self, method, url, **kwargs):
+            if method == "GET" and url.endswith("/media-1/insights"):
+                assert kwargs["params"]["metric"] == "views,likes,replies,reposts,quotes,shares"
+                return FakeResponse(
+                    {
+                        "data": [
+                            {"name": "views", "values": [{"value": 120}]},
+                            {"name": "likes", "values": [{"value": 8}]},
+                            {"name": "replies", "values": [{"value": 3}]},
+                            {"name": "reposts", "values": [{"value": 2}]},
+                            {"name": "quotes", "values": [{"value": 1}]},
+                            {"name": "shares", "values": [{"value": 4}]},
+                        ]
+                    }
+                )
+            return super().request(method, url, **kwargs)
+
+    metrics = ThreadsPublisher("user", "token", session=InsightsSession()).post_insights(
+        "media-1", window="24h"
+    )
+
+    assert metrics.views == 120
+    assert metrics.likes == 8
+    assert metrics.quotes_shares == 5
+    assert metrics.source == "Threads Insights API"
+
+
 def item(existing_ids=None) -> QueueItem:
     return QueueItem(
         page_id="page",

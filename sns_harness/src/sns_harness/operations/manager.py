@@ -240,14 +240,15 @@ class DailyOperationsManager:
             candidates.append(
                 DataRequest(
                     key="threads-window-views",
-                    title="Threads 기간별 조회수 입력",
+                    title="Threads Insights 자동 수집 권한 확인",
                     priority=RequestPriority.REQUIRED,
                     missing_data="24시간 또는 72시간 조회수",
-                    reason="Hook과 콘텐츠 성과 비교에 필요한 최소 표본이 부족합니다.",
+                    reason="Hook과 콘텐츠 성과 비교에 필요한 최소 표본이 부족합니다. 수치는 "
+                    "공식 Threads Insights API로 자동 수집합니다.",
                     impact="콘셉트 전환 여부를 판단할 수 없습니다.",
-                    input_location="SNS 게시 큐의 24시간조회수 또는 72시간조회수",
-                    minimum_required=f"추가 {missing_views}건",
-                    completion_check="측정 가능한 게시물이 총 20건 이상인지 확인",
+                    input_location="Meta Developer Console의 Threads 앱 재인증",
+                    minimum_required="threads_manage_insights 권한을 포함한 액세스 토큰",
+                    completion_check=f"자동 수집된 측정 가능 게시물이 {20}건 이상인지 확인",
                     fallback_scope="예약·오류 상태와 콘텐츠 구성만 진단 가능",
                 )
             )

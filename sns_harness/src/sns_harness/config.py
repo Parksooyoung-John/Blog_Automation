@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     blog_base_url: str = "https://j2gblog.tistory.com"
     blog_account_label: str = "mone.ybrief"
     naver_blog_id: str = "education_blog"
+    naver_client_id: str = ""
+    naver_client_secret: str = ""
     openai_api_key: str = ""
     openai_model: str = "gpt-5.4-mini"
     notion_api_key: str = ""
@@ -105,6 +107,10 @@ class Settings(BaseSettings):
             "prepare-sales-dry-run": {
                 "NOTION_API_KEY": self.notion_api_key,
                 "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
+            },
+            "research-topics": {
+                "NAVER_CLIENT_ID": self.naver_client_id,
+                "NAVER_CLIENT_SECRET": self.naver_client_secret,
             },
         }
         return [name for name, value in required.get(command, {}).items() if not value]

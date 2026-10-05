@@ -13,6 +13,7 @@ from sns_harness.config import Settings, get_settings
 from sns_harness.orchestrator import HarnessOrchestrator
 from sns_harness.publishers.threads import ThreadsPublisher
 from sns_harness.queues.notion import NotionQueue
+from sns_harness.research.naver_datalab import NaverDataLabClient, default_date_range
 from sns_harness.sources.naver import NaverSource
 from sns_harness.sources.router import PublishSourceRouter
 from sns_harness.sources.tistory import TistorySource
@@ -59,6 +60,10 @@ def parser() -> argparse.ArgumentParser:
 
     prepare_sales = commands.add_parser("prepare-sales")
     prepare_sales.add_argument("--dry-run", action="store_true")
+    research = commands.add_parser("research-topics")
+    research.add_argument("--days", type=int, default=30)
+    research.add_argument("--keyword", action="append", default=[])
+    research.add_argument("--dry-run", action="store_true")
     return root
 
 
@@ -118,6 +123,36 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         added = notion_queue(settings).ensure_daily_schema()
         print(json.dumps({"added": added}, ensure_ascii=False, sort_keys=True))
+        return 0
+
+    if args.command == "research-topics":
+        missing = settings.missing_for("research-topics")
+        if missing:
+            print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
+            return 2
+        keywords = args.keyword
+        if not keywords:
+            source = NaverSource(settings.naver_blog_id, timeout=settings.request_timeout_seconds)
+            keywords = [post.title[:40] for post in source.discover(limit=5)]
+        groups = [(keyword, [keyword]) for keyword in keywords if keyword.strip()]
+        start, end = default_date_range(args.days)
+        snapshots = NaverDataLabClient(
+            settings.naver_client_id,
+            settings.naver_client_secret,
+            timeout=settings.request_timeout_seconds,
+        ).search(groups, start_date=start, end_date=end)
+        print(json.dumps({
+            "days": args.days,
+            "results": [
+                {
+                    "keyword": item.group_name,
+                    "trend_score": item.score,
+                    "trend_direction": item.direction.value,
+                    "series": list(item.series),
+                }
+                for item in snapshots
+            ],
+        }, ensure_ascii=False))
         return 0
 
     if args.command == "generate-daily":

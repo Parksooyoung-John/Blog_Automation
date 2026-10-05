@@ -29,13 +29,8 @@ Notion SNS 게시 큐에서 `상태`, `콘텐츠유형`, `게시슬롯`, `첫게
 
 ## 검색 추세 확인
 
-`.env`에 `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`을 입력한 뒤 실행합니다.
-
-```powershell
-.\.venv\Scripts\python.exe -m sns_harness research-topics --days 30 --keyword "실업급여" --keyword "ISA"
-```
-
-이 기능은 데이터랩의 상대 추세만 보여줍니다. 절대 검색량·순위·CTR은 생성하거나 추정하지 않습니다.
+네이버 데이터랩은 현재 사용하지 않습니다. 신규 API 키 발급 제약 때문에 운영 Manager는
+Threads 공식 인사이트와 최근 게시 성과를 바탕으로 판단하며, 검색 추세는 `미측정`으로 남깁니다.
 
 ## 성과 기록 원칙
 

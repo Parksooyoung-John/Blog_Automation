@@ -67,4 +67,5 @@ def test_suppressed_request_is_not_repeated_and_requests_are_capped():
         snapshot([], suppressed_request_keys={"github-actions-read"})
     )
     assert all(request.key != "github-actions-read" for request in result.data_requests)
+    assert all(request.key != "naver-datalab" for request in result.data_requests)
     assert len(result.data_requests) <= 5

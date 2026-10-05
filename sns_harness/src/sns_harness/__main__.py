@@ -149,7 +149,10 @@ def collect_metrics(
 ) -> dict[str, object]:
     now = datetime.now(UTC)
     minimum_hours, maximum_hours = metric_age_hours(window)
-    items = notion_queue(settings).operations_items(now - timedelta(days=days))
+    queue = notion_queue(settings)
+    if not dry_run:
+        queue.ensure_daily_schema()
+    items = queue.operations_items(now - timedelta(days=days))
     candidates = [
         item
         for item in items
@@ -171,7 +174,6 @@ def collect_metrics(
         result["dry_run"] = True
         return result
 
-    queue = notion_queue(settings)
     publisher = ThreadsPublisher(
         settings.threads_user_id,
         settings.threads_access_token,

@@ -44,6 +44,9 @@ jobs:
           cache: pip
           cache-dependency-path: sns_harness/pyproject.toml
       - run: python -m pip install .
+      - name: Ensure SNS metrics schema
+        if: ${{ inputs.dry_run != true }}
+        run: python -m sns_harness setup-daily-schema
       - name: Collect Threads insights
         if: ${{ inputs.dry_run != true }}
         shell: bash

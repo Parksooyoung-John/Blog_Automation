@@ -6,14 +6,20 @@ from typing import Any
 import requests
 
 from sns_harness.models import (
+    ContentGoal,
     ContentType,
     HookType,
     PostFormat,
+    PostMetrics,
     QueueItem,
     QueueStatus,
     ReviewResult,
+    SampleStatus,
+    SearchIntent,
     SourcePost,
     ThreadsDraft,
+    Timeliness,
+    TrendDirection,
     draft_content_hash,
     manual_source_key,
     threads_ids_from_text,
@@ -85,6 +91,28 @@ DAILY_PROPERTY_DEFINITIONS = {
             ]
         }
     },
+    "기획키워드": {"rich_text": {}},
+    "연관키워드": {"rich_text": {}},
+    "검색의도": {"select": {"options": [{"name": value} for value in SearchIntent]}},
+    "트렌드지수": {"number": {"format": "number"}},
+    "트렌드방향": {"select": {"options": [{"name": value} for value in TrendDirection]}},
+    "시의성": {"select": {"options": [{"name": value} for value in Timeliness]}},
+    "콘텐츠목표": {"select": {"options": [{"name": value} for value in ContentGoal]}},
+    "실험가설": {"rich_text": {}},
+    "Threads조회수": {"number": {"format": "number"}},
+    "좋아요": {"number": {"format": "number"}},
+    "답글": {"number": {"format": "number"}},
+    "재게시": {"number": {"format": "number"}},
+    "인용공유": {"number": {"format": "number"}},
+    "팔로우증가": {"number": {"format": "number"}},
+    "24시간조회수": {"number": {"format": "number"}},
+    "72시간조회수": {"number": {"format": "number"}},
+    "7일조회수": {"number": {"format": "number"}},
+    "블로그조회수": {"number": {"format": "number"}},
+    "추정블로그유입": {"number": {"format": "number"}},
+    "측정출처": {"rich_text": {}},
+    "표본상태": {"select": {"options": [{"name": value} for value in SampleStatus]}},
+    "성과확인시각": {"date": {}},
 }
 
 NAVER_SOURCE_FILTER = {
@@ -161,6 +189,21 @@ class NotionQueue:
         """Compatibility wrapper for the legacy Tistory-only interface."""
         return self.find_by_source_key(tistory_id)
 
+    def operations_items(self, since: datetime) -> list[QueueItem]:
+        pages = self._query(
+            {
+                "or": [
+                    {"property": "게시시각", "date": {"on_or_after": since.isoformat()}},
+                    {
+                        "property": "상태",
+                        "select": {"does_not_equal": QueueStatus.PUBLISHED.value},
+                    },
+                ]
+            },
+            sorts=[{"timestamp": "last_edited_time", "direction": "descending"}],
+        )
+        return [self._to_item(page) for page in pages]
+
     def sales_draft_requests(self) -> list[QueueItem]:
         pages = self._query(
             {
@@ -234,10 +277,11 @@ class NotionQueue:
             if hook in counts and created >= cutoff.astimezone(UTC):
                 counts[hook] += 1
         ordered = sorted(eligible, key=lambda hook: (hook is last_hook, counts[hook], hook.value))
-        include_link = len(pages) == 9 and not any(
+        recent_link_count = sum(
             bool(page.get("properties", {}).get("블로그링크사용", {}).get("checkbox"))
             for page in pages
         )
+        include_link = recent_link_count < 4
         return {"hook_types": tuple(ordered[:3]), "include_link": include_link}
 
     def create(self, source: SourcePost, review: ReviewResult) -> QueueItem:
@@ -327,6 +371,31 @@ class NotionQueue:
 
     def update_source_hash(self, page_id: str, source_hash: str) -> None:
         self._patch(page_id, {"원문해시": self._rich(source_hash)})
+
+    def update_metrics(self, page_id: str, metrics: PostMetrics) -> None:
+        properties: dict[str, Any] = {
+            "Threads조회수": {"number": metrics.views},
+            "좋아요": {"number": metrics.likes},
+            "답글": {"number": metrics.replies},
+            "재게시": {"number": metrics.reposts},
+            "인용공유": {"number": metrics.quotes_shares},
+            "팔로우증가": {"number": metrics.follows},
+            "추정블로그유입": {"number": metrics.estimated_blog_traffic},
+            "측정출처": self._rich(metrics.source),
+            "표본상태": self._select(metrics.sample_status.value),
+        }
+        if metrics.measured_at:
+            properties["성과확인시각"] = {
+                "date": {"start": metrics.measured_at.isoformat()}
+            }
+        window_property = {
+            "24h": "24시간조회수",
+            "72h": "72시간조회수",
+            "7d": "7일조회수",
+        }.get(metrics.window)
+        if window_property:
+            properties[window_property] = {"number": metrics.views}
+        self._patch(page_id, properties)
 
     def approved_without_schedule(self) -> list[QueueItem]:
         pages = self._query(
@@ -557,7 +626,44 @@ class NotionQueue:
             human_edit_required=bool(props.get("사람수정필요", {}).get("checkbox", False)),
             dedupe_key=self._plain(props.get("중복검사키", {})),
             performance_judgement=self._select_name(props.get("성과판정", {})) or "미측정",
+            planning_keyword=self._plain(props.get("기획키워드", {})),
+            related_keywords=[
+                item.strip()
+                for item in self._plain(props.get("연관키워드", {})).split(",")
+                if item.strip()
+            ],
+            search_intent=self._select_name(props.get("검색의도", {})) or None,
+            trend_score=props.get("트렌드지수", {}).get("number"),
+            trend_direction=self._select_name(props.get("트렌드방향", {})) or None,
+            timeliness=self._select_name(props.get("시의성", {})) or None,
+            content_goal=self._select_name(props.get("콘텐츠목표", {})) or None,
+            experiment_hypothesis=self._plain(props.get("실험가설", {})),
+            metrics=self._metrics_from_properties(props),
         )
+
+    @classmethod
+    def _metrics_from_properties(cls, props: dict[str, Any]) -> dict[str, PostMetrics]:
+        result: dict[str, PostMetrics] = {}
+        common = {
+            "likes": props.get("좋아요", {}).get("number"),
+            "replies": props.get("답글", {}).get("number"),
+            "reposts": props.get("재게시", {}).get("number"),
+            "quotes_shares": props.get("인용공유", {}).get("number"),
+            "follows": props.get("팔로우증가", {}).get("number"),
+            "blog_views": props.get("블로그조회수", {}).get("number"),
+            "estimated_blog_traffic": props.get("추정블로그유입", {}).get("number"),
+        }
+        for window, property_name in (
+            ("24h", "24시간조회수"),
+            ("72h", "72시간조회수"),
+            ("7d", "7일조회수"),
+        ):
+            value = props.get(property_name, {}).get("number")
+            if value is not None:
+                result[window] = PostMetrics(window=window, views=int(value), **common)
+        if not result and common["blog_views"] is not None:
+            result["manual"] = PostMetrics(window="manual", **common)
+        return result
 
     @staticmethod
     def _rich(value: str) -> dict[str, Any]:

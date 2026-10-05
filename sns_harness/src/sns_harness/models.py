@@ -49,6 +49,39 @@ class ContentType(StrEnum):
     OPERATOR = "운영글"
 
 
+class SearchIntent(StrEnum):
+    INFORMATION = "정보확인"
+    COMPARISON = "조건비교"
+    APPLICATION = "신청방법"
+    CALCULATION = "계산"
+    CAUTION = "주의사항"
+
+
+class TrendDirection(StrEnum):
+    RISING = "상승"
+    STEADY = "유지"
+    FALLING = "하락"
+
+
+class Timeliness(StrEnum):
+    EVERGREEN = "상시"
+    SEASONAL = "계절"
+    DEADLINE = "마감임박"
+
+
+class ContentGoal(StrEnum):
+    REACH = "도달"
+    COMMENTS = "댓글"
+    SAVES_SHARES = "저장·공유"
+    BLOG_TRAFFIC = "블로그 유입"
+
+
+class SampleStatus(StrEnum):
+    SUFFICIENT = "충분"
+    INSUFFICIENT = "부족"
+    UNMEASURED = "미측정"
+
+
 class HookType(StrEnum):
     CURIOSITY = "궁금증"
     NUMBER = "숫자"
@@ -261,6 +294,47 @@ class DailyDraft(BaseModel):
     hook_type: HookType = HookType.CURIOSITY
 
 
+class TopicResearch(BaseModel):
+    keyword: str = Field(min_length=1, max_length=100)
+    related_keywords: list[str] = Field(default_factory=list, max_length=20)
+    search_intent: SearchIntent
+    trend_score: float = Field(default=0, ge=0, le=100)
+    trend_direction: TrendDirection = TrendDirection.STEADY
+    timeliness: Timeliness = Timeliness.EVERGREEN
+    official_sources: list[OfficialSource] = Field(default_factory=list)
+    channel_fit_score: float = Field(default=0, ge=0, le=100)
+    evidence_score: float = Field(default=0, ge=0, le=100)
+    conversation_score: float = Field(default=0, ge=0, le=100)
+    duplicate_score: float = Field(default=0, ge=0, le=100)
+    experiment_hypothesis: str = Field(default="", max_length=500)
+
+    @property
+    def priority_score(self) -> float:
+        return round(
+            self.channel_fit_score * 0.35
+            + self.trend_score * 0.25
+            + self.evidence_score * 0.20
+            + (100 - self.duplicate_score) * 0.10
+            + self.conversation_score * 0.10,
+            2,
+        )
+
+
+class PostMetrics(BaseModel):
+    window: str
+    views: int | None = Field(default=None, ge=0)
+    likes: int | None = Field(default=None, ge=0)
+    replies: int | None = Field(default=None, ge=0)
+    reposts: int | None = Field(default=None, ge=0)
+    quotes_shares: int | None = Field(default=None, ge=0)
+    follows: int | None = Field(default=None, ge=0)
+    blog_views: int | None = Field(default=None, ge=0)
+    estimated_blog_traffic: int | None = Field(default=None, ge=0)
+    source: str = ""
+    sample_status: SampleStatus = SampleStatus.UNMEASURED
+    measured_at: datetime | None = None
+
+
 class ReviewResult(BaseModel):
     approved: bool
     issues: list[str] = Field(default_factory=list)
@@ -304,6 +378,15 @@ class QueueItem(BaseModel):
     human_edit_required: bool = False
     dedupe_key: str = ""
     performance_judgement: str = ""
+    planning_keyword: str = ""
+    related_keywords: list[str] = Field(default_factory=list)
+    search_intent: SearchIntent | None = None
+    trend_score: float | None = Field(default=None, ge=0, le=100)
+    trend_direction: TrendDirection | None = None
+    timeliness: Timeliness | None = None
+    content_goal: ContentGoal | None = None
+    experiment_hypothesis: str = ""
+    metrics: dict[str, PostMetrics] = Field(default_factory=dict)
 
     @model_validator(mode="before")
     @classmethod

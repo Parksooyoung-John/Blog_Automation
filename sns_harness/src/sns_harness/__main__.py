@@ -3,16 +3,21 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 
 import requests
 
 from sns_harness.agents.reviewer import ComplianceReviewer
 from sns_harness.agents.writer import ThreadsWriter
 from sns_harness.config import Settings, get_settings
+from sns_harness.operations.github_status import GitHubActionsStatus
+from sns_harness.operations.manager import DailyOperationsManager
+from sns_harness.operations.models import OperationsSnapshot
 from sns_harness.orchestrator import HarnessOrchestrator
 from sns_harness.publishers.threads import ThreadsPublisher
 from sns_harness.queues.notion import NotionQueue
+from sns_harness.queues.operations_notion import OperationsNotionQueue
+from sns_harness.research.naver_datalab import NaverDataLabClient, default_date_range
 from sns_harness.sources.naver import NaverSource
 from sns_harness.sources.router import PublishSourceRouter
 from sns_harness.sources.tistory import TistorySource
@@ -59,6 +64,24 @@ def parser() -> argparse.ArgumentParser:
 
     prepare_sales = commands.add_parser("prepare-sales")
     prepare_sales.add_argument("--dry-run", action="store_true")
+    research = commands.add_parser("research-topics")
+    research.add_argument("--days", type=int, default=30)
+    research.add_argument("--keyword", action="append", default=[])
+    research.add_argument("--dry-run", action="store_true")
+    operations = commands.add_parser("operations")
+    operation_commands = operations.add_subparsers(dest="operation", required=True)
+    collect = operation_commands.add_parser("collect")
+    collect.add_argument("--days", type=int, default=30)
+    collect.add_argument("--dry-run", action="store_true")
+    operation_commands.add_parser("data-gaps").add_argument("--days", type=int, default=30)
+    brief = operation_commands.add_parser("brief")
+    brief.add_argument("--date", default="today")
+    brief.add_argument("--days", type=int, default=30)
+    evaluate = operation_commands.add_parser("evaluate")
+    evaluate.add_argument("--days", type=int, default=30)
+    report = operation_commands.add_parser("report")
+    report.add_argument("--days", type=int, default=30)
+    operation_commands.add_parser("setup-schema")
     return root
 
 
@@ -67,6 +90,47 @@ def notion_queue(settings: Settings) -> NotionQueue:
         settings.notion_api_key,
         settings.notion_sns_database_id,
         timeout=settings.request_timeout_seconds,
+    )
+
+
+def operations_queue(settings: Settings) -> OperationsNotionQueue:
+    return OperationsNotionQueue(
+        settings.notion_api_key,
+        settings.notion_operations_database_id,
+        timeout=settings.request_timeout_seconds,
+    )
+
+
+def operations_snapshot(settings: Settings, days: int) -> OperationsSnapshot:
+    now = datetime.now(UTC)
+    items = notion_queue(settings).operations_items(now - timedelta(days=days))
+    github_available = False
+    github_failures = 0
+    try:
+        github_available, github_failures = GitHubActionsStatus(
+            settings.github_token,
+            settings.github_repository,
+            timeout=settings.request_timeout_seconds,
+        ).recent_failures()
+    except requests.RequestException:
+        pass
+    previous_verdicts = []
+    unresolved: set[str] = set()
+    suppressed: set[str] = set()
+    if settings.notion_operations_database_id:
+        queue = operations_queue(settings)
+        previous_verdicts = queue.previous_verdicts()
+        unresolved, suppressed = queue.request_context()
+    return OperationsSnapshot(
+        generated_at=now,
+        period_days=days,
+        items=items,
+        github_status_available=github_available,
+        github_failures=github_failures,
+        search_trend_available=any(item.trend_score is not None for item in items),
+        unresolved_request_keys=unresolved,
+        suppressed_request_keys=suppressed,
+        previous_verdicts=previous_verdicts,
     )
 
 
@@ -118,6 +182,69 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         added = notion_queue(settings).ensure_daily_schema()
         print(json.dumps({"added": added}, ensure_ascii=False, sort_keys=True))
+        return 0
+
+    if args.command == "research-topics":
+        missing = settings.missing_for("research-topics")
+        if missing:
+            print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
+            return 2
+        keywords = args.keyword
+        if not keywords:
+            source = NaverSource(settings.naver_blog_id, timeout=settings.request_timeout_seconds)
+            keywords = [post.title[:40] for post in source.discover(limit=5)]
+        groups = [(keyword, [keyword]) for keyword in keywords if keyword.strip()]
+        start, end = default_date_range(args.days)
+        snapshots = NaverDataLabClient(
+            settings.naver_client_id,
+            settings.naver_client_secret,
+            timeout=settings.request_timeout_seconds,
+        ).search(groups, start_date=start, end_date=end)
+        print(json.dumps({
+            "days": args.days,
+            "results": [
+                {
+                    "keyword": item.group_name,
+                    "trend_score": item.score,
+                    "trend_direction": item.direction.value,
+                    "series": list(item.series),
+                }
+                for item in snapshots
+            ],
+        }, ensure_ascii=False))
+        return 0
+
+    if args.command == "operations":
+        if args.operation == "setup-schema":
+            mode = "operations-schema"
+        elif args.operation == "brief":
+            mode = "operations-brief"
+        else:
+            mode = "operations-read"
+        missing = settings.missing_for(mode)
+        if missing:
+            print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
+            return 2
+        if args.operation == "setup-schema":
+            added = operations_queue(settings).ensure_schema()
+            print(json.dumps({"added": added}, ensure_ascii=False, sort_keys=True))
+            return 0
+        evaluation = DailyOperationsManager().evaluate(
+            operations_snapshot(settings, args.days)
+        )
+        if args.operation == "brief":
+            target_day = (
+                datetime.now(settings.tz).date()
+                if args.date == "today"
+                else date.fromisoformat(args.date)
+            )
+            page_id = operations_queue(settings).upsert_brief(target_day, evaluation)
+            result = {"page_id": page_id, **evaluation.model_dump(mode="json")}
+        elif args.operation == "data-gaps":
+            result = {"data_requests": evaluation.model_dump(mode="json")["data_requests"]}
+        else:
+            result = evaluation.model_dump(mode="json")
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0
 
     if args.command == "generate-daily":

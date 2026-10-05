@@ -189,6 +189,21 @@ class NotionQueue:
         """Compatibility wrapper for the legacy Tistory-only interface."""
         return self.find_by_source_key(tistory_id)
 
+    def operations_items(self, since: datetime) -> list[QueueItem]:
+        pages = self._query(
+            {
+                "or": [
+                    {"property": "게시시각", "date": {"on_or_after": since.isoformat()}},
+                    {
+                        "property": "상태",
+                        "select": {"does_not_equal": QueueStatus.PUBLISHED.value},
+                    },
+                ]
+            },
+            sorts=[{"timestamp": "last_edited_time", "direction": "descending"}],
+        )
+        return [self._to_item(page) for page in pages]
+
     def sales_draft_requests(self) -> list[QueueItem]:
         pages = self._query(
             {
@@ -629,6 +644,15 @@ class NotionQueue:
     @classmethod
     def _metrics_from_properties(cls, props: dict[str, Any]) -> dict[str, PostMetrics]:
         result: dict[str, PostMetrics] = {}
+        common = {
+            "likes": props.get("좋아요", {}).get("number"),
+            "replies": props.get("답글", {}).get("number"),
+            "reposts": props.get("재게시", {}).get("number"),
+            "quotes_shares": props.get("인용공유", {}).get("number"),
+            "follows": props.get("팔로우증가", {}).get("number"),
+            "blog_views": props.get("블로그조회수", {}).get("number"),
+            "estimated_blog_traffic": props.get("추정블로그유입", {}).get("number"),
+        }
         for window, property_name in (
             ("24h", "24시간조회수"),
             ("72h", "72시간조회수"),
@@ -636,7 +660,9 @@ class NotionQueue:
         ):
             value = props.get(property_name, {}).get("number")
             if value is not None:
-                result[window] = PostMetrics(window=window, views=int(value))
+                result[window] = PostMetrics(window=window, views=int(value), **common)
+        if not result and common["blog_views"] is not None:
+            result["manual"] = PostMetrics(window="manual", **common)
         return result
 
     @staticmethod

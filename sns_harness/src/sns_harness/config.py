@@ -32,8 +32,11 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-5.4-mini"
     notion_api_key: str = ""
     notion_sns_database_id: str = ""
+    notion_operations_database_id: str = ""
     threads_user_id: str = ""
     threads_access_token: str = ""
+    github_token: str = ""
+    github_repository: str = ""
     timezone: str = Field("Asia/Seoul", alias="TZ")
     default_slots: Annotated[tuple[str, ...], NoDecode] = (
         "08:30", "12:30", "16:30", "21:30"
@@ -111,6 +114,19 @@ class Settings(BaseSettings):
             "research-topics": {
                 "NAVER_CLIENT_ID": self.naver_client_id,
                 "NAVER_CLIENT_SECRET": self.naver_client_secret,
+            },
+            "operations-brief": {
+                "NOTION_API_KEY": self.notion_api_key,
+                "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
+                "NOTION_OPERATIONS_DATABASE_ID": self.notion_operations_database_id,
+            },
+            "operations-read": {
+                "NOTION_API_KEY": self.notion_api_key,
+                "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
+            },
+            "operations-schema": {
+                "NOTION_API_KEY": self.notion_api_key,
+                "NOTION_OPERATIONS_DATABASE_ID": self.notion_operations_database_id,
             },
         }
         return [name for name, value in required.get(command, {}).items() if not value]

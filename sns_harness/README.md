@@ -102,3 +102,23 @@ Notion의 `기획키워드`, `검색의도`, `트렌드지수`, `트렌드방향
 `블로그조회수`는 수동 입력이며 자동 성과 수집으로 덮어쓰지 않습니다.
 
 자세한 절차는 [운영자 매뉴얼](docs/USER_MANUAL.md)을 참고하세요.
+
+## Daily Operations Manager
+
+매일 07:45 KST에 예약·오류·성과·데이터 누락을 분석해 별도 Notion 데이터베이스에
+객관적인 운영 브리핑을 만듭니다. Manager는 게시 큐를 변경하지 않고 필요한 조치만 제안합니다.
+
+```powershell
+# 별도 Notion DB 속성 추가
+.\.venv\Scripts\python.exe -m sns_harness operations setup-schema
+
+# 외부 변경 없이 현재 판정과 필요한 데이터 확인
+.\.venv\Scripts\python.exe -m sns_harness operations evaluate --days 30
+.\.venv\Scripts\python.exe -m sns_harness operations data-gaps --days 30
+
+# 오늘 브리핑 생성 또는 갱신
+.\.venv\Scripts\python.exe -m sns_harness operations brief --date today --days 30
+```
+
+`NOTION_OPERATIONS_DATABASE_ID`에는 Title 속성명이 `이름`인 별도 데이터베이스 ID를 넣습니다.
+4주·측정 가능 게시물 20건·3개 실험을 충족하기 전에는 콘셉트 실패를 단정하지 않습니다.

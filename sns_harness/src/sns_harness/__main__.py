@@ -386,7 +386,8 @@ def main(argv: list[str] | None = None) -> int:
         item = queue.create_daily_candidate(
             title=f"{args.type} · {post.title}", text=draft.text,
             content_type=args.type, publish_slot=args.slot, topic=draft.topic,
-            hook_type=draft.hook_type.value,)
+            hook_type=draft.hook_type.value, hook_text=draft.hook_text,
+        )
         print(json.dumps(
             {"page_id": item.page_id, "status": item.status.value}, ensure_ascii=False
         ))

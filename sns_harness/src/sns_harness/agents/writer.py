@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from sns_harness.models import (
     URL_RE,
     BlogDraftCandidates,
+    ContentType,
     DailyDraft,
     HookType,
     ProductDraftContent,
@@ -16,6 +17,7 @@ from sns_harness.models import (
     SourcePost,
     ThreadsDraft,
     strict_json_schema,
+    validate_daily_draft,
 )
 
 
@@ -32,15 +34,48 @@ class ThreadsWriter:
         )
 
     def generate_daily(self, source: SourcePost, content_type: str) -> DailyDraft:
-        payload = {"content_type": content_type, "title": source.title,
-                   "published_at": source.published_at.isoformat(),
-                   "description": source.description, "content": source.content[:30000]}
-        response = self.client.responses.create(
-            model=self.model, instructions=self.daily_instructions,
-            input=json.dumps(payload, ensure_ascii=False), store=False,
-            text={"format": {"type": "json_schema", "name": "daily_draft",
-                              "strict": True, "schema": strict_json_schema(DailyDraft)}})
-        return DailyDraft.model_validate_json(response.output_text)
+        payload = {
+            "content_type": content_type,
+            "title": source.title,
+            "published_at": source.published_at.isoformat(),
+            "description": source.description,
+            "content": source.content[:30_000],
+        }
+        last_error: Exception | None = None
+        for attempt in range(3):
+            response = self.client.responses.create(
+                model=self.model,
+                instructions=self.daily_instructions,
+                input=json.dumps(
+                    {
+                        **payload,
+                        "generation_attempt": attempt + 1,
+                        "previous_validation_error": str(last_error) if last_error else "",
+                    },
+                    ensure_ascii=False,
+                ),
+                store=False,
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "daily_draft",
+                        "strict": True,
+                        "schema": strict_json_schema(DailyDraft),
+                    }
+                },
+            )
+            try:
+                draft = DailyDraft.model_validate_json(response.output_text)
+                issues = validate_daily_draft(
+                    draft, ContentType(content_type), source
+                )
+                if issues:
+                    raise ValueError("; ".join(issues))
+                return draft
+            except (ValidationError, ValueError) as exc:
+                last_error = exc
+        assert last_error is not None
+        raise last_error
 
     def generate(self, source: SourcePost) -> ThreadsDraft:
         return self.generate_candidates(

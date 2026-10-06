@@ -299,8 +299,14 @@ class NotionQueue:
 
     def create_daily_candidate(self, *, title: str, text: str, content_type: str,
                                publish_slot: str, topic: str = "", hook_type: str = "",
-                               operator_note: str = "") -> QueueItem:
-        draft = ThreadsDraft(format=PostFormat.SINGLE, posts=[text], topic_tag=topic or None)
+                               hook_text: str = "", operator_note: str = "") -> QueueItem:
+        draft = ThreadsDraft(
+            format=PostFormat.SINGLE,
+            posts=[text],
+            topic_tag=topic or None,
+            hook_type=hook_type or None,
+            hook_text=hook_text,
+        )
         source_key = manual_source_key(content_type, text, datetime.now(UTC))
         properties = {
             "이름": self._title(title), "상태": self._select(QueueStatus.DRAFT.value),
@@ -308,6 +314,7 @@ class NotionQueue:
             "형식": self._select(PostFormat.SINGLE.value), "첫게시물": self._rich(text),
             "주제태그": self._rich(topic), "ThreadsIDs": self._rich("[]"),
             "오류": self._rich(""), "재시도횟수": {"number": 0},
+            "Hook문구": self._rich(hook_text),
             "콘텐츠유형": self._select(content_type), "게시슬롯": self._rich(publish_slot),
             "원문키": self._rich(source_key), "주제": self._rich(topic),
             "원문해시": self._rich(draft_content_hash(draft)),

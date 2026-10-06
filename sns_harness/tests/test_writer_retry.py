@@ -6,7 +6,13 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 from sns_harness.agents.writer import ThreadsWriter
-from sns_harness.models import BlogDraftCandidates, HookType, SourcePost, ThreadsDraft
+from sns_harness.models import (
+    BlogDraftCandidates,
+    DailyDraft,
+    HookType,
+    SourcePost,
+    ThreadsDraft,
+)
 
 
 def test_writer_retries_invalid_thread_count() -> None:
@@ -63,3 +69,45 @@ def test_writer_retries_invalid_thread_count() -> None:
     assert create.call_count == 2
     second_input = json.loads(create.call_args_list[1].kwargs["input"])
     assert "thread format requires 2-5 posts" in second_input["previous_validation_error"]
+
+
+def test_writer_retries_daily_draft_without_a_real_hook() -> None:
+    source = SourcePost(
+        tistory_id="46",
+        url="https://blog.naver.com/education_blog/46",
+        title="근로장려금 기한후 신청",
+        content="기한후 신청은 11월 30일까지 가능하고 지급액은 10% 감액됩니다.",
+        published_at=datetime.now(UTC),
+    )
+    invalid = DailyDraft(
+        text="기한후 신청은 11월 30일까지 가능합니다.",
+        topic="근로장려금",
+        hook_type=HookType.CURIOSITY,
+        hook_text="기한후 신청은 11월 30일까지 가능합니다.",
+    )
+    valid = DailyDraft(
+        text=(
+            "근로장려금, 신청을 놓쳤다고 끝난 건 아님.\n"
+            "기한후 신청은 11월 30일까지 가능하지만 지급액은 10% 감액됩니다."
+        ),
+        topic="근로장려금",
+        hook_type=HookType.CURIOSITY,
+        hook_text="근로장려금, 신청을 놓쳤다고 끝난 건 아님.",
+    )
+    create = Mock(
+        side_effect=[
+            SimpleNamespace(output_text=invalid.model_dump_json()),
+            SimpleNamespace(output_text=valid.model_dump_json()),
+        ]
+    )
+    writer = ThreadsWriter.__new__(ThreadsWriter)
+    writer.client = SimpleNamespace(responses=SimpleNamespace(create=create))
+    writer.model = "test-model"
+    writer.daily_instructions = "write"
+
+    result = writer.generate_daily(source, "재테크팁")
+
+    assert result == valid
+    assert create.call_count == 2
+    second_input = json.loads(create.call_args_list[1].kwargs["input"])
+    assert "줄바꿈" in second_input["previous_validation_error"]

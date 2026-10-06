@@ -291,7 +291,8 @@ class ProductDraftContent(BaseModel):
 class DailyDraft(BaseModel):
     text: str = Field(min_length=1, max_length=480)
     topic: str = Field(default="", max_length=100)
-    hook_type: HookType = HookType.CURIOSITY
+    hook_type: HookType
+    hook_text: str = Field(min_length=15, max_length=80)
 
 
 class TopicResearch(BaseModel):
@@ -620,6 +621,11 @@ def validate_content_contract(item: QueueItem) -> list[str]:
     issues: list[str] = []
     if item.content_type is ContentType.MONEY_TIP and not 100 <= grapheme_len(text) <= 220:
         issues.append("재테크팁은 100~220자여야 합니다.")
+    if item.auto_generated and item.content_type in {
+        ContentType.MONEY_TIP,
+        ContentType.QUESTION,
+    }:
+        issues.extend(validate_daily_draft(item.draft, item.content_type))
     if item.content_type is ContentType.QUESTION:
         if not 80 <= grapheme_len(text) <= 180:
             issues.append("질문형은 80~180자여야 합니다.")
@@ -634,6 +640,62 @@ def validate_content_contract(item: QueueItem) -> list[str]:
             issues.append("운영글은 사람 수정이 필요합니다.")
         if URL_RE.search(text):
             issues.append("운영글에는 기본적으로 링크를 넣을 수 없습니다.")
+    return issues
+
+
+def validate_daily_draft(
+    draft: DailyDraft | ThreadsDraft,
+    content_type: ContentType,
+    source: SourcePost | None = None,
+) -> list[str]:
+    """Reject automatic daily drafts that have a label but no real opening hook."""
+    text = draft.text if isinstance(draft, DailyDraft) else "\n".join(draft.posts)
+    hook = draft.hook_text.strip()
+    hook_type = draft.hook_type
+    issues: list[str] = []
+
+    if not hook:
+        return ["자동 생성 콘텐츠에는 Hook문구가 필요합니다."]
+    if not text.startswith(hook):
+        issues.append("Hook문구는 첫게시물의 정확한 시작 문자열이어야 합니다.")
+    if not text[len(hook):].startswith("\n"):
+        issues.append("Hook문구 뒤에는 줄바꿈 후 핵심 정보를 작성해야 합니다.")
+    if len([part for part in re.split(r"[.!?？]+", hook) if part.strip()]) > 2:
+        issues.append("Hook문구는 최대 두 문장이어야 합니다.")
+    if hook_type is None:
+        issues.append("자동 생성 콘텐츠에는 Hook유형이 필요합니다.")
+    elif hook_type is HookType.CURIOSITY:
+        markers = ("헷갈", "생각보다", "의외", "놓쳤다고", "끝난 건", "알고 있으면")
+        if not any(marker in hook for marker in markers):
+            issues.append("궁금증 Hook은 예상 밖 조건이나 혼동 지점을 보여줘야 합니다.")
+    elif hook_type is HookType.NUMBER and not NUMBER_RE.search(hook):
+        issues.append("숫자 Hook은 원문에 있는 핵심 숫자로 시작해야 합니다.")
+    elif hook_type is HookType.MISTAKE:
+        markers = ("놓치", "실수", "헷갈", "착각", "잘못", "그냥")
+        if not any(marker in hook for marker in markers):
+            issues.append("실수 Hook은 흔한 착각이나 누락 지점을 보여줘야 합니다.")
+    elif hook_type is HookType.COMPARISON:
+        if not any(marker in hook for marker in ("vs", "차이", "보다", "둘")):
+            issues.append("비교 Hook은 두 선택지의 차이를 보여줘야 합니다.")
+    elif hook_type is HookType.QUESTION:
+        if hook.count("?") + hook.count("？") != 1:
+            issues.append("질문 Hook은 질문을 정확히 한 번 포함해야 합니다.")
+    elif hook_type is HookType.EMPATHY:
+        issues.append("자동 생성 콘텐츠에는 경험/공감 Hook을 사용할 수 없습니다.")
+
+    if content_type is ContentType.QUESTION and hook_type is not HookType.QUESTION:
+        issues.append("질문형 콘텐츠는 질문 Hook을 사용해야 합니다.")
+    if URL_RE.search(text):
+        issues.append("자동 생성 재테크팁·질문형에는 링크를 넣을 수 없습니다.")
+    if source is not None:
+        source_numbers = {
+            value.rstrip(".,")
+            for value in NUMBER_RE.findall(source.title + "\n" + source.content)
+        }
+        draft_numbers = {value.rstrip(".,") for value in NUMBER_RE.findall(text)}
+        novel_numbers = sorted(draft_numbers - source_numbers)
+        if novel_numbers:
+            issues.append("초안에 원문에 없는 숫자가 있습니다: " + ", ".join(novel_numbers))
     return issues
 
 

@@ -17,10 +17,11 @@ from pathlib import Path
 import requests
 
 import verify_naver
-from keyword_research import STALE_DAYS, volume_age_days
+from keyword_research import SERP_TOP, STALE_DAYS, fresh_cutoff, serp_stats, volume_age_days
 
 ROOT = Path(__file__).parent
 METRICS = ROOT / "content" / "naver" / "_metrics.csv"
+RANKS = ROOT / "content" / "naver" / "_ranks.csv"
 
 # 판정 기준 (2026-10-05 확정). 편수·주차 중 먼저 오는 쪽에서 점검한다.
 MID_POSTS, MID_WEEKS, MID_VISITORS = 10, 4, 15        # 미달 → 경고
@@ -88,7 +89,62 @@ def avg7(rows: dict, today):
     return (sum(week) / len(week) if week else None), (today - max(done)).days
 
 
+def target_keyword(md: str):
+    """제목에 그대로 들어 있는 태그 중 가장 긴 것 — NAVER_GUIDE 태그 규칙상 그것이 목표 키워드다.
+
+    첫 태그를 쓰면 안 된다: 1·3·8편의 첫 태그는 셋 다 '근로장려금'이었다.
+    """
+    line = re.search(r"^#\S+(?: +#\S+)+$", md, re.M)
+    if not line:
+        return None
+    tags = re.findall(r"#(\S+)", line.group(0))
+    title = re.search(r"^제목: (.+)$", md, re.M)
+    squeezed = title.group(1).replace(" ", "") if title else ""
+    return max((t for t in tags if t in squeezed), key=len, default=tags[0])
+
+
+def check_ranks(posts, today):
+    """원고별 목표 키워드의 블로그 탭 순위를 조회해 _ranks.csv에 쌓는다. → 30위 안에 든 편수, 조회한 편수
+
+    방문자 수는 홈판·이웃 유입이 섞여 검색 성과를 가린다(2026-10-06 주간 유입 39건 중 검색 3건).
+    검색 유입은 자동으로 못 가져오지만 순위는 가져올 수 있다.
+    """
+    now = datetime.datetime.now(datetime.UTC) + datetime.timedelta(hours=9)
+    cutoff = fresh_cutoff([(int(p["logNo"]), p["when"]) for p in posts], now)
+    old = []
+    if RANKS.exists():
+        with RANKS.open(encoding="utf-8", newline="") as f:
+            old = [r for r in csv.DictReader(f) if r["date"] != today.isoformat()]
+    last = max((r["date"] for r in old), default=None)
+    prev = {r["keyword"]: r["rank"] for r in old if r["date"] == last}
+
+    rows = []
+    for path in sorted((ROOT / "content" / "naver").glob("[0-9][0-9]_*.md")):
+        kw = target_keyword(path.read_text(encoding="utf-8"))
+        if not kw:
+            print(f"    {path.name[:2]}편 태그 줄을 못 읽음")
+            continue
+        try:
+            mine, fresh, n = serp_stats(kw, verify_naver.BLOG, cutoff)
+        except (RuntimeError, requests.RequestException) as e:
+            print(f"    {path.name[:2]}편 {kw}: 조회 실패 — {e}")
+            continue
+        was = f" (지난번 {prev[kw] or '밖'})" if kw in prev else ""
+        print(f"    {path.name[:2]}편 {kw:<16} {f'{mine}위' if mine else f'{n}위 밖':<7}{was}  상위 {SERP_TOP}개 중 최근 글 {fresh}")
+        rows.append({"date": today.isoformat(), "keyword": kw, "rank": mine or "", "fresh": fresh})
+    if rows:
+        with RANKS.open("w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=["date", "keyword", "rank", "fresh"])
+            w.writeheader()
+            w.writerows(old + rows)
+    return sum(bool(r["rank"]) for r in rows), len(rows)
+
+
 def selftest():
+    md = "제목: 2026 근로장려금 대상 기준, 재산을 먼저\n\n본문\n\n#근로장려금 #근로장려금대상 #홈택스\n\n## 작성 메모\n"
+    assert target_keyword(md) == "근로장려금대상", target_keyword(md)        # 첫 태그가 아니라 제목 속 가장 긴 태그
+    assert target_keyword("제목: 다른 제목\n\n#가나다 #라마바\n") == "가나다"   # 제목에 없으면 첫 태그
+    assert target_keyword("## 소제목\n본문 #해시 하나\n") is None      # 소제목·본문 속 #은 태그 줄이 아니다
     assert judge(8, 1.6, None, None)[0] == "관찰중"
     assert judge(10, 1.0, 14.9, 1)[0] == "경고"
     assert judge(9, 4.0, 15.0, 1)[0] == "OK"
@@ -151,6 +207,13 @@ def main(argv):
         print(f"  방문자: 7일 평균 {a7:.1f}명 (마지막 수치 {age}일 전)")
         for d, v in sorted(rows.items())[-7:]:
             print(f"    {d} {v}")
+
+    print("\n검색 순위 (블로그 탭, 제목 속 목표 키워드 기준)")
+    if posts:
+        inside, checked = check_ranks(posts, today)
+        print(f"  30위 안 {inside}편 / 조회 {checked}편")
+        if verdict == "OK" and checked and not inside:
+            print("  ⚠ 방문자는 기준을 넘었지만 30위 안에 든 글이 없다 — 검색이 아닌 유입일 수 있다. 유입분석 화면 확인 필요")
 
     print("\n데이터 신선도")
     vol = ROOT / "_workspace" / "keywords_volume.csv"

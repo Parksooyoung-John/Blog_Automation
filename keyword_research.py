@@ -3,11 +3,12 @@
 사용법:
     python -X utf8 keyword_research.py expand          # 자동완성으로 후보 수집 → _workspace/keywords_candidates.json
     python -X utf8 keyword_research.py volume          # 후보의 월 검색량 조회 → _workspace/keywords_volume.csv
+    python -X utf8 keyword_research.py serp 키워드 ...  # 블로그 검색 상위 10개 중 최근 글 수 + 우리 순위
 
 volume 모드는 .env에 아래 3개가 있어야 한다(네이버 검색광고 > 도구 > API 사용관리에서 무료 발급):
     NAVER_AD_API_KEY / NAVER_AD_SECRET_KEY / NAVER_AD_CUSTOMER_ID
 """
-import sys, json, time, hmac, hashlib, base64, csv
+import sys, json, time, hmac, hashlib, base64, csv, re
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
@@ -222,6 +223,72 @@ def gap(min_vol=1000, as_json=False):
         print(f"   {k[:34]:<34} 월 {v:>7,}  경쟁 {c}")
 
 
+# ── 블로그 검색 경쟁 ─────────────────────────────────────────────
+# 검색광고 API의 '경쟁'은 광고 입찰 경쟁이다. 블로그 검색에서 이길 수 있는지는 알려주지 않는다.
+# 2026-10-07: '경쟁 낮음'으로 고른 키워드들의 블로그 탭 상위 10개가 전부 최근 3주 글이었고,
+# 발행 9편 중 8편이 목표 키워드에서 30위 밖이었다. 그래서 검색 결과를 직접 본다.
+FRESH_DAYS = 21
+SERP_TOP = 10
+
+
+def parse_serp(html: str) -> list:
+    """블로그 탭 결과 HTML → [(blogId, logNo)] 노출 순서대로, 중복 제거."""
+    return list(dict.fromkeys(re.findall(r"blog\.naver\.com/([A-Za-z0-9_-]+)/(\d{9,})", html)))
+
+
+def serp(q: str) -> list:
+    r = requests.get("https://search.naver.com/search.naver",
+                     params={"ssc": "tab.blog.all", "query": q}, headers=UA, timeout=15)
+    res = parse_serp(r.text)
+    if len(res) < SERP_TOP:
+        # 못 읽은 것을 '순위 밖'으로 보고하면 안 된다 — 조용히 틀린 숫자가 된다.
+        raise RuntimeError(f"'{q}' 블로그 검색 결과를 {len(res)}개만 읽었다 (마크업 변경 또는 차단)")
+    return res
+
+
+def fresh_cutoff(own: list, now, days=FRESH_DAYS) -> float:
+    """days일 전에 해당하는 logNo 추정값. own은 우리 글의 [(logNo, 발행시각)].
+
+    ponytail: logNo가 시간에 비례해 커진다고 보고 우리 글 두 점으로 직선을 긋는다.
+    하루 단위 오차는 있다. 정확한 발행일이 필요해지면 글 페이지를 열어 읽는다.
+    """
+    (n0, t0), (n1, t1) = min(own), max(own)
+    per_day = (n1 - n0) / ((t1 - t0).total_seconds() / 86400)
+    return n1 + per_day * ((now - t1).total_seconds() / 86400 - days)
+
+
+def serp_stats(q: str, blog: str, cutoff: float) -> tuple:
+    """→ (우리 블로그 순위 또는 None, 상위 10개 중 최근 글 수, 읽은 결과 수)"""
+    res = serp(q)
+    mine = next((i for i, (b, _) in enumerate(res, 1) if b == blog), None)
+    return mine, sum(int(n) >= cutoff for _, n in res[:SERP_TOP]), len(res)
+
+
+def own_posts() -> tuple:
+    """→ (블로그 ID, [(logNo, 발행시각)], 지금). 시각은 verify_naver와 같은 KST 표기."""
+    import datetime
+    import verify_naver
+    posts, page = [], 1
+    while batch := verify_naver.recent(30, page):
+        posts += batch
+        page += 1
+    now = datetime.datetime.now(datetime.UTC) + datetime.timedelta(hours=9)
+    return verify_naver.BLOG, [(int(p["logNo"]), p["when"]) for p in posts], now
+
+
+def serp_cmd(keywords: list):
+    if not keywords:
+        sys.exit("사용법: keyword_research.py serp 키워드 [키워드 ...]")
+    blog, own, now = own_posts()
+    cutoff = fresh_cutoff(own, now)
+    print(f"블로그 탭 상위 {SERP_TOP}개 중 최근 {FRESH_DAYS}일 글 수 / 우리 순위\n")
+    for q in keywords:
+        mine, fresh, n = serp_stats(q, blog, cutoff)
+        print(f"   {q[:28]:<28} 최근 글 {fresh:>2}/{SERP_TOP}   우리 {f'{mine}위' if mine else f'{n}위 밖'}")
+        time.sleep(0.5)
+    print("\n최근 글이 많을수록 상위가 빨리 갈린다 — 블로그 신뢰도가 낮으면 들어가기 어렵고, 들어가도 오래 못 버틴다.")
+
+
 def _demo():
     import tempfile
     assert _signature("1", "GET", "/x", "s"), "서명 생성 실패"
@@ -235,6 +302,16 @@ def _demo():
         (Path(d) / "_calendar.md").write_text("제목 없음", encoding="utf-8")
         assert naver_titles(d) == ["테스트 제목"], "네이버 원고 제목 추출 실패"
     assert len(naver_titles()) >= 1, "content/naver 원고 제목을 하나도 못 읽음"
+
+    import datetime
+    # 네이버가 내려주는 형태: 같은 글 주소가 data-url·href로 여러 번 나온다.
+    html = ('<a data-url="https://blog.naver.com/aaa/224430314750" href="https://blog.naver.com/aaa/224430314750">'
+            '<a href="https://m.blog.naver.com/bbb_2/224400000001"><a href="https://blog.naver.com/aaa">')
+    assert parse_serp(html) == [("aaa", "224430314750"), ("bbb_2", "224400000001")], parse_serp(html)
+    assert parse_serp("") == []
+    t = datetime.datetime(2026, 10, 1)
+    own = [(1000, t), (1100, t + datetime.timedelta(days=10))]           # 하루에 10씩 커진다
+    assert fresh_cutoff(own, t + datetime.timedelta(days=12), days=21) == 1100 + 10 * (2 - 21)
     print("demo ok")
 
 
@@ -242,5 +319,7 @@ if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "expand"
     if cmd == "gap":
         gap(as_json="--json" in sys.argv[2:])
+    elif cmd == "serp":
+        serp_cmd(sys.argv[2:])
     else:
         {"expand": expand, "volume": volume, "demo": _demo, "selftest": _demo}[cmd]()

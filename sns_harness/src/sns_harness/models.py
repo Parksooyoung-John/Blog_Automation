@@ -654,6 +654,9 @@ def strict_json_schema(model: type[BaseModel]) -> dict[str, Any]:
 
     def visit(node: object) -> None:
         if isinstance(node, dict):
+            # Responses strict schemas reject Pydantic's JSON Schema ``default``
+            # keyword, including defaults on enum fields such as DailyDraft.hook_type.
+            node.pop("default", None)
             properties = node.get("properties")
             if node.get("type") == "object" and isinstance(properties, dict):
                 node["additionalProperties"] = False

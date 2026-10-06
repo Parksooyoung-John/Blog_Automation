@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from sns_harness.models import (
+    DailyDraft,
     PostFormat,
     ProductOffer,
     SourceKind,
@@ -192,6 +193,12 @@ def test_openai_schema_is_strict_at_every_object() -> None:
         if definition.get("type") == "object":
             assert definition["additionalProperties"] is False
             assert set(definition["required"]) == set(definition["properties"])
+
+
+def test_openai_schema_removes_defaults_from_nested_properties() -> None:
+    schema = strict_json_schema(DailyDraft)
+
+    assert "default" not in schema["properties"]["hook_type"]
 
 
 def test_product_thread_link_and_disclosure_contract() -> None:

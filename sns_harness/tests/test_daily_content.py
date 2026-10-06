@@ -85,3 +85,17 @@ def test_daily_tip_rejects_a_default_label_without_a_hook() -> None:
     assert "Hook문구 뒤에는 줄바꿈 후 핵심 정보를 작성해야 합니다." in validate_daily_draft(
         draft, ContentType.MONEY_TIP
     )
+
+
+def test_daily_mistake_hook_allows_a_clear_misconception_correction() -> None:
+    draft = DailyDraft(
+        text=(
+            "건강보험료 확인서, 모든 가입자에게 필요한 건 아님.\n"
+            "발급 대상과 용도를 먼저 확인하면 불필요한 서류 준비를 줄일 수 있습니다."
+        ),
+        topic="건강보험료 확인서",
+        hook_type=HookType.MISTAKE,
+        hook_text="건강보험료 확인서, 모든 가입자에게 필요한 건 아님.",
+    )
+
+    assert validate_daily_draft(draft, ContentType.MONEY_TIP) == []

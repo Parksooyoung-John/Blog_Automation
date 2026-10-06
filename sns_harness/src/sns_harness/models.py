@@ -665,13 +665,18 @@ def validate_daily_draft(
     if hook_type is None:
         issues.append("자동 생성 콘텐츠에는 Hook유형이 필요합니다.")
     elif hook_type is HookType.CURIOSITY:
-        markers = ("헷갈", "생각보다", "의외", "놓쳤다고", "끝난 건", "알고 있으면")
+        markers = (
+            "헷갈", "생각보다", "의외", "놓쳤다고", "끝난 건", "알고 있으면",
+            "아닌", "아님", "않", "없", "다르",
+        )
         if not any(marker in hook for marker in markers):
             issues.append("궁금증 Hook은 예상 밖 조건이나 혼동 지점을 보여줘야 합니다.")
     elif hook_type is HookType.NUMBER and not NUMBER_RE.search(hook):
         issues.append("숫자 Hook은 원문에 있는 핵심 숫자로 시작해야 합니다.")
     elif hook_type is HookType.MISTAKE:
-        markers = ("놓치", "실수", "헷갈", "착각", "잘못", "그냥")
+        markers = (
+            "놓치", "실수", "헷갈", "착각", "잘못", "그냥", "아닌", "아님", "않", "없",
+        )
         if not any(marker in hook for marker in markers):
             issues.append("실수 Hook은 흔한 착각이나 누락 지점을 보여줘야 합니다.")
     elif hook_type is HookType.COMPARISON:

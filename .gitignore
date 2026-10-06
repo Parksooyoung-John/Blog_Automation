@@ -20,3 +20,6 @@ assets/naver_img/*.png
 
 # 상위 Claude_code 저장소의 작업폴더 — 이 저장소 소관이 아니다
 push-work/
+
+# naver_paste.py가 원고에서 만들어내는 파일
+content/naver/*_붙여넣기용.txt

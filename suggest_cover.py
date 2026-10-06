@@ -16,6 +16,7 @@ import os
 import re
 import sys
 from pathlib import Path
+from itertools import zip_longest
 from urllib.parse import quote
 
 import requests
@@ -68,13 +69,20 @@ def parse_gongu(page: str) -> list[dict]:
     return out
 
 
+def interleave(groups: list) -> list:
+    """검색어별 결과를 번갈아 담는다. 이어 붙이면 첫 검색어가 limit을 다 채워 나머지가 안 보인다."""
+    return [c for row in zip_longest(*groups) for c in row if c]
+
+
 def search_gongu(words: str, limit=12) -> list[dict]:
-    found = []
+    per_word = []
     for w in [x.strip() for x in words.split(",") if x.strip()]:
-        r = requests.get(f"{GONGU}/gongu/wrt/wrtCl/listWrtImage.do?menuNo=200023&searchWrd={quote(w)}",
-                         headers=UA, timeout=15)
+        # wrtTy=10006은 '사진' 분류. 빼면 아이콘·일러스트·현수막이 섞여 대표 사진으로 쓸 게 거의 없다.
+        r = requests.get(f"{GONGU}/gongu/wrt/wrtCl/listWrtImage.do?menuNo=200023&wrtTy=10006"
+                         f"&searchWrd={quote(w)}", headers=UA, timeout=15)
         r.raise_for_status()
-        found += parse_gongu(r.text)
+        per_word.append(parse_gongu(r.text))
+    found = interleave(per_word)
     seen, uniq = set(), []
     for c in found:
         if c["page"] not in seen:
@@ -163,6 +171,7 @@ def selftest():
     assert got[1]["license"] == "CC BY"
     assert "thumbSe=t_thumb" in got[0]["thumb"] and "&amp;" not in got[0]["thumb"]
     assert keywords("x\n- 대표사진 검색어: 고용센터, 구직 | job center\n") == ("고용센터, 구직", "job center")
+    assert interleave([["a1", "a2", "a3"], ["b1"]]) == ["a1", "b1", "a2", "a3"]
     assert keywords("검색어 없음") is None
     print("selftest ok")
 

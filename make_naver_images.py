@@ -276,6 +276,36 @@ CARDS = {
       <div class='row'><span class='tag'>11월 신청</span><span class='txt'>11월 말부터 4개월 이내</span><span class='num'>2027년 3월 말까지</span></div>
       <p class='foot'>정기신청처럼 일괄 지급되지 않고 심사가 끝나는 순서대로 입금됩니다.</p>
     """),
+    "21_납부확인서_자격득실확인서_비교": card_html("""
+      <h2>납부확인서 vs 자격득실확인서</h2>
+      <p class='sub'>이름은 비슷하지만 증명하는 내용이 다릅니다</p>
+      <div class='row'><span class='tag'>납부확인서</span><span class='txt'>기간별로 보험료를 얼마 냈는지</span><span class='num'>금액</span></div>
+      <div class='row'><span class='tag'>자격득실</span><span class='txt'>언제 가입하고 언제 빠졌는지</span><span class='num'>가입 이력</span></div>
+      <p class='foot'>납부확인서는 2001년 이후 납부분부터 발급됩니다. 제출처가 어느 쪽을 원하는지 먼저 확인하세요.</p>
+    """),
+    "22_납부확인서_발급경로": card_html("""
+      <h2>건강보험료 납부확인서 발급 경로 4가지</h2>
+      <p class='sub'>국민건강보험공단 안내 기준</p>
+      <div class='row'><span class='tag'>홈페이지</span><span class='txt'>로그인 → 개인민원 → 보험료 납부확인서</span></div>
+      <div class='row'><span class='tag'>모바일 앱</span><span class='txt'>건강보험25시 (옛 The건강보험)</span></div>
+      <div class='row'><span class='tag'>전화</span><span class='txt'>디지털ARS로 직접 신청</span><span class='num'>1577-1000</span></div>
+      <div class='row'><span class='tag'>지사 방문</span><span class='txt'>신분증 지참</span></div>
+      <p class='foot'>직장가입자의 피부양자는 보험료 납부 대상이 아니어서 발급되지 않습니다.</p>
+    """),
+    "23_납부확인서_발급화면_순서": card_html("""
+      <h2>발급 화면에서 고르는 순서</h2>
+      <p class='sub'>공단 홈페이지 기준 · 용도를 잘못 고르면 다시 발급해야 합니다</p>
+      <div class='flow'>
+        <div class='step'><div class='k'>1</div><div class='v'>발급<br>언어</div><div class='d'>국내 제출은 한글</div></div>
+        <div class='arrow'>→</div>
+        <div class='step'><div class='k'>2</div><div class='v'>기간</div><div class='d'>연월 정하고 조회</div></div>
+        <div class='arrow'>→</div>
+        <div class='step'><div class='k'>3</div><div class='v'>용도</div><div class='d'>제출처에 먼저 확인</div></div>
+        <div class='arrow'>→</div>
+        <div class='step'><div class='k'>4</div><div class='v'>보험<br>종류</div><div class='d'>건강보험 등</div></div>
+      </div>
+      <p class='foot'>고른 뒤 프린트 발급 또는 팩스전송을 누릅니다. 납부 직후에는 반영까지 영업일 2~3일이 걸립니다.</p>
+    """),
 }
 
 

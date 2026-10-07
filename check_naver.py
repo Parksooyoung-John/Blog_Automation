@@ -21,6 +21,71 @@ VOLUME_CSV = '_workspace/keywords_volume.csv'   # 네이버 검색광고 API 실
 # 현행 서비스처럼 안내한 채 발행됐다. `옛 워크넷`처럼 과거형으로 밝힌 표기는 허용한다.
 STALE_TERMS = {'워크넷': '고용24'}
 
+# 구조 검사(2026-10-07 추가) — 모바일 가독성과 검색·AI 요약이 가져가는 자리.
+# 01~09편은 이미 발행됐다. 발행 글을 다시 고치는 것은 NAVER_GUIDE가 막으므로 판정에서 빼고 수치만 보여준다.
+NEW_RULES_FROM = 10
+MAX_SENT = 60          # 모바일 한 줄이 20자 안팎 → 60자는 3줄
+HARD_SENT = 80
+MAX_LONG_SENTS = 2     # 60자 초과 문장 허용 개수
+MAX_PARA_SENTS = 3
+MAX_BOLD = 30          # 문장 통째 볼드는 강조가 아니다 (10편 초안 최장 51자)
+
+
+def split_sentences(text: str) -> list:
+    """문장 단위로 나눈다. 한글·닫는 괄호 뒤의 마침표에서만 끊는다 —
+    `7.19%`, `2019. 8. 27.`, `1577-1000`에서 끊기면 안 된다."""
+    return [s for s in re.split(r'(?<=[가-힣)][.?!])\s+', text.strip()) if s]
+
+
+def target_keyword(md: str):
+    """제목에 그대로 들어 있는 태그 중 가장 긴 것 — NAVER_GUIDE 태그 규칙상 그것이 목표 키워드다.
+
+    첫 태그를 쓰면 안 된다: 1·3·8편의 첫 태그는 셋 다 '근로장려금'이었다.
+    """
+    line = re.search(r"^#\S+(?: +#\S+)+$", md, re.M)
+    if not line:
+        return None
+    tags = re.findall(r"#(\S+)", line.group(0))
+    title = re.search(r"^제목: (.+)$", md, re.M)
+    squeezed = title.group(1).replace(" ", "") if title else ""
+    return max((t for t in tags if t in squeezed), key=len, default=tags[0])
+
+
+def structure_issues(body: str, keyword) -> list:
+    """body: 제목·태그·플레이스홀더를 걷어낸 본문(소제목과 ** 표시는 남아 있다). → 문제 설명 목록"""
+    issues = []
+    blocks = [b.strip() for b in re.split(r'\n\s*\n', body) if b.strip()]
+    intro = body.split('\n## ')[0]
+    if keyword and keyword not in intro.replace(' ', ''):
+        issues.append(f"도입부에 목표 키워드({keyword})가 없다")
+    if not re.search(r'\d', intro):
+        issues.append("도입부에 숫자가 없다 — 답(금액·기한·일수)을 먼저")
+    if not re.search(r'20\d\d', body):
+        issues.append("본문에 기준 연도가 없다")
+
+    long_sents, hard = 0, 0
+    for blk in blocks:
+        if blk.startswith('## '):
+            continue
+        is_list = all(re.match(r'(- |\d+\. )', ln) for ln in blk.split('\n'))
+        units = blk.split('\n') if is_list else [blk]     # 목록은 줄 단위, 문단은 통째로
+        for u in units:
+            if len(re.findall(r'\*\*.+?\*\*', u)) > 1:
+                issues.append(f"한 {'줄' if is_list else '문단'}에 볼드가 둘 이상: {u[:24]}…")
+            for s in split_sentences(u.replace('**', '')):
+                long_sents += len(s) > MAX_SENT
+                hard += len(s) > HARD_SENT
+        if not is_list and len(split_sentences(blk)) > MAX_PARA_SENTS:
+            issues.append(f"문단이 {len(split_sentences(blk))}문장: {blk[:24]}…")
+    if hard:
+        issues.append(f"{HARD_SENT}자 넘는 문장 {hard}개")
+    if long_sents > MAX_LONG_SENTS:
+        issues.append(f"{MAX_SENT}자 넘는 문장 {long_sents}개 (허용 {MAX_LONG_SENTS}개)")
+    big = [b for b in re.findall(r'\*\*(.+?)\*\*', body) if len(b) > MAX_BOLD]
+    if big:
+        issues.append(f"볼드가 {MAX_BOLD}자를 넘는 곳 {len(big)}개: {big[0][:24]}…")
+    return issues
+
 
 def parts(path):
     n = open(path, encoding='utf-8').read()
@@ -74,6 +139,8 @@ def measure(path, tistory, volumes=None):
         "stale": [f"{k}→{v}" for k, v in STALE_TERMS.items()
                   if re.search(f'(?<!옛 ){k}', c)],
         "cover_kw": (re.findall(r'^- 대표사진 검색어:\s*(.+?)\s*$', n, flags=re.M) or [None])[0],
+        "structure": structure_issues(c, target_keyword(n)),
+        "judged": not (num := re.match(r'\d+', os.path.basename(path))) or int(num.group()) >= NEW_RULES_FROM,
     }
 
 
@@ -91,7 +158,8 @@ def same_cover_kw(results: dict) -> list:
 def passes(r):
     return (800 <= r["chars"] <= 1600 and 3 <= r["heads"] <= 5 and r["images"] >= 2
             and r["exp"] >= 1 and r["links"] >= 1 and 8 <= len(r["tags"]) <= 12
-            and not r["dup"] and not r["stale"])
+            and not r["dup"] and not r["stale"]
+            and not (r["judged"] and r["structure"]))
 
 
 def selftest():
@@ -133,6 +201,28 @@ def selftest():
     assert r["chars"] < 120, f"플레이스홀더가 글자수에 섞였다: {r['chars']}"
     assert r["cover_kw"] == "퇴사, 취업 | job interview", r["cover_kw"]
     assert same_cover_kw({"01": "a | x", "02": "b | y", "03": "a | x", "04": None, "05": None}) == [("01", "03")]
+
+    # 문장 분리: 소수점·날짜·전화번호에서 끊기면 안 된다
+    assert split_sentences("보험료율은 7.19%입니다. 개정일은 2019. 8. 27.이고 번호는 1577-1000입니다. 끝났나요? 네.") == [
+        "보험료율은 7.19%입니다.", "개정일은 2019. 8. 27.이고 번호는 1577-1000입니다.", "끝났나요?", "네."]
+
+    good = ("실업급여 수급기간은 2026년 기준 120일에서 270일입니다.\n\n## 소제목\n\n"
+            "가입기간이 **1년**을 넘으면 늘어납니다. 나이도 봅니다.\n\n- 1년 미만 — **120일**\n- 10년 이상 — **240일**\n")
+    assert structure_issues(good, "실업급여수급기간") == [], structure_issues(good, "실업급여수급기간")
+
+    def has(body, word, kw="키워드"):
+        return any(word in i for i in structure_issues(body, kw))
+    base = "키워드는 2026년에 3일입니다.\n\n## 소제목\n\n"
+    assert has("도입부입니다 2026.\n\n## 소제목\n\n본문.", "목표 키워드")
+    assert has("키워드 설명입니다.\n\n## 소제목\n\n2026년 본문.", "도입부에 숫자")
+    assert has("키워드는 3일입니다.\n\n## 소제목\n\n본문.", "기준 연도")
+    assert has(base + "가" * 81 + "입니다.", f"{HARD_SENT}자 넘는")
+    assert has(base + "\n\n".join("나" * 61 + "입니다." for _ in range(3)), f"{MAX_SENT}자 넘는")
+    assert not has(base + "\n\n".join("나" * 61 + "입니다." for _ in range(2)), f"{MAX_SENT}자 넘는")
+    assert has(base + "하나입니다. 둘입니다. 셋입니다. 넷입니다.", "문단이 4문장")
+    assert has(base + "**하나**와 **둘**을 같이 강조합니다.", "볼드가 둘 이상")
+    assert not has(base + "- 첫 줄 **하나**\n- 둘째 줄 **둘**", "볼드가 둘 이상")   # 목록은 줄마다 하나씩 허용
+    assert has(base + "**" + "다" * 31 + "**", f"{MAX_BOLD}자를 넘는")
     print("selftest ok")
 
 
@@ -165,6 +255,11 @@ def main():
                   + (f' · 나머지 {unknown}개는 CSV 미수록(미확인)' if unknown else ''))
         for t in r["stale"]:
             print('         옛 명칭:', t)
+        if r["judged"]:
+            for t in r["structure"]:
+                print('         구조:', t)
+        elif r["structure"]:
+            print(f'         (발행됨 — 판정 제외) 구조 {len(r["structure"])}건')
         for d in list(r["dup"])[:3]:
             print('         중복:', d[:55])
     for a, b in same_cover_kw(cover_kws):

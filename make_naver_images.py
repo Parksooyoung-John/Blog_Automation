@@ -306,6 +306,49 @@ CARDS = {
       </div>
       <p class='foot'>고른 뒤 프린트 발급 또는 팩스전송을 누릅니다. 납부 직후에는 반영까지 영업일 2~3일이 걸립니다.</p>
     """),
+    "24_실업급여_소정급여일수표": card_html("""
+      <h2>실업급여 받는 일수, 가입기간과 나이로 정해집니다</h2>
+      <p class='sub'>소정급여일수 · 고용보험법 별표 1 · 나이는 이직일 기준</p>
+      <div class='row'><span class='tag'>1년 미만</span><span class='txt'>50세 미만 120일</span><span class='num'>50세 이상 120일</span></div>
+      <div class='row'><span class='tag'>1~3년</span><span class='txt'>50세 미만 150일</span><span class='num'>50세 이상 180일</span></div>
+      <div class='row'><span class='tag'>3~5년</span><span class='txt'>50세 미만 180일</span><span class='num'>50세 이상 210일</span></div>
+      <div class='row'><span class='tag'>5~10년</span><span class='txt'>50세 미만 210일</span><span class='num'>50세 이상 240일</span></div>
+      <div class='row'><span class='tag'>10년 이상</span><span class='txt'>50세 미만 240일</span><span class='num'>50세 이상 270일</span></div>
+      <p class='foot'>장애인은 나이와 관계없이 50세 이상 기준을 적용합니다.</p>
+    """),
+    "25_실업급여_경계_하루차이": card_html("""
+      <h2>경계를 하루 넘기면 달라지는 일수</h2>
+      <p class='sub'>금액은 2026년 하한액 하루 66,048원 기준</p>
+      <div class='exgrid'>
+        <div class='ex'>
+          <span class='badge' style='background:#1b64da;'>가입 1년 · 50세 미만</span>
+          <div class='pay'>120일 →</div>
+          <div class='amt'>150일</div>
+          <div class='note'>+30일<br>약 198만 원</div>
+        </div>
+        <div class='ex'>
+          <span class='badge' style='background:#12b886;'>가입 1년 · 50세 이상</span>
+          <div class='pay'>120일 →</div>
+          <div class='amt'>180일</div>
+          <div class='note'>+60일<br>약 396만 원</div>
+        </div>
+        <div class='ex'>
+          <span class='badge' style='background:#f76707;'>50세 생일 · 가입 1~3년</span>
+          <div class='pay'>150일 →</div>
+          <div class='amt'>180일</div>
+          <div class='note'>+30일<br>약 198만 원</div>
+        </div>
+      </div>
+      <p class='foot'>3년·5년·10년 경계에서도 30일씩 늘어납니다. 기준일은 퇴사한 날(이직일)입니다.</p>
+    """),
+    "26_실업급여_가입기간_합산": card_html("""
+      <h2>이전 직장 가입기간, 합쳐지는 경우와 아닌 경우</h2>
+      <p class='sub'>고용보험법 제50조</p>
+      <div class='row'><span class='tag'>합산</span><span class='txt'>이전 직장 상실일부터 3년 안에 다시 가입</span></div>
+      <div class='row'><span class='tag'>제외</span><span class='txt'>이전 직장을 나오며 실업급여를 받은 기간</span></div>
+      <div class='row'><span class='tag'>제외</span><span class='txt'>상실 후 3년을 넘겨 다시 가입한 경우의 이전 기간</span></div>
+      <p class='foot'>지금 회사 근속만이 아니라 합산된 가입기간으로 일수가 정해집니다.</p>
+    """),
 }
 
 

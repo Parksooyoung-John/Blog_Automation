@@ -17,6 +17,7 @@ from pathlib import Path
 import requests
 
 import verify_naver
+from check_naver import target_keyword
 from keyword_research import SERP_TOP, STALE_DAYS, fresh_cutoff, serp_stats, volume_age_days
 
 ROOT = Path(__file__).parent
@@ -87,20 +88,6 @@ def avg7(rows: dict, today):
         return None, None
     week = [v for d, v in done.items() if (today - d).days <= 7]
     return (sum(week) / len(week) if week else None), (today - max(done)).days
-
-
-def target_keyword(md: str):
-    """제목에 그대로 들어 있는 태그 중 가장 긴 것 — NAVER_GUIDE 태그 규칙상 그것이 목표 키워드다.
-
-    첫 태그를 쓰면 안 된다: 1·3·8편의 첫 태그는 셋 다 '근로장려금'이었다.
-    """
-    line = re.search(r"^#\S+(?: +#\S+)+$", md, re.M)
-    if not line:
-        return None
-    tags = re.findall(r"#(\S+)", line.group(0))
-    title = re.search(r"^제목: (.+)$", md, re.M)
-    squeezed = title.group(1).replace(" ", "") if title else ""
-    return max((t for t in tags if t in squeezed), key=len, default=tags[0])
 
 
 def check_ranks(posts, today):

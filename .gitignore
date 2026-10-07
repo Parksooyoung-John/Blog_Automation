@@ -22,4 +22,4 @@ assets/naver_img/*.png
 push-work/
 
 # naver_paste.py가 원고에서 만들어내는 파일
-content/naver/*_붙여넣기용.txt
+content/naver/*_붙여넣기용.*

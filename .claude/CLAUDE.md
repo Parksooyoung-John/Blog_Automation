@@ -1004,8 +1004,12 @@ Notion은 "처리중"인 경우), 수동으로 Notion API PATCH를 날릴 필요
 ```bash
 python -X utf8 check_naver.py --selftest    # 원고 표기법 카운트
 python -X utf8 verify_naver.py --selftest   # 라이브 HTML 파싱·카테고리·제목 지문
-python -X utf8 naver_paste.py --selftest    # 마크다운 → 붙여넣기 변환
+python -X utf8 naver_paste.py --selftest    # 마크다운 → 붙여넣기용 HTML (볼드 유지, 문장 단위 줄바꿈)
 ```
+
+`check_naver.py`는 2026-10-07부터 구조도 본다: 도입부에 목표 키워드와 숫자, 문장 60자, 문단 3문장,
+볼드 30자·문단당 한 곳, 기준 연도. 규칙은 `NAVER_GUIDE.md` 「검색과 AI 요약에 걸리는 구조」「모바일 문장과 강조」.
+발행된 01~09편은 판정에서 뺐다(`NEW_RULES_FROM`).
 
 셀프테스트에는 **실제로 쓰는 표기법 그대로**를 합성 입력으로 넣고 카운트를 assert한다.
 표기법을 바꾸면 셀프테스트가 먼저 깨진다.

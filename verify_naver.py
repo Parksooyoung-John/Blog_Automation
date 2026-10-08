@@ -62,9 +62,15 @@ def inspect(log_no: str) -> dict:
 
 
 def parse(html: str) -> dict:
+    # 본문은 se-main-container부터 마지막 se-component 뒤 첫 <script> 앞까지다.
+    # 전에는 본문 뒤의 `{&#034;title&#034;` 표지로 끊었는데 2026-10-07에 그 표지가 사라져서
+    # 뒤따르는 스크립트 6만 자가 본문으로 세어졌다(10편 1,400자를 12,994자로 보고).
     i = html.find("se-main-container")
-    j = html.find("{&#034;title&#034;", i)
-    body = html[i:j] if j > i else html[i:i + 60000]
+    comps = [m.start() for m in re.finditer(r"se-component se-", html)]
+    if i < 0 or not comps:
+        raise ValueError("본문(se-main-container·se-component)을 찾지 못했다 — 네이버 마크업이 바뀌었을 수 있다")
+    j = html.find("<script", comps[-1])
+    body = html[i:j] if j > i else html[i:]
 
     text = re.sub(r"<script.*?</script>", "", body, flags=re.S)
     text = re.sub(r"<[^>]+>", " ", text).replace("&nbsp;", " ").replace("​", "")
@@ -105,9 +111,10 @@ def selftest():
         '<div class="se-component se-text">본문 문장입니다.</div>'
         '<div class="se-component se-quotation se-l-quotation_line">소제목 둘</div>'
         '<div class="se-component se-oglink"><a href="https://blog.naver.com/education_blog/224422755053">링크</a></div>'
-        '</div>{&#034;title&#034;:&#034;끝&#034;}'
+        '</div></div>'
+        '<script>jindo.m.patch("1.12.0"); var 본문이아닌스크립트 = "' + "가" * 5000 + '";'
         'var gsTagName = "근로장려금,홈택스,절세"; var x = 1;'
-        '"tagNames":"",'
+        '"tagNames":"",</script>'
     )
     r = parse(html)
     assert r["tags"] == ["근로장려금", "홈택스", "절세"], r["tags"]
@@ -115,7 +122,12 @@ def selftest():
     assert r["subheads"] == 2, r["subheads"]
     assert r["inlinks"] == 1, r["inlinks"]
     assert r["tistory"] == 0, r["tistory"]
-    assert "본문 문장입니다." in html and r["chars"] > 10, r["chars"]
+    assert 10 < r["chars"] < 60, r["chars"]        # 본문 뒤 스크립트가 글자수에 섞이면 안 된다
+    try:
+        parse("<html><body>본문 없음</body></html>")
+        raise AssertionError("본문을 못 찾았는데 0자로 통과시켰다")
+    except ValueError:
+        pass
 
     assert expected_category("실업급여 조건 2026, 6개월 다녔는데") == "실업급여·고용보험"
     assert expected_category("2026 근로장려금 대상 기준") == "근로장려금·자녀장려금"

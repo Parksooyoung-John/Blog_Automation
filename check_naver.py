@@ -31,6 +31,20 @@ MAX_PARA_SENTS = 3
 MAX_BOLD = 30          # 문장 통째 볼드는 강조가 아니다 (10편 초안 최장 51자)
 
 
+GEO_FROM = 11          # 작성 메모의 `- GEO 질의:` 줄을 요구하기 시작하는 편 (10편까지는 그 줄 없이 발행됐다)
+MIN_GEO_QUERIES = 2
+
+
+def geo_queries(md: str) -> list:
+    """작성 메모의 `- GEO 질의: a | b | c` → ['a', 'b', 'c']. AI 브리핑 인용을 추적할 질의다.
+
+    `keyword_research.py geo`로 블로그 인용형(aibAnswer)인지 확인한 질의를 적는다 —
+    공공정책형 질의는 블로그를 인용하지 않아 추적해도 0이다.
+    """
+    m = re.search(r'^- GEO 질의:\s*(.+?)\s*$', md, flags=re.M)
+    return [q.strip() for q in m.group(1).split('|') if q.strip()] if m else []
+
+
 def split_sentences(text: str) -> list:
     """문장 단위로 나눈다. 한글·닫는 괄호 뒤의 마침표에서만 끊는다 —
     `7.19%`, `2019. 8. 27.`, `1577-1000`에서 끊기면 안 된다."""
@@ -141,6 +155,8 @@ def measure(path, tistory, volumes=None):
         "cover_kw": (re.findall(r'^- 대표사진 검색어:\s*(.+?)\s*$', n, flags=re.M) or [None])[0],
         "structure": structure_issues(c, target_keyword(n)),
         "judged": not (num := re.match(r'\d+', os.path.basename(path))) or int(num.group()) >= NEW_RULES_FROM,
+        "geo": geo_queries(n),
+        "geo_required": not num or int(num.group()) >= GEO_FROM,
     }
 
 
@@ -159,7 +175,8 @@ def passes(r):
     return (800 <= r["chars"] <= 1600 and 3 <= r["heads"] <= 5 and r["images"] >= 2
             and r["exp"] >= 1 and r["links"] >= 1 and 8 <= len(r["tags"]) <= 12
             and not r["dup"] and not r["stale"]
-            and not (r["judged"] and r["structure"]))
+            and not (r["judged"] and r["structure"])
+            and not (r["geo_required"] and len(r["geo"]) < MIN_GEO_QUERIES))
 
 
 def selftest():
@@ -180,6 +197,7 @@ def selftest():
         "#태그1 #태그2 #태그3 #태그4 #태그5 #태그6 #태그7 #태그8 #태그9 #태그10\n\n"
         "---\n\n## 작성 메모 (발행 시 삭제)\n\n- 메모는 세지 않는다\n"
         "- 대표사진 검색어: 퇴사, 취업 | job interview\n"
+        "- GEO 질의: 실업급여 수급기간 알바 | 실업급여 수급기간 해외여행\n"
     )
     with tempfile.TemporaryDirectory() as d:
         path = os.path.join(d, "t.md")
@@ -200,6 +218,8 @@ def selftest():
         assert measure(path, set())["stale"] == ["워크넷→고용24"], "현행처럼 쓴 워크넷을 놓쳤다"
     assert r["chars"] < 120, f"플레이스홀더가 글자수에 섞였다: {r['chars']}"
     assert r["cover_kw"] == "퇴사, 취업 | job interview", r["cover_kw"]
+    assert r["geo"] == ["실업급여 수급기간 알바", "실업급여 수급기간 해외여행"], r["geo"]
+    assert geo_queries("- GEO 질의: 하나만\n") == ["하나만"] and geo_queries("메모 없음") == []
     assert same_cover_kw({"01": "a | x", "02": "b | y", "03": "a | x", "04": None, "05": None}) == [("01", "03")]
 
     # 문장 분리: 소수점·날짜·전화번호에서 끊기면 안 된다
@@ -255,6 +275,8 @@ def main():
                   + (f' · 나머지 {unknown}개는 CSV 미수록(미확인)' if unknown else ''))
         for t in r["stale"]:
             print('         옛 명칭:', t)
+        if r["geo_required"] and len(r["geo"]) < MIN_GEO_QUERIES:
+            print(f'         GEO: 작성 메모에 `- GEO 질의: a | b` 줄이 없거나 {MIN_GEO_QUERIES}개 미만이다')
         if r["judged"]:
             for t in r["structure"]:
                 print('         구조:', t)

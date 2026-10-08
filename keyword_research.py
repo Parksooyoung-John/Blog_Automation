@@ -4,6 +4,9 @@
     python -X utf8 keyword_research.py expand          # 자동완성으로 후보 수집 → _workspace/keywords_candidates.json
     python -X utf8 keyword_research.py volume          # 후보의 월 검색량 조회 → _workspace/keywords_volume.csv
     python -X utf8 keyword_research.py serp 키워드 ...  # 블로그 검색 상위 10개 중 최근 글 수 + 우리 순위
+    python -X utf8 keyword_research.py geo 질의 ...     # AI 브리핑 종류·인용 출처·우리 글 인용 여부
+                                 geo --expand 시드    # 자동완성으로 넓혀 블로그 인용형 질의 찾기
+                                 geo --detail 질의    # 인용된 글과 인용 구절까지
 
 volume 모드는 .env에 아래 3개가 있어야 한다(네이버 검색광고 > 도구 > API 사용관리에서 무료 발급):
     NAVER_AD_API_KEY / NAVER_AD_SECRET_KEY / NAVER_AD_CUSTOMER_ID
@@ -289,6 +292,111 @@ def serp_cmd(keywords: list):
     print("\n최근 글이 많을수록 상위가 빨리 갈린다 — 블로그 신뢰도가 낮으면 들어가기 어렵고, 들어가도 오래 못 버틴다.")
 
 
+# ── AI 브리핑(GEO) ───────────────────────────────────────────────
+# 네이버 통합검색 페이지에는 AI 브리핑이 JSON으로 들어 있다(2026-10-08 확인, 로그인 불필요).
+# 템플릿이 둘이다: aibPublic(공공정책형)은 공식 사이트·뉴스를 인용하고 블로그는 거의 안 쓴다.
+# aibAnswer(일반형)는 공식 1~2곳에 네이버 블로그 2~4곳을 섞는다. 우리가 써 온 목표 키워드 10개 중
+# 7개가 aibPublic이었다 — 인용 자리가 애초에 없는 질의였다. 그래서 글감을 고를 때 이걸 먼저 본다.
+AIB_MARK = "fender_renderer-ai_briefing"
+BLOG_TEMPLATE = "aibAnswer"
+
+
+def _json_array(text: str, key: str) -> list:
+    """key 뒤에 오는 JSON 배열을 괄호 짝으로 잘라 읽는다(문자열 안의 괄호는 세지 않는다). 없으면 []."""
+    i = text.find(key)
+    if i < 0:
+        return []
+    j = text.index("[", i)
+    depth, in_str, esc = 0, False, False
+    for k in range(j, len(text)):
+        c = text[k]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+        elif c == '"':
+            in_str = True
+        elif c == "[":
+            depth += 1
+        elif c == "]":
+            depth -= 1
+            if depth == 0:
+                return json.loads(text[j:k + 1])
+    return []
+
+
+def source_kind(s: dict) -> str:
+    url = s.get("url", "")
+    if "blog.naver.com" in url:
+        return "블로그"
+    if s.get("official"):
+        return "공식"
+    if s.get("platform") == "news" or "news.naver.com" in url:
+        return "뉴스"
+    return "웹"
+
+
+def parse_aib(html: str, blog: str) -> dict:
+    """검색 페이지 HTML → AI 브리핑 요약. present가 False면 그 질의에는 AI 브리핑이 없다."""
+    if AIB_MARK not in html:
+        return {"present": False, "template": "", "sources": [], "blogs": 0, "cited": False}
+    m = re.search(r'"templateId":"(aib[A-Za-z]*)"', html)
+    sources = _json_array(html, '"sources":[')
+    return {
+        "present": True,
+        "template": m.group(1) if m else "?",
+        "sources": sources,
+        "blogs": sum(source_kind(s) == "블로그" for s in sources),
+        "cited": any(f"blog.naver.com/{blog}/" in s.get("url", "") for s in sources),
+    }
+
+
+def aib(q: str, blog: str) -> dict:
+    r = requests.get("https://search.naver.com/search.naver",
+                     params={"query": q, "where": "nexearch"}, headers=UA, timeout=15)
+    if 'id="main_pack"' not in r.text:
+        # 차단·오류 페이지를 'AI 브리핑 없음'으로 읽으면 안 된다.
+        raise RuntimeError(f"'{q}' 검색 페이지를 읽지 못했다 (HTTP {r.status_code}, {len(r.text)}자)")
+    return parse_aib(r.text, blog)
+
+
+def geo_cmd(args: list):
+    expand, detail = "--expand" in args, "--detail" in args
+    queries = [a for a in args if not a.startswith("--")]
+    if not queries:
+        sys.exit("사용법: keyword_research.py geo [--expand] [--detail] 질의 [질의 ...]")
+    if expand:      # 자동완성으로 넓힌다. 구체적인 질의일수록 블로그 인용형이 많다
+        queries = list(dict.fromkeys(q for seed in queries for q in [seed] + _naver_ac(seed)))
+    import verify_naver
+    blog = verify_naver.BLOG
+    seen = 0
+    print(f"AI 브리핑 — 질의 {len(queries)}개 (블로그 인용형 = {BLOG_TEMPLATE})\n")
+    for q in queries:
+        try:
+            a = aib(q, blog)
+        except (RuntimeError, requests.RequestException) as e:
+            print(f"   {q[:28]:<28} 조회 실패 — {e}")
+            continue
+        if not a["present"]:
+            print(f"   {q[:28]:<28} 없음")
+        else:
+            seen += 1
+            mine = "  ★우리 글 인용" if a["cited"] else ""
+            print(f"   {q[:28]:<28} {a['template']:<10} 출처 {len(a['sources'])} / 블로그 {a['blogs']}{mine}")
+            if detail:
+                for s in a["sources"]:
+                    print(f"        [{source_kind(s)}] {s.get('sourceName') or s.get('platform', '')} | "
+                          f"{s.get('dateText', '')} | {s.get('title', '')[:40]}\n          {s.get('url', '')}")
+                    if source_kind(s) == "블로그":
+                        print("          인용 구절:", re.sub(r"\s+", " ", s.get("content", ""))[:160])
+        time.sleep(0.4)
+    if len(queries) >= 10 and not seen:
+        print("\n⚠ 10개 넘게 조회했는데 AI 브리핑이 하나도 없다 — 네이버 마크업이 바뀌었을 수 있다")
+
+
 def _demo():
     import tempfile
     assert _signature("1", "GET", "/x", "s"), "서명 생성 실패"
@@ -312,6 +420,19 @@ def _demo():
     t = datetime.datetime(2026, 10, 1)
     own = [(1000, t), (1100, t + datetime.timedelta(days=10))]           # 하루에 10씩 커진다
     assert fresh_cutoff(own, t + datetime.timedelta(days=12), days=21) == 1100 + 10 * (2 - 21)
+
+    # AI 브리핑: 네이버가 내려주는 형태 — 요약문 안에 "[5] 동아일보" 같은 대괄호와 이스케이프된 따옴표가 있다
+    page = ('<div data-meta-ssuid-extra="fender_renderer-ai_briefing">'
+            '{"body":{"templateId":"aibAnswer","props":{"summary":{"markdown":"요약 [1] \\"인용\\" ]"},'
+            '"sources":[{"official":true,"platform":"고용24","url":"https://www.work24.go.kr/x","title":"공식 [안내]"},'
+            '{"official":false,"platform":"네이버 블로그","url":"https://blog.naver.com/other/224400000001","content":"표 ] 구절"},'
+            '{"official":false,"platform":"네이버 블로그","url":"https://blog.naver.com/mine/224400000002"},'
+            '{"official":false,"platform":"news","url":"https://n.news.naver.com/a"}],"relatedQuestions":{"items":[]}}}}')
+    a = parse_aib(page, "mine")
+    assert (a["present"], a["template"], len(a["sources"]), a["blogs"], a["cited"]) == (True, "aibAnswer", 4, 2, True), a
+    assert [source_kind(s) for s in a["sources"]] == ["공식", "블로그", "블로그", "뉴스"]
+    assert parse_aib(page, "someoneelse")["cited"] is False
+    assert parse_aib("<html>AI 브리핑이 없는 페이지</html>", "mine")["present"] is False
     print("demo ok")
 
 
@@ -321,5 +442,7 @@ if __name__ == "__main__":
         gap(as_json="--json" in sys.argv[2:])
     elif cmd == "serp":
         serp_cmd(sys.argv[2:])
+    elif cmd == "geo":
+        geo_cmd(sys.argv[2:])
     else:
         {"expand": expand, "volume": volume, "demo": _demo, "selftest": _demo}[cmd]()

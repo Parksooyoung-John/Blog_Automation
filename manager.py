@@ -12,17 +12,20 @@ import csv
 import datetime
 import re
 import sys
+import time
 from pathlib import Path
 
 import requests
 
 import verify_naver
-from check_naver import target_keyword
-from keyword_research import SERP_TOP, STALE_DAYS, fresh_cutoff, serp_stats, volume_age_days
+from check_naver import geo_queries, target_keyword
+from keyword_research import (BLOG_TEMPLATE, SERP_TOP, STALE_DAYS, aib, fresh_cutoff, serp_stats,
+                              volume_age_days)
 
 ROOT = Path(__file__).parent
 METRICS = ROOT / "content" / "naver" / "_metrics.csv"
 RANKS = ROOT / "content" / "naver" / "_ranks.csv"
+GEO = ROOT / "content" / "naver" / "_geo.csv"
 
 # 판정 기준 (2026-10-05 확정). 편수·주차 중 먼저 오는 쪽에서 점검한다.
 MID_POSTS, MID_WEEKS, MID_VISITORS = 10, 4, 15        # 미달 → 경고
@@ -127,6 +130,52 @@ def check_ranks(posts, today):
     return sum(bool(r["rank"]) for r in rows), len(rows)
 
 
+def check_geo(today):
+    """원고별 추적 질의의 AI 브리핑을 조회해 _geo.csv에 쌓는다. → (우리 글 인용 건수, 블로그 인용형 질의 수, 조회 수)
+
+    추적 질의는 작성 메모의 `- GEO 질의:` 줄이고, 없는 원고(10편까지)는 목표 키워드 하나로 본다.
+    인용은 방문이 아니다 — 요약만 읽고 나가면 방문자 수는 그대로다. 그래서 판정과 섞지 않고 따로 센다.
+    """
+    old = []
+    if GEO.exists():
+        with GEO.open(encoding="utf-8", newline="") as f:
+            old = [r for r in csv.DictReader(f) if r["date"] != today.isoformat()]
+    last = max((r["date"] for r in old), default=None)
+    prev_cited = sum(r["cited"] == "1" for r in old if r["date"] == last)
+
+    rows = []
+    for path in sorted((ROOT / "content" / "naver").glob("[0-9][0-9]_*.md")):
+        md = path.read_text(encoding="utf-8")
+        queries = geo_queries(md) or [q for q in [target_keyword(md)] if q]
+        got = []
+        for q in queries:
+            try:
+                a = aib(q, verify_naver.BLOG)
+            except (RuntimeError, requests.RequestException) as e:
+                print(f"    {path.name[:2]}편 {q}: 조회 실패 — {e}")
+                continue
+            got.append({"date": today.isoformat(), "post": path.name[:2], "query": q,
+                        "template": a["template"] if a["present"] else "없음",
+                        "blogs": a["blogs"], "cited": int(a["cited"])})
+            time.sleep(0.4)
+        rows += got
+        blog_type = sum(r["template"] == BLOG_TEMPLATE for r in got)
+        cited = [r["query"] for r in got if r["cited"]]
+        print(f"    {path.name[:2]}편 추적 {len(got)}개 / 블로그 인용형 {blog_type}개 / 우리 인용 {len(cited)}건"
+              + (f" ★ {', '.join(cited)}" if cited else ""))
+    if rows:
+        with GEO.open("w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=["date", "post", "query", "template", "blogs", "cited"])
+            w.writeheader()
+            w.writerows(old + rows)
+    cited = sum(r["cited"] for r in rows)
+    print(f"  우리 글 인용 {cited}건" + (f" (지난번 {prev_cited}건)" if last else "")
+          + f" / 블로그 인용형 질의 {sum(r['template'] == BLOG_TEMPLATE for r in rows)}개 / 조회 {len(rows)}개")
+    if rows and not any(r["template"] != "없음" for r in rows) and len(rows) >= 10:
+        print("  ⚠ AI 브리핑이 하나도 안 읽혔다 — 네이버 마크업이 바뀌었을 수 있다")
+    return cited
+
+
 def selftest():
     md = "제목: 2026 근로장려금 대상 기준, 재산을 먼저\n\n본문\n\n#근로장려금 #근로장려금대상 #홈택스\n\n## 작성 메모\n"
     assert target_keyword(md) == "근로장려금대상", target_keyword(md)        # 첫 태그가 아니라 제목 속 가장 긴 태그
@@ -201,6 +250,9 @@ def main(argv):
         print(f"  30위 안 {inside}편 / 조회 {checked}편")
         if verdict == "OK" and checked and not inside:
             print("  ⚠ 방문자는 기준을 넘었지만 30위 안에 든 글이 없다 — 검색이 아닌 유입일 수 있다. 유입분석 화면 확인 필요")
+
+    print("\nAI 브리핑 인용 (추적 질의 기준 — 인용은 방문과 별개)")
+    check_geo(today)
 
     print("\n데이터 신선도")
     vol = ROOT / "_workspace" / "keywords_volume.csv"

@@ -45,6 +45,22 @@ def geo_queries(md: str) -> list:
     return [q.strip() for q in m.group(1).split('|') if q.strip()] if m else []
 
 
+LENGTH_FROM = 12       # 분량·시각 요소 새 기준을 적용하기 시작하는 편
+LENGTH_NEW = (1500, 2500)   # AI 브리핑에 인용된 블로그 글 24편의 중앙값이 2,195자였다(2026-10-09 실측)
+LENGTH_OLD = (800, 1600)
+MAX_TABLE_COLS = 3     # 폰 화면 폭
+
+
+def is_table(block: str) -> bool:
+    return all(ln.lstrip().startswith('|') for ln in block.strip().split('\n'))
+
+
+def table_rows(block: str) -> list:
+    """마크다운 표 블록 → 칸 목록의 목록. `|---|---|` 구분선 행은 뺀다."""
+    rows = [[c.strip() for c in ln.strip().strip('|').split('|')] for ln in block.strip().split('\n')]
+    return [r for r in rows if not all(re.fullmatch(r':?-{2,}:?', c) for c in r)]
+
+
 def split_sentences(text: str) -> list:
     """문장 단위로 나눈다. 한글·닫는 괄호 뒤의 마침표에서만 끊는다 —
     `7.19%`, `2019. 8. 27.`, `1577-1000`에서 끊기면 안 된다."""
@@ -81,7 +97,12 @@ def structure_issues(body: str, keyword) -> list:
     for blk in blocks:
         if blk.startswith('## '):
             continue
-        is_list = all(re.match(r'(- |\d+\. )', ln) for ln in blk.split('\n'))
+        if is_table(blk):        # 표는 문장·볼드 한도 대신 열 수만 본다
+            cols = max(len(r) for r in table_rows(blk))
+            if cols > MAX_TABLE_COLS:
+                issues.append(f"표가 {cols}열 — 폰에서 깨진다 ({MAX_TABLE_COLS}열 이하)")
+            continue
+        is_list =all(re.match(r'(- |\d+\. )', ln) for ln in blk.split('\n'))
         units = blk.split('\n') if is_list else [blk]     # 목록은 줄 단위, 문단은 통째로
         for u in units:
             if len(re.findall(r'\*\*.+?\*\*', u)) > 1:
@@ -98,6 +119,19 @@ def structure_issues(body: str, keyword) -> list:
     big = [b for b in re.findall(r'\*\*(.+?)\*\*', body) if len(b) > MAX_BOLD]
     if big:
         issues.append(f"볼드가 {MAX_BOLD}자를 넘는 곳 {len(big)}개: {big[0][:24]}…")
+    return issues
+
+
+def format_issues(chars: int, heads: int, images: int, tables: int, thumb: bool) -> list:
+    """12편부터 보는 분량·시각 요소 기준. → 문제 설명 목록"""
+    issues = []
+    lo, hi = LENGTH_NEW
+    if not lo <= chars <= hi:
+        issues.append(f"분량 {chars}자 ({lo}~{hi}자)")
+    if images + tables < heads + 1:
+        issues.append(f"시각 요소 {images + tables}개 (이미지 {images} + 표 {tables}) — 소제목 {heads}개면 {heads + 1}개 이상")
+    if not thumb:
+        issues.append("작성 메모에 `- 썸네일 문구: 윗줄 | 아랫줄` 줄이 없다")
     return issues
 
 
@@ -140,8 +174,14 @@ def measure(path, tistory, volumes=None):
     m = re.search(r'^제목: (.+)$', n, flags=re.M)
     if not m:
         return None
-    return {
+    # 표의 세로선과 구분선 행은 글자가 아니다
+    c = re.sub(r'^\s*\|.*$', lambda t: '' if re.fullmatch(r'[\s|:\-]+', t.group()) else t.group().replace('|', ''),
+               c, flags=re.M)
+    tables = sum(is_table(blk) for blk in re.split(r'\n\s*\n', b) if blk.strip())
+    r = {
         "title": m.group(1),
+        "tables": tables,
+        "thumb": bool(re.search(r'^- 썸네일 문구:\s*\S', n, flags=re.M)),
         "chars": len(c.strip()),
         "heads": len(re.findall(r'^## ', b, flags=re.M)),
         "images": len(re.findall(r'\[이미지', b)),
@@ -157,7 +197,14 @@ def measure(path, tistory, volumes=None):
         "judged": not (num := re.match(r'\d+', os.path.basename(path))) or int(num.group()) >= NEW_RULES_FROM,
         "geo": geo_queries(n),
         "geo_required": not num or int(num.group()) >= GEO_FROM,
+        "new_format": not num or int(num.group()) >= LENGTH_FROM,
     }
+    if r["new_format"]:
+        r["format"] = format_issues(r["chars"], r["heads"], r["images"], tables, r["thumb"])
+    else:       # 11편까지는 발행 당시 기준 그대로
+        lo, hi = LENGTH_OLD
+        r["format"] = [] if lo <= r["chars"] <= hi else [f"분량 {r['chars']}자 ({lo}~{hi}자)"]
+    return r
 
 
 def same_cover_kw(results: dict) -> list:
@@ -172,7 +219,7 @@ def same_cover_kw(results: dict) -> list:
 
 
 def passes(r):
-    return (800 <= r["chars"] <= 1600 and 3 <= r["heads"] <= 5 and r["images"] >= 2
+    return (not r["format"] and 3 <= r["heads"] <= (6 if r["new_format"] else 5) and r["images"] >= 2
             and r["exp"] >= 1 and r["links"] >= 1 and 8 <= len(r["tags"]) <= 12
             and not r["dup"] and not r["stale"]
             and not (r["judged"] and r["structure"])
@@ -243,6 +290,27 @@ def selftest():
     assert has(base + "**하나**와 **둘**을 같이 강조합니다.", "볼드가 둘 이상")
     assert not has(base + "- 첫 줄 **하나**\n- 둘째 줄 **둘**", "볼드가 둘 이상")   # 목록은 줄마다 하나씩 허용
     assert has(base + "**" + "다" * 31 + "**", f"{MAX_BOLD}자를 넘는")
+
+    # 표: 구분선 행을 빼고 읽고, 문장·볼드 한도는 적용하지 않으며, 4열은 막는다
+    tbl = "| 가입기간 | 50세 미만 | 50세 이상 |\n|---|:---:|---|\n| 1년 미만 | **120일** | **120일** |"
+    assert is_table(tbl) and not is_table("| 표처럼 시작하지만\n본문 줄")
+    assert table_rows(tbl) == [["가입기간", "50세 미만", "50세 이상"], ["1년 미만", "**120일**", "**120일**"]]
+    assert not has(base + tbl, "볼드가 둘 이상") and not has(base + tbl, "열")
+    assert has(base + "| a | b | c | d |\n|---|---|---|---|\n| 1 | 2 | 3 | 4 |", "4열")
+
+    # 12편부터의 분량·시각 요소 기준
+    assert format_issues(2000, 4, 4, 1, True) == []
+    assert any("분량" in i for i in format_issues(1499, 4, 4, 1, True))
+    assert any("분량" in i for i in format_issues(2501, 4, 4, 1, True))
+    assert any("시각 요소 4개" in i for i in format_issues(2000, 4, 3, 1, True))     # 소제목 4개면 5개 필요
+    assert any("썸네일 문구" in i for i in format_issues(2000, 4, 4, 1, False))
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "t.md")
+        open(path, "w", encoding="utf-8").write(doc.replace("## 소제목 둘\n\n본문입니다.", "## 소제목 둘\n\n" + tbl)
+                                                + "- 썸네일 문구: 윗줄 | 아랫줄\n")
+        t = measure(path, set())
+    assert (t["tables"], t["thumb"]) == (1, True), (t["tables"], t["thumb"])
+    assert "|" not in str(t["chars"]) and t["chars"] < 160, t["chars"]        # 세로선·구분선은 글자 수에 안 든다
     print("selftest ok")
 
 
@@ -262,7 +330,7 @@ def main():
         ok = passes(r)
         allok &= ok
         print(('OK   ' if ok else 'CHECK'), os.path.basename(p))
-        print(f"       {r['chars']}자 / 소제목 {r['heads']} / 이미지 {r['images']}"
+        print(f"       {r['chars']}자 / 소제목 {r['heads']} / 이미지 {r['images']} / 표 {r['tables']}"
               f" / 경험 {r['exp']} / 내부링크 {r['links']}"
               f" / 태그 {len(r['tags'])} / 티스토리 중복 {len(r['dup'])}")
         print(f"       제목: {r['title']}")
@@ -277,6 +345,8 @@ def main():
             print('         옛 명칭:', t)
         if r["geo_required"] and len(r["geo"]) < MIN_GEO_QUERIES:
             print(f'         GEO: 작성 메모에 `- GEO 질의: a | b` 줄이 없거나 {MIN_GEO_QUERIES}개 미만이다')
+        for t in r["format"]:
+            print('         형식:', t)
         if r["judged"]:
             for t in r["structure"]:
                 print('         구조:', t)

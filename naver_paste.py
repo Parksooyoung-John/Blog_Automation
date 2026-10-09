@@ -13,7 +13,9 @@ import re
 import sys
 from pathlib import Path
 
-from check_naver import split_sentences
+from check_naver import is_table, split_sentences, table_rows
+
+CELL = 'style="border:1px solid #c8c8c8;padding:6px 10px"'
 
 # 해시태그 줄: '#실업급여 #실업급여조건 ...'. '## 소제목'과 헷갈리면 안 된다.
 TAG_RE = re.compile(r"^#\S+(?: +#\S+)+$", re.M)
@@ -76,28 +78,38 @@ def parts(md: str) -> tuple:
     assert "##" not in body, "소제목 변환 실패"
     assert tags.startswith("#") and tags.count("#") >= 5, f"태그 추출 실패: {tags!r}"
 
-    # 문단 안의 문장을 한 줄에 하나씩 — 모바일에서 문장 중간은 화면이 알아서 접는다.
-    # 플레이스홀더([이미지 …] 등)와 목록 줄은 건드리지 않는다.
+    # 문장 하나마다 빈 줄을 둔다(2026-10-09 사용자 확정 — 11편에서 손으로 넣던 모양).
+    # 문장 중간은 끊지 않는다. 플레이스홀더([이미지 …] 등)·목록·표는 덩어리째 둔다.
     blocks = []
     for blk in body.split("\n\n"):
-        plain_para = not re.match(r"(\[|· |\d+\. )", blk)
-        blocks.append("\n".join(split_sentences(blk)) if plain_para else blk)
+        plain_para = not is_table(blk) and not re.match(r"(\[|· |\d+\. )", blk)
+        blocks += split_sentences(blk) if plain_para else [blk]
     return title, "\n\n".join(blocks), tags
 
 
+def _rich(text: str) -> str:
+    return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", html.escape(text))
+
+
 def convert(md: str) -> str:
-    """일반 텍스트(볼드 없음) — 서식을 받지 못하는 곳에 붙일 때 쓰이는 쪽."""
+    """일반 텍스트(볼드 없음) — 서식을 받지 못하는 곳에 붙일 때 쓰이는 쪽. 표는 `a — b` 줄로 낸다."""
     _, body, _ = parts(md)
-    return body.replace("**", "")
+    blocks = ["\n".join(" — ".join(r) for r in table_rows(b)) if is_table(b) else b for b in body.split("\n\n")]
+    return "\n\n".join(blocks).replace("**", "")
 
 
 def to_html(md: str) -> str:
     title, body, tags = parts(md)
     paras = []
     for blk in body.split("\n\n"):
-        for line in blk.split("\n"):
-            paras.append("<p>" + re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", html.escape(line)) + "</p>")
-        paras.append("<p><br></p>")          # 문단 사이 빈 줄
+        if is_table(blk):       # 에디터가 자기 표로 바꾸도록 테두리만 준다
+            head, *rest = table_rows(blk)
+            rows = ["<tr>" + "".join(f"<th {CELL}>{_rich(c)}</th>" for c in head) + "</tr>"]
+            rows += ["<tr>" + "".join(f"<td {CELL}>{_rich(c)}</td>" for c in r) + "</tr>" for r in rest]
+            paras.append('<table style="border-collapse:collapse">' + "".join(rows) + "</table>")
+        else:
+            paras += ["<p>" + _rich(line) + "</p>" for line in blk.split("\n")]
+        paras.append("<p><br></p>")          # 덩어리 사이 빈 줄
     assert "**" not in "".join(paras), "닫히지 않은 볼드 표시가 남았다"
     return PAGE.format(title=html.escape(title), body="\n".join(paras[:-1]), tags=html.escape(tags),
                        checklist=html.escape(CHECKLIST),
@@ -111,8 +123,9 @@ def selftest():
     text = convert(md)
     assert "[소제목] 첫 소제목" in text
     assert "· 항목 강조" in text
-    # 문장마다 줄이 나뉘되 소수점에서는 끊기지 않는다
-    assert "도입부입니다.\n보험료율은 7.19%입니다.\nA < B인 경우도 있습니다." in text, text
+    # 문장마다 빈 줄을 두되 소수점에서는 끊기지 않는다. 목록 줄은 붙어 있다
+    assert "도입부입니다.\n\n보험료율은 7.19%입니다.\n\nA < B인 경우도 있습니다." in text, text
+    assert "· 항목 강조\n· 둘째 항목" in text
     assert "[이미지 ②: assets/x.png — 제작 완료]" in text      # 플레이스홀더는 한 줄 그대로
     assert "메모" not in text and "#태그하나" not in text
 
@@ -122,6 +135,14 @@ def selftest():
     assert "A &lt; B인" in page                                 # 본문의 < 가 태그로 읽히면 안 된다
     assert '<div id="tags">#태그하나 #태그둘 #태그셋 #태그넷 #태그다섯</div>' in page
     assert "작성 메모" not in page and "- 메모" not in page
+    assert "<p>도입부입니다.</p>\n<p><br></p>\n<p>보험료율은" in page          # 문장 사이 빈 줄
+    assert "<p>· 항목 <b>강조</b></p>\n<p>· 둘째 항목</p>" in page             # 목록은 붙어 있다
+
+    tmd = md.replace("- 항목 **강조**\n- 둘째 항목", "| 가입기간 | 일수 |\n|---|---|\n| 1년 미만 | **120일** |")
+    tpage, ttext = to_html(tmd), convert(tmd)
+    assert "<table" in tpage and f"<th {CELL}>가입기간</th>" in tpage
+    assert f"<td {CELL}><b>120일</b></td>" in tpage and "|---" not in tpage and "---|" not in tpage
+    assert "가입기간 — 일수\n1년 미만 — 120일" in ttext, ttext
     print("selftest ok")
 
 

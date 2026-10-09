@@ -61,11 +61,114 @@ h2 {{ font-size: 30px; color: #1a1a1a; margin-bottom: 6px; letter-spacing: -0.5p
 .exgrid .ex .pay {{ font-size: 15px; color: #868e96; margin-top: 12px; }}
 .exgrid .ex .amt {{ font-size: 25px; font-weight: 800; color: #1a1a1a; margin-top: 3px; }}
 .exgrid .ex .note {{ font-size: 12.5px; color: #adb5bd; margin-top: 10px; line-height: 1.5; }}
+
+/* 2026-10-09 추가 형태 4종 — 강조색(--accent) 머리띠가 붙는다. 기존 카드는 이 규칙을 쓰지 않는다 */
+.band {{ height: 10px; border-radius: 6px; margin-bottom: 22px; background: var(--accent); }}
+.hero {{ display: flex; align-items: baseline; gap: 12px; margin: 10px 0 4px; }}
+.hero .big {{ font-size: 96px; font-weight: 800; letter-spacing: -3px; line-height: 1; color: var(--accent); }}
+.hero .unit {{ font-size: 30px; font-weight: 700; color: #333; }}
+.hero-desc {{ font-size: 20px; color: #444; margin-top: 14px; line-height: 1.5; }}
+.bars .b {{ margin-bottom: 16px; }}
+.bars .lab {{ display: flex; justify-content: space-between; align-items: baseline;
+              font-size: 18px; color: #333; margin-bottom: 7px; }}
+.bars .lab b {{ font-size: 21px; color: #1a1a1a; }}
+.bars .track {{ height: 26px; border-radius: 13px; background: #eef1f5; overflow: hidden; }}
+.bars .fill {{ height: 100%; border-radius: 13px; background: var(--accent); }}
+.tl {{ margin: 10px 0 4px 12px; padding-left: 30px; border-left: 3px solid #dfe3e8; }}
+.tl .ev {{ position: relative; padding-bottom: 22px; }}
+.tl .ev:last-child {{ padding-bottom: 2px; }}
+.tl .ev::before {{ content: ''; position: absolute; left: -41px; top: 3px; width: 13px; height: 13px;
+                   border-radius: 50%; background: var(--accent); border: 3px solid #fff;
+                   box-shadow: 0 0 0 2px var(--accent); }}
+.tl .when {{ font-size: 15px; font-weight: 700; color: var(--accent); }}
+.tl .what {{ font-size: 20px; font-weight: 700; color: #1a1a1a; margin-top: 2px; }}
+.tl .why {{ font-size: 15px; color: #777; margin-top: 3px; }}
+.chk .it {{ display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px;
+            border-radius: 12px; background: #f6f8fa; margin-bottom: 10px; }}
+.chk .box {{ flex: none; width: 26px; height: 26px; border-radius: 7px; background: var(--accent);
+             color: #fff; font-size: 17px; font-weight: 800;
+             display: flex; align-items: center; justify-content: center; }}
+.chk .t {{ font-size: 19px; color: #222; line-height: 1.4; }}
+.chk .t small {{ display: block; font-size: 14px; color: #888; margin-top: 3px; }}
 """
+
+# 카테고리마다 강조색 하나. 흰 바탕에 회색 줄만 있던 카드가 '글 같은 이미지'로 보였다.
+ACCENT = {"실업급여": "#1b64da", "근로장려금": "#12b886", "세금": "#f76707", "연금·건강보험": "#7048e8"}
 
 
 def card_html(body: str) -> str:
     return f"<style>{CARD_CSS}</style><div class='card'>{body}</div>"
+
+
+def _framed(accent: str, title: str, sub: str, inner: str, foot: str) -> str:
+    return card_html(f"<div style='--accent:{accent}'><div class='band'></div><h2>{title}</h2>"
+                     f"<p class='sub'>{sub}</p>{inner}<p class='foot'>{foot}</p></div>")
+
+
+def hero_card(accent, title, sub, big, unit, desc, foot) -> str:
+    """답이 되는 숫자 하나를 크게."""
+    return _framed(accent, title, sub, f"<div class='hero'><span class='big'>{big}</span>"
+                   f"<span class='unit'>{unit}</span></div><p class='hero-desc'>{desc}</p>", foot)
+
+
+def bar_card(accent, title, sub, rows, foot) -> str:
+    """값의 크기 차이를 막대 길이로. rows: [(이름, 표시값, 0~100 비율)]"""
+    bars = "".join(f"<div class='b'><div class='lab'><span>{n}</span><b>{v}</b></div>"
+                   f"<div class='track'><div class='fill' style='width:{p}%'></div></div></div>" for n, v, p in rows)
+    return _framed(accent, title, sub, f"<div class='bars'>{bars}</div>", foot)
+
+
+def timeline_card(accent, title, sub, events, foot) -> str:
+    """날짜·순서가 있는 절차. events: [(언제, 무엇, 설명)]"""
+    evs = "".join(f"<div class='ev'><div class='when'>{w}</div><div class='what'>{x}</div>"
+                  f"<div class='why'>{y}</div></div>" for w, x, y in events)
+    return _framed(accent, title, sub, f"<div class='tl'>{evs}</div>", foot)
+
+
+def checklist_card(accent, title, sub, items, foot) -> str:
+    """확인할 것의 목록. items: [(항목, 보충 설명)]"""
+    its = "".join(f"<div class='it'><div class='box'>✓</div><div class='t'>{a}<small>{b}</small></div></div>"
+                  for a, b in items)
+    return _framed(accent, title, sub, f"<div class='chk'>{its}</div>", foot)
+
+
+THUMB_CSS = """
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Malgun Gothic','맑은 고딕',system-ui,sans-serif; }
+.thumb { width: 860px; height: 484px; position: relative; background-size: cover; background-position: center; }
+.thumb::after { content: ''; position: absolute; inset: 0;
+                background: linear-gradient(180deg, rgba(0,0,0,.05) 25%, rgba(0,0,0,.78) 100%); }
+.thumb .txt { position: absolute; left: 44px; right: 44px; bottom: 40px; z-index: 1; }
+.thumb .l1 { font-size: 40px; font-weight: 700; color: #fff; letter-spacing: -1px; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.thumb .l2 { font-size: 58px; font-weight: 800; color: #ffe066; letter-spacing: -2px; line-height: 1.15;
+             margin-top: 6px; text-shadow: 0 2px 10px rgba(0,0,0,.55); }
+"""
+
+
+def thumb_text(md: str):
+    """원고 작성 메모의 `- 썸네일 문구: 윗줄 | 아랫줄` → (윗줄, 아랫줄). 없으면 None."""
+    import re
+    m = re.search(r"^- 썸네일 문구:\s*(.+?)\s*\|\s*(.+?)\s*$", md, flags=re.M)
+    return (m.group(1), m.group(2)) if m else None
+
+
+def shoot_thumb(page, photo: Path, line1: str, line2: str, out: Path):
+    """대표 사진 위에 제목 문구를 얹은 16:9 썸네일. 사진은 사용자가 고른 것만 쓴다(AI 생성 없음)."""
+    import base64
+    import html as html_lib
+    mime = {".jpg": "jpeg", ".jpeg": "jpeg", ".png": "png", ".webp": "webp"}[photo.suffix.lower()]
+    data = base64.b64encode(photo.read_bytes()).decode()
+    page.set_viewport_size({"width": 860, "height": 484})
+    page.set_content(f"<style>{THUMB_CSS}</style><div class='thumb' style=\"background-image:url('data:image/{mime};base64,{data}')\">"
+                     f"<div class='txt'><div class='l1'>{html_lib.escape(line1)}</div>"
+                     f"<div class='l2'>{html_lib.escape(line2)}</div></div></div>")
+    page.wait_for_timeout(500)
+    over = page.evaluate("() => { const t = document.querySelector('.txt'); "
+                         "return t.scrollWidth > t.clientWidth || t.offsetHeight > 300; }")
+    page.query_selector(".thumb").screenshot(path=str(out))
+    if over:
+        print(f"  ⚠ 썸네일 문구가 넘친다 — 줄여야 한다: {line1} | {line2}")
+    return not over
 
 
 CARDS = {
@@ -349,6 +452,22 @@ CARDS = {
       <div class='row'><span class='tag'>제외</span><span class='txt'>상실 후 3년을 넘겨 다시 가입한 경우의 이전 기간</span></div>
       <p class='foot'>지금 회사 근속만이 아니라 합산된 가입기간으로 일수가 정해집니다.</p>
     """),
+    "27_실업급여_해외여행_기준": card_html("""
+      <h2>실업급여 받는 중 해외여행, 기준은 세 가지</h2>
+      <p class='sub'>고용노동부 고객상담센터 안내 기준</p>
+      <div class='row'><span class='tag'>여행</span><span class='txt'>출국·해외여행 자체는 제한 없음</span><span class='num'>가능</span></div>
+      <div class='row'><span class='tag'>실업인정일</span><span class='txt'>그날은 국내에서 본인이 직접 신청</span><span class='num'>필수</span></div>
+      <div class='row'><span class='tag'>해외 접속</span><span class='txt'>해외에서 인터넷으로 신청하면 부정수급</span><span class='num'>환수</span></div>
+      <p class='foot'>여행 기간이 2주든 한 달이든, 따지는 것은 실업인정일과 겹치는지입니다.</p>
+    """),
+    "28_실업급여_실업인정일_날짜변경": card_html("""
+      <h2>여행과 실업인정일이 겹칠 때</h2>
+      <p class='sub'>실업인정일 변경 · 고용보험법 시행규칙</p>
+      <div class='row'><span class='tag'>출국 전</span><span class='txt'>고용센터에 실업인정일 변경이 되는지 문의</span></div>
+      <div class='row'><span class='tag'>놓쳤다면</span><span class='txt'>실업인정일 다음 날부터 고용센터 출석</span><span class='num'>14일 이내</span></div>
+      <div class='row'><span class='tag'>착오 사유</span><span class='txt'>날짜를 잊은 경우의 변경</span><span class='num'>수급기간 중 1회</span></div>
+      <p class='foot'>해외 취업이 목적이면 출국 전 해외 재취업활동계획서를 내고 해외에서 인정받는 길이 따로 있습니다.</p>
+    """),
 }
 
 
@@ -391,15 +510,16 @@ def find_overflow(page) -> list:
     """)
 
 
-def shoot_cards(page) -> list:
+def shoot_cards(page, cards=None, out=None) -> list:
     broken = []
-    for name, html in CARDS.items():
+    cards, out = cards or CARDS, out or OUT
+    for name, html in cards.items():
         page.set_viewport_size({"width": W, "height": 700})
         page.set_content(html)
         page.wait_for_timeout(400)
         over = find_overflow(page)
         el = page.query_selector(".card")
-        el.screenshot(path=str(OUT / f"{name}.png"))
+        el.screenshot(path=str(out / f"{name}.png"))
         if over:
             broken.append((name, over))
             print("  카드:", name, "⚠ 글자 넘침:", " / ".join(over))
@@ -455,5 +575,64 @@ def main():
     print(f"\n완료: {OUT}")
 
 
+# 새 형태 4종의 견본. 발행용이 아니라 모양을 확인하는 용도라 _workspace에 만든다.
+SAMPLES = {
+    "견본_큰숫자": hero_card(ACCENT["실업급여"], "실업인정일을 놓쳤다면", "고용노동부 고객상담센터 안내 기준",
+                        "14", "일 이내", "실업인정일 다음 날부터 세고, 고용센터에 직접 출석해야 합니다.",
+                        "착오로 날짜를 잊은 경우의 변경은 수급기간 중 1회만 인정됩니다."),
+    "견본_막대비교": bar_card(ACCENT["실업급여"], "가입기간이 길수록 받는 일수가 늘어납니다", "50세 미만 · 고용보험법 별표 1",
+                        [("1년 미만", "120일", 44), ("1~3년", "150일", 56), ("3~5년", "180일", 67),
+                         ("5~10년", "210일", 78), ("10년 이상", "240일", 89)],
+                        "막대 길이는 최대 270일(50세 이상·10년 이상) 대비 비율입니다."),
+    "견본_타임라인": timeline_card(ACCENT["근로장려금"], "기한후 신청부터 입금까지", "신청한 달의 말일부터 4개월 이내",
+                            [("~11월 30일", "기한후 신청 마감", "12월 1일부터는 접수 자체가 닫힙니다"),
+                             ("신청 후", "세무서 개별 심사", "정기신청처럼 일괄 지급되지 않습니다"),
+                             ("10월 신청 → 2027년 2월 말", "입금", "11월 신청이면 2027년 3월 말까지")],
+                            "지급액은 정기신청보다 10% 적습니다."),
+    "견본_체크리스트": checklist_card(ACCENT["실업급여"], "출국 전에 확인할 것", "실업급여 받는 중 해외여행",
+                              [("여행 기간에 실업인정일이 들어 있는가", "겹치지 않으면 따로 할 일이 없습니다"),
+                               ("겹친다면 고용센터에 날짜 변경을 문의했는가", "개인 여행이 변경 사유가 되는지는 고용센터가 판단합니다"),
+                               ("그 기간의 구직활동을 채웠는가", "못 채우면 그 회차는 인정받지 못합니다"),
+                               ("해외에서 접속해 신청하지 않기로 했는가", "해외에서 인터넷으로 신청하면 부정수급입니다")],
+                              "실업인정일 당일에는 국내에서 본인이 직접 신청해야 합니다."),
+}
+
+
+def find_cover(num: str):
+    ws = Path(__file__).parent / "_workspace" / "naver"
+    return next((p for ext in ("jpg", "jpeg", "png", "webp") for p in ws.glob(f"cover_{num}.{ext}")), None)
+
+
+def thumb_cmd(num: str) -> int:
+    drafts = list((Path(__file__).parent / "content" / "naver").glob(f"{num}_*.md"))
+    text = thumb_text(drafts[0].read_text(encoding="utf-8")) if drafts else None
+    photo = find_cover(num)
+    if not text:
+        print(f"{num}편 원고 작성 메모에 `- 썸네일 문구: 윗줄 | 아랫줄` 줄이 없습니다")
+        return 1
+    if not photo:
+        print(f"고른 대표 사진을 _workspace/naver/cover_{num}.jpg (또는 png·webp)로 저장한 뒤 다시 실행하세요")
+        return 1
+    out = OUT / f"{num}_썸네일.png"
+    with sync_playwright() as pw:
+        b = pw.chromium.launch(headless=True)
+        ok = shoot_thumb(b.new_page(device_scale_factor=2), photo, *text, out)
+        b.close()
+    print(out)
+    return 0 if ok else 1
+
+
 if __name__ == "__main__":
-    main()
+    if "--samples" in sys.argv:
+        dest = Path(__file__).parent / "_workspace" / "naver" / "card_samples"
+        dest.mkdir(parents=True, exist_ok=True)
+        with sync_playwright() as pw:
+            b = pw.chromium.launch(headless=True)
+            bad = shoot_cards(b.new_page(device_scale_factor=2), SAMPLES, dest)
+            b.close()
+        print(dest)
+        sys.exit(1 if bad else 0)
+    elif "--thumb" in sys.argv:
+        sys.exit(thumb_cmd(sys.argv[sys.argv.index("--thumb") + 1]))
+    else:
+        main()

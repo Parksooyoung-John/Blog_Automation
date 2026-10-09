@@ -26,6 +26,9 @@ CATEGORY_RULES = [
     (["국민연금", "건강보험", "연금"], "연금·건강보험"),
 ]
 MAX_SHARED_TAGS = 3
+# 서식 기준. AI 브리핑에 인용된 블로그 글 24편 중 글자 16이 13편, 왼쪽 정렬이 19편이었고 우리 글도 전부 그렇다.
+BODY_FONT = "16"
+MAX_CENTER_PCT = 10
 
 
 def _get(url):
@@ -81,7 +84,19 @@ def parse(html: str) -> dict:
     m = re.search(r'var gsTagName = "([^"]*)"', html)
     tags = [t for t in (m.group(1).split(",") if m and m.group(1) else []) if t]
 
+    # 서식: 문단별 정렬과 글자 크기를 글자 수로 가중해 본다(2026-10-09). 기준은 글자 16·왼쪽 정렬이다.
+    size, centered, total = Counter(), 0, 0
+    for cls, inner in re.findall(r'<p class="(se-text-paragraph[^"]*)"[^>]*>(.*?)</p>', body, flags=re.S):
+        n = len(re.sub(r"<[^>]+>", "", inner).replace("​", "").strip())
+        total += n
+        centered += n if "se-text-paragraph-align-center" in cls else 0
+        for fs, seg in re.findall(r'<span[^>]*class="[^"]*se-fs-fs(\d+)[^"]*"[^>]*>(.*?)</span>', inner, flags=re.S):
+            size[fs] += len(re.sub(r"<[^>]+>", "", seg))
+
     return {
+        "font": size.most_common(1)[0][0] if size else "",
+        "center_pct": round(100 * centered / total) if total else 0,
+        "tables": len(re.findall(r'se-component se-table[ "]', body)),
         "chars": len(text),
         "images": len(re.findall(r'se-component se-image[ "]', body)),
         "subheads": len(re.findall(r'se-component se-quotation[ "]', body)),
@@ -108,7 +123,11 @@ def selftest():
         '<div class="se-main-container">'
         '<div class="se-component se-image se-l-default"><img src="x.png"></div>'
         '<div class="se-component se-quotation se-l-quotation_line">소제목 하나</div>'
-        '<div class="se-component se-text">본문 문장입니다.</div>'
+        '<div class="se-component se-text">'
+        '<p class="se-text-paragraph se-text-paragraph-align-center "><span class="se-fs-fs13 se-ff-">사진 출처</span></p>'
+        '<p class="se-text-paragraph se-text-paragraph-align- "><span class="se-fs-fs16 se-ff-">본문 문장입니다. 왼쪽으로 정렬된 열여섯 크기 글자입니다.</span></p>'
+        '</div>'
+        '<div class="se-component se-table se-l-default"><table><tr><td>표</td></tr></table></div>'
         '<div class="se-component se-quotation se-l-quotation_line">소제목 둘</div>'
         '<div class="se-component se-oglink"><a href="https://blog.naver.com/education_blog/224422755053">링크</a></div>'
         '</div></div>'
@@ -122,7 +141,9 @@ def selftest():
     assert r["subheads"] == 2, r["subheads"]
     assert r["inlinks"] == 1, r["inlinks"]
     assert r["tistory"] == 0, r["tistory"]
-    assert 10 < r["chars"] < 60, r["chars"]        # 본문 뒤 스크립트가 글자수에 섞이면 안 된다
+    assert 10 < r["chars"] < 80, r["chars"]        # 본문 뒤 스크립트가 글자수에 섞이면 안 된다
+    assert (r["font"], r["tables"]) == ("16", 1), (r["font"], r["tables"])
+    assert 10 < r["center_pct"] < 20, r["center_pct"]      # 5자(출처) / 36자 — 글자 수로 가중한다
     try:
         parse("<html><body>본문 없음</body></html>")
         raise AssertionError("본문을 못 찾았는데 0자로 통과시켰다")
@@ -152,13 +173,19 @@ def main(argv):
             print(f"  발행 {p['when']:%Y-%m-%d %H:%M}  |  카테고리 {p['category']}")
         print(f"  {r['chars']}자 / 이미지 {r['images']} / 소제목 {r['subheads']} "
               f"/ 태그 {len(r['tags'])} / 내부링크 {r['inlinks']}")
+        print(f"  글자 크기 {r['font'] or '?'} / 가운데 정렬 {r['center_pct']}% / 표 {r['tables']}")
+
+        if r["font"] and r["font"] != BODY_FONT:
+            problems.append(f"{p['logNo']} 본문 글자 크기가 {r['font']} (기준 {BODY_FONT})")
+        if r["center_pct"] > MAX_CENTER_PCT:
+            problems.append(f"{p['logNo']} 가운데 정렬이 {r['center_pct']}% (사진 출처 줄만, {MAX_CENTER_PCT}% 이하)")
 
         if not r["tags"]:
             problems.append(f"{p['logNo']} 태그가 비어 있다")
         if r["images"] < 2:
             problems.append(f"{p['logNo']} 이미지가 {r['images']}장 (최소 2장)")
-        if not 800 <= r["chars"] <= 1800:
-            problems.append(f"{p['logNo']} 분량 {r['chars']}자 (800~1800)")
+        if not 800 <= r["chars"] <= 2800:    # 원고 기준(12편부터 1,500~2,500자)에 경험 문장·출처 줄이 더 붙는다
+            problems.append(f"{p['logNo']} 분량 {r['chars']}자 (800~2800)")
         if r["tistory"]:
             problems.append(f"{p['logNo']} 티스토리 링크가 있다 — 유입을 내보내고 유사문서 위험")
         if r["inlinks"] == 0:

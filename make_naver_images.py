@@ -132,43 +132,83 @@ def checklist_card(accent, title, sub, items, foot) -> str:
     return _framed(accent, title, sub, f"<div class='chk'>{its}</div>", foot)
 
 
+# ── 제목 썸네일 ──────────────────────────────────────────────────
+# 정사각형으로 만든다. 12편 썸네일은 가로형(16:9)에 글자를 왼쪽 아래에 뒀는데, 네이버가 목록용으로
+# 정사각형으로 자르면서(인물 쪽으로 치우쳐 자른다) 글자가 "…가족 / …만원이 기준입니다"만 남았다.
+# 정사각형 원본은 정사각형으로 쓸 때 안 잘리고, 가로로 잘릴 때는 가운데 띠만 남으므로 글자를 그 띠 안에 둔다.
+THUMB = 860
+BAND = (188, 672)          # 16:9로 가운데를 잘랐을 때 남는 세로 구간
+SIDE = 120                 # 글자 좌우 여백
+THUMB_FONT = "Jalnan2TTF.ttf"      # 여기어때 잘난체 2
+FONT_DIRS = [Path.home() / "AppData/Local/Microsoft/Windows/Fonts", Path("C:/Windows/Fonts")]
+
 THUMB_CSS = """
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Malgun Gothic','맑은 고딕',system-ui,sans-serif; }
-.thumb { width: 860px; height: 484px; position: relative; background-size: cover; background-position: center; }
+body { font-family: 'Thumb'; }
+.thumb { width: %(size)dpx; height: %(size)dpx; position: relative; background-size: cover; background-position: center; }
 .thumb::after { content: ''; position: absolute; inset: 0;
-                background: linear-gradient(180deg, rgba(0,0,0,.05) 25%, rgba(0,0,0,.78) 100%); }
-.thumb .txt { position: absolute; left: 44px; right: 44px; bottom: 40px; z-index: 1; }
-.thumb .l1 { font-size: 40px; font-weight: 700; color: #fff; letter-spacing: -1px; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
-.thumb .l2 { font-size: 58px; font-weight: 800; color: #ffe066; letter-spacing: -2px; line-height: 1.15;
-             margin-top: 6px; text-shadow: 0 2px 10px rgba(0,0,0,.55); }
-"""
+                background: linear-gradient(180deg, rgba(0,0,0,.04) 34%%, rgba(0,0,0,.74) 66%%, rgba(0,0,0,.34) 100%%); }
+.thumb .txt { position: absolute; left: %(side)dpx; right: %(side)dpx; bottom: %(bottom)dpx; z-index: 1; text-align: center; }
+.thumb .l1, .thumb .l2 { -webkit-text-stroke: 11px #111; paint-order: stroke fill; white-space: nowrap; }
+.thumb .l1 { font-size: 52px; color: #fff; }
+.thumb .l2 { font-size: 84px; color: #ffe033; line-height: 1.12; margin-top: 6px; }
+""" % {"size": THUMB, "side": SIDE, "bottom": THUMB - BAND[1] + 24}
+
+
+def thumb_font() -> Path:
+    """썸네일 폰트 파일. 없으면 멈춘다 — 조용히 맑은 고딕으로 바뀌면 썸네일마다 글씨가 달라진다."""
+    for d in FONT_DIRS:
+        if (d / THUMB_FONT).exists():
+            return d / THUMB_FONT
+    raise SystemExit(f"썸네일 폰트 {THUMB_FONT}(여기어때 잘난체 2)를 찾지 못했습니다. "
+                     f"설치 위치: {' 또는 '.join(str(d) for d in FONT_DIRS)}")
 
 
 def thumb_text(md: str):
-    """원고 작성 메모의 `- 썸네일 문구: 윗줄 | 아랫줄` → (윗줄, 아랫줄). 없으면 None."""
+    """원고 작성 메모의 `- 썸네일 문구: 윗줄 | 아랫줄` → (윗줄, 아랫줄). 없으면 None.
+    줄 안의 `/`는 줄바꿈이다(정사각형 폭에는 큰 글자 7~8자가 한계)."""
     import re
     m = re.search(r"^- 썸네일 문구:\s*(.+?)\s*\|\s*(.+?)\s*$", md, flags=re.M)
     return (m.group(1), m.group(2)) if m else None
 
 
-def shoot_thumb(page, photo: Path, line1: str, line2: str, out: Path):
-    """대표 사진 위에 제목 문구를 얹은 16:9 썸네일. 사진은 사용자가 고른 것만 쓴다(AI 생성 없음)."""
+def shoot_thumb(page, photo: Path, line1: str, line2: str, out: Path, font: Path = None, crop_preview: Path = None):
+    """대표 사진 위에 제목 문구를 얹은 정사각형 썸네일. 사진은 사용자가 고른 것만 쓴다(AI 생성 없음).
+    → 글자가 좌우 여백과 가로 크롭 띠 안에 다 들어갔으면 True"""
     import base64
     import html as html_lib
+    font = font or thumb_font()
     mime = {".jpg": "jpeg", ".jpeg": "jpeg", ".png": "png", ".webp": "webp"}[photo.suffix.lower()]
-    data = base64.b64encode(photo.read_bytes()).decode()
-    page.set_viewport_size({"width": 860, "height": 484})
-    page.set_content(f"<style>{THUMB_CSS}</style><div class='thumb' style=\"background-image:url('data:image/{mime};base64,{data}')\">"
-                     f"<div class='txt'><div class='l1'>{html_lib.escape(line1)}</div>"
-                     f"<div class='l2'>{html_lib.escape(line2)}</div></div></div>")
+    face = (f"@font-face {{ font-family: 'Thumb'; "
+            f"src: url(data:font/ttf;base64,{base64.b64encode(font.read_bytes()).decode()}); }}")
+    lines = ["<br>".join(html_lib.escape(part.strip()) for part in t.split("/")) for t in (line1, line2)]
+    page.set_viewport_size({"width": THUMB, "height": THUMB})
+    page.set_content(f"<style>{face}{THUMB_CSS}</style><div class='thumb' style=\"background-image:"
+                     f"url('data:image/{mime};base64,{base64.b64encode(photo.read_bytes()).decode()}')\">"
+                     f"<div class='txt'><div class='l1'>{lines[0]}</div><div class='l2'>{lines[1]}</div></div></div>")
+    page.evaluate("() => document.fonts.ready")
     page.wait_for_timeout(500)
-    over = page.evaluate("() => { const t = document.querySelector('.txt'); "
-                         "return t.scrollWidth > t.clientWidth || t.offsetHeight > 300; }")
+    # 글자의 실제 좌표를 잰다. 외곽선 두께(11px의 절반)만큼 여유를 둔다
+    box = page.evaluate("""() => {
+        const r = document.createRange(); let l = 1e9, t = 1e9, rt = -1e9, b = -1e9;
+        document.querySelectorAll('.l1, .l2').forEach(el => { r.selectNodeContents(el);
+            for (const q of r.getClientRects()) { l = Math.min(l, q.left); t = Math.min(t, q.top);
+                                                  rt = Math.max(rt, q.right); b = Math.max(b, q.bottom); } });
+        return {l, t, r: rt, b, font: document.fonts.check("52px Thumb")};
+    }""")
     page.query_selector(".thumb").screenshot(path=str(out))
-    if over:
-        print(f"  ⚠ 썸네일 문구가 넘친다 — 줄여야 한다: {line1} | {line2}")
-    return not over
+    if crop_preview:
+        page.screenshot(path=str(crop_preview), clip={"x": 0, "y": BAND[0], "width": THUMB, "height": BAND[1] - BAND[0]})
+    problems = []
+    if not box["font"]:
+        problems.append("폰트가 적용되지 않았다")
+    if box["l"] < SIDE - 6 or box["r"] > THUMB - SIDE + 6:
+        problems.append(f"글자가 좌우 여백을 넘는다 (폭 {box['r'] - box['l']:.0f}px, 한도 {THUMB - 2 * SIDE}px) — `/`로 줄을 나누거나 줄인다")
+    if box["t"] < BAND[0] + 12 or box["b"] > BAND[1] - 6:
+        problems.append("글자가 가로 크롭 띠를 벗어난다 — 줄 수를 줄인다")
+    for x in problems:
+        print(f"  ⚠ 썸네일: {x}  [{line1} | {line2}]")
+    return not problems
 
 
 CARDS = {
@@ -468,6 +508,24 @@ CARDS = {
       <div class='row'><span class='tag'>착오 사유</span><span class='txt'>날짜를 잊은 경우의 변경</span><span class='num'>수급기간 중 1회</span></div>
       <p class='foot'>해외 취업이 목적이면 출국 전 해외 재취업활동계획서를 내고 해외에서 인정받는 길이 따로 있습니다.</p>
     """),
+    "29_연말정산_부양가족_150만원": hero_card(
+        ACCENT["세금"], "부양가족 한 명마다 빠지는 소득", "기본공제 · 2026년 귀속 연말정산",
+        "150", "만 원", "나이 요건과 소득 요건을 둘 다 채운 가족 한 명당 소득에서 150만 원을 뺍니다.",
+        "장애인은 나이 요건이 없고 200만 원이 더 공제됩니다."),
+    "30_연말정산_부양가족_개편안_시점": timeline_card(
+        ACCENT["세금"], "소득 기준 300만 원, 언제부터인가", "2026년 세제개편안 · 국회 통과 전",
+        [("2026년 8월 3일", "정부가 세제개편안 발표", "소득금액 100만 원 → 300만 원, 총급여 500만 원 → 750만 원"),
+         ("2027년 1~2월", "이번 연말정산 (2026년 소득분)", "지금 기준 그대로 100만 원 · 500만 원"),
+         ("2027년 1월 1일 이후", "개편안이 적용되는 소득", "국회를 통과해야 확정됩니다"),
+         ("2028년 초", "새 기준으로 하는 첫 연말정산", "2027년 소득분부터")],
+        "100만 원 기준은 1996년부터, 총급여 500만 원 기준은 2016년부터 유지돼 왔습니다."),
+    "31_연말정산_부양가족_실수": checklist_card(
+        ACCENT["세금"], "부양가족을 올리기 전에 확인할 것", "국세청이 안내한 자주 틀리는 유형",
+        [("가족의 소득금액이 100만 원 이하인가", "근로소득만 있으면 총급여 500만 원 이하"),
+         ("집이나 상가를 판 해가 아닌가", "양도소득금액도 소득 기준에 들어갑니다"),
+         ("형제자매와 부모님을 겹쳐 올리지 않았는가", "같은 부모님은 한 명만 공제받습니다"),
+         ("소득 초과 가족의 카드·보험료를 넣지 않았는가", "의료비만 소득 요건 없이 공제됩니다")],
+        "과다공제로 점검받으면 덜 낸 세금에 가산세가 붙습니다."),
 }
 
 
@@ -614,11 +672,13 @@ def thumb_cmd(num: str) -> int:
         print(f"고른 대표 사진을 _workspace/naver/cover_{num}.jpg (또는 png·webp)로 저장한 뒤 다시 실행하세요")
         return 1
     out = OUT / f"{num}_썸네일.png"
+    preview = Path(__file__).parent / "_workspace" / "naver" / f"{num}_썸네일_가로크롭.png"
     with sync_playwright() as pw:
         b = pw.chromium.launch(headless=True)
-        ok = shoot_thumb(b.new_page(device_scale_factor=2), photo, *text, out)
+        ok = shoot_thumb(b.new_page(device_scale_factor=2), photo, *text, out, crop_preview=preview)
         b.close()
     print(out)
+    print(f"가로로 잘렸을 때: {preview}")
     return 0 if ok else 1
 
 

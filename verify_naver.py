@@ -26,8 +26,11 @@ CATEGORY_RULES = [
     (["국민연금", "건강보험", "연금"], "연금·건강보험"),
 ]
 MAX_SHARED_TAGS = 3
-# 서식 기준. AI 브리핑에 인용된 블로그 글 24편 중 글자 16이 13편, 왼쪽 정렬이 19편이었고 우리 글도 전부 그렇다.
-BODY_FONT = "16"
+# 서식 기준: 본문 글자 15, 왼쪽 정렬. 처음엔 16으로 정했는데(인용된 글 24편 중 13편이 16), 사용자가 폰에서 보니
+# 16은 줄 끝에 한두 글자만 넘어가는 줄바꿈이 자주 생겨 2026-10-09에 15로 바꿨다. 1~11편은 16으로 발행돼 있다.
+BODY_FONT = "15"
+LEGACY_FONT = "16"
+FONT_15_FROM = 224436054552      # 12편의 logNo. 이보다 앞선 글은 16이어도 된다
 MAX_CENTER_PCT = 10
 
 
@@ -84,7 +87,7 @@ def parse(html: str) -> dict:
     m = re.search(r'var gsTagName = "([^"]*)"', html)
     tags = [t for t in (m.group(1).split(",") if m and m.group(1) else []) if t]
 
-    # 서식: 문단별 정렬과 글자 크기를 글자 수로 가중해 본다(2026-10-09). 기준은 글자 16·왼쪽 정렬이다.
+    # 서식: 문단별 정렬과 글자 크기를 글자 수로 가중해 본다(2026-10-09). 기준은 BODY_FONT·왼쪽 정렬이다.
     size, centered, total = Counter(), 0, 0
     for cls, inner in re.findall(r'<p class="(se-text-paragraph[^"]*)"[^>]*>(.*?)</p>', body, flags=re.S):
         n = len(re.sub(r"<[^>]+>", "", inner).replace("​", "").strip())
@@ -175,7 +178,8 @@ def main(argv):
               f"/ 태그 {len(r['tags'])} / 내부링크 {r['inlinks']}")
         print(f"  글자 크기 {r['font'] or '?'} / 가운데 정렬 {r['center_pct']}% / 표 {r['tables']}")
 
-        if r["font"] and r["font"] != BODY_FONT:
+        ok_fonts = {BODY_FONT} if int(p["logNo"]) >= FONT_15_FROM else {BODY_FONT, LEGACY_FONT}
+        if r["font"] and r["font"] not in ok_fonts:
             problems.append(f"{p['logNo']} 본문 글자 크기가 {r['font']} (기준 {BODY_FONT})")
         if r["center_pct"] > MAX_CENTER_PCT:
             problems.append(f"{p['logNo']} 가운데 정렬이 {r['center_pct']}% (사진 출처 줄만, {MAX_CENTER_PCT}% 이하)")

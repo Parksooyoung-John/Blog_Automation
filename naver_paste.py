@@ -16,6 +16,7 @@ from pathlib import Path
 from check_naver import is_table, split_sentences, table_rows
 
 CELL = 'style="border:1px solid #c8c8c8;padding:6px 10px"'
+BODY_PX = 15      # verify_naver.BODY_FONT와 같은 값(16은 폰에서 한두 글자 줄바꿈이 잦아 15로). 표 안 글자는 에디터 기본값
 
 # 해시태그 줄: '#실업급여 #실업급여조건 ...'. '## 소제목'과 헷갈리면 안 된다.
 TAG_RE = re.compile(r"^#\S+(?: +#\S+)+$", re.M)
@@ -108,7 +109,8 @@ def to_html(md: str) -> str:
             rows += ["<tr>" + "".join(f"<td {CELL}>{_rich(c)}</td>" for c in r) + "</tr>" for r in rest]
             paras.append('<table style="border-collapse:collapse">' + "".join(rows) + "</table>")
         else:
-            paras += ["<p>" + _rich(line) + "</p>" for line in blk.split("\n")]
+            # 글자 크기를 실어 보낸다 — 에디터 기본값이 바뀌어도 같은 크기로 들어가게.
+            paras += [f'<p><span style="font-size:{BODY_PX}px">' + _rich(line) + "</span></p>" for line in blk.split("\n")]
         paras.append("<p><br></p>")          # 덩어리 사이 빈 줄
     assert "**" not in "".join(paras), "닫히지 않은 볼드 표시가 남았다"
     return PAGE.format(title=html.escape(title), body="\n".join(paras[:-1]), tags=html.escape(tags),
@@ -130,13 +132,14 @@ def selftest():
     assert "메모" not in text and "#태그하나" not in text
 
     page = to_html(md)
-    assert "<p>보험료율은 <b>7.19%</b>입니다.</p>" in page
-    assert "<p>· 항목 <b>강조</b></p>" in page
+    P, E = f'<p><span style="font-size:{BODY_PX}px">', "</span></p>"      # 본문 줄은 글자 크기를 달고 나간다
+    assert f"{P}보험료율은 <b>7.19%</b>입니다.{E}" in page
+    assert f"{P}· 항목 <b>강조</b>{E}" in page
     assert "A &lt; B인" in page                                 # 본문의 < 가 태그로 읽히면 안 된다
     assert '<div id="tags">#태그하나 #태그둘 #태그셋 #태그넷 #태그다섯</div>' in page
     assert "작성 메모" not in page and "- 메모" not in page
-    assert "<p>도입부입니다.</p>\n<p><br></p>\n<p>보험료율은" in page          # 문장 사이 빈 줄
-    assert "<p>· 항목 <b>강조</b></p>\n<p>· 둘째 항목</p>" in page             # 목록은 붙어 있다
+    assert f"{P}도입부입니다.{E}\n<p><br></p>\n{P}보험료율은" in page          # 문장 사이 빈 줄
+    assert f"{P}· 항목 <b>강조</b>{E}\n{P}· 둘째 항목{E}" in page             # 목록은 붙어 있다
 
     tmd = md.replace("- 항목 **강조**\n- 둘째 항목", "| 가입기간 | 일수 |\n|---|---|\n| 1년 미만 | **120일** |")
     tpage, ttext = to_html(tmd), convert(tmd)

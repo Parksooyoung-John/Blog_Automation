@@ -175,14 +175,16 @@ def measure(path, tistory, volumes=None):
     if not m:
         return None
     # 표의 세로선과 구분선 행은 글자가 아니다
-    c = re.sub(r'^\s*\|.*$', lambda t: '' if re.fullmatch(r'[\s|:\-]+', t.group()) else t.group().replace('|', ''),
-               c, flags=re.M)
+    # 글자 수를 셀 때만 뺀다. 구조 검사에는 세로선이 남아 있어야 표로 알아본다 —
+    # 처음엔 c를 덮어써서 12편의 표가 82자짜리 '문장'으로 잡혔다.
+    counted = re.sub(r'^\s*\|.*$', lambda t: '' if re.fullmatch(r'[\s|:\-]+', t.group()) else t.group().replace('|', ''),
+                     c, flags=re.M)
     tables = sum(is_table(blk) for blk in re.split(r'\n\s*\n', b) if blk.strip())
     r = {
         "title": m.group(1),
         "tables": tables,
         "thumb": bool(re.search(r'^- 썸네일 문구:\s*\S', n, flags=re.M)),
-        "chars": len(c.strip()),
+        "chars": len(counted.strip()),
         "heads": len(re.findall(r'^## ', b, flags=re.M)),
         "images": len(re.findall(r'\[이미지', b)),
         "exp": len(re.findall(r'\[경험 한 줄', b)),
@@ -310,6 +312,7 @@ def selftest():
                                                 + "- 썸네일 문구: 윗줄 | 아랫줄\n")
         t = measure(path, set())
     assert (t["tables"], t["thumb"]) == (1, True), (t["tables"], t["thumb"])
+    assert not any("볼드가 둘 이상" in i for i in t["structure"]), t["structure"]   # 파일로 읽어도 표는 표로 본다
     assert "|" not in str(t["chars"]) and t["chars"] < 160, t["chars"]        # 세로선·구분선은 글자 수에 안 든다
     print("selftest ok")
 

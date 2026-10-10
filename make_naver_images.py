@@ -150,7 +150,7 @@ body { font-family: 'Thumb'; }
                 background: linear-gradient(180deg, rgba(0,0,0,.04) 34%%, rgba(0,0,0,.74) 66%%, rgba(0,0,0,.34) 100%%); }
 .thumb .txt { position: absolute; left: %(side)dpx; right: %(side)dpx; bottom: %(bottom)dpx; z-index: 1; text-align: center; }
 .thumb .l1, .thumb .l2 { -webkit-text-stroke: 11px #111; paint-order: stroke fill; white-space: nowrap; }
-.thumb .l1 { font-size: 52px; color: #fff; }
+.thumb .l1 { font-size: 62px; color: #fff; }
 .thumb .l2 { font-size: 84px; color: #ffe033; line-height: 1.12; margin-top: 6px; }
 """ % {"size": THUMB, "side": SIDE, "bottom": THUMB - BAND[1] + 24}
 
@@ -526,6 +526,18 @@ CARDS = {
          ("형제자매와 부모님을 겹쳐 올리지 않았는가", "같은 부모님은 한 명만 공제받습니다"),
          ("소득 초과 가족의 카드·보험료를 넣지 않았는가", "의료비만 소득 요건 없이 공제됩니다")],
         "과다공제로 점검받으면 덜 낸 세금에 가산세가 붙습니다."),
+    "32_연말정산_월세_공제액": bar_card(
+        ACCENT["세금"], "월세에 따라 줄어드는 세금", "총급여 5,500만 원 이하 · 공제율 17% · 2026년 귀속",
+        [("월세 40만 원 (연 480만 원)", "81만 6천 원", 48), ("월세 60만 원 (연 720만 원)", "122만 4천 원", 72),
+         ("월세 100만 원 (한도 1,000만 원 적용)", "170만 원", 100)],
+        "총급여 5,500만 원 초과 8,000만 원 이하는 15%, 최대 150만 원입니다."),
+    "33_연말정산_월세_조건": checklist_card(
+        ACCENT["세금"], "월세 세액공제를 받는 조건", "국세청 연말정산 안내 · 2026년 귀속",
+        [("12월 31일 기준 무주택 세대인가", "세대주가 공제받지 않으면 세대원도 가능합니다"),
+         ("총급여가 8,000만 원 이하인가", "종합소득금액으로는 7,000만 원 이하"),
+         ("전용 85㎡ 이하이거나 기준시가 4억 원 이하인가", "주거용 오피스텔과 고시원도 포함됩니다"),
+         ("계약서 주소로 전입신고를 했는가", "주민등록등본 주소와 계약서 주소가 같아야 합니다")],
+        "확정일자는 요건이 아닙니다."),
 }
 
 

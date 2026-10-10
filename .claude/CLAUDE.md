@@ -1000,6 +1000,7 @@ Notion은 "처리중"인 경우), 수동으로 Notion API PATCH를 날릴 필요
 | 2026-08-22 | 썸네일 호스팅을 jsdelivr로 이전 | `verify_post.py` 카드 이미지 검증(`thumb/R800x0`) |
 | 2026-09-26 | 원고 플레이스홀더 표기 | `check_naver.py` 이미지·경험·분량 카운트 |
 | 2026-10-07 | (우리가 아니라 네이버가) 글 페이지 마크업 | `verify_naver.py` 본문 끝 표지 — 1,627자를 12,994자로 보고 |
+| 2026-10-10 | 원고에 표를 쓰기 시작(12편~) | `verify_naver.py` 글자 크기 — 가장 많은 크기 하나만 봐서, 13편 스팬 148개 중 37개에 크기가 없는데 통과 |
 
 네 번째는 우리가 바꾼 것이 아니라 **외부가 바뀐 경우**다. 셀프테스트는 우리가 표기를 바꿀 때만 깨지므로
 이건 못 잡는다. 그래서 외부 HTML을 읽는 파서에는 "못 찾으면 예외"를 넣는다 — `verify_naver.parse()`는 본문
@@ -1014,7 +1015,8 @@ Notion은 "처리중"인 경우), 수동으로 Notion API PATCH를 날릴 필요
 ```bash
 python -X utf8 check_naver.py --selftest    # 원고 표기법 카운트
 python -X utf8 verify_naver.py --selftest   # 라이브 HTML 파싱·카테고리·제목 지문
-python -X utf8 naver_paste.py --selftest    # 마크다운 → 붙여넣기용 HTML (볼드 유지, 문장 단위 줄바꿈)
+python -X utf8 naver_paste.py --selftest    # 마크다운 → 붙여넣기용 HTML (볼드 유지, 문장 단위 줄바꿈, 크기 15·나눔바른고딕)
+python -X utf8 naver_prep.py --selftest     # 원고에서 이미지 경로를 넣는 순서대로 뽑기
 ```
 
 `check_naver.py`는 2026-10-07부터 구조도 본다: 도입부에 목표 키워드와 숫자, 문장 60자, 문단 3문장,

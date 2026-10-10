@@ -32,6 +32,10 @@ BODY_FONT = "15"
 LEGACY_FONT = "16"
 FONT_15_FROM = 224436054552      # 12편의 logNo. 이보다 앞선 글은 16이어도 된다
 MAX_CENTER_PCT = 10
+# 본문 글자 중 크기 15·나눔바른고딕이 아닌 비율. naver_paste.py가 둘을 실어 보내기 시작한 14편부터 본다.
+BODY_FACE = "nanumbarungothic"
+MAX_OFF_PCT = 10
+FACE_FROM = 224436979055 + 1     # 13편 logNo 다음부터
 
 
 def _get(url):
@@ -88,15 +92,29 @@ def parse(html: str) -> dict:
     tags = [t for t in (m.group(1).split(",") if m and m.group(1) else []) if t]
 
     # 서식: 문단별 정렬과 글자 크기를 글자 수로 가중해 본다(2026-10-09). 기준은 BODY_FONT·왼쪽 정렬이다.
-    size, centered, total = Counter(), 0, 0
+    size, centered, total, spans, off = Counter(), 0, 0, 0, 0
+    paras = Counter()
     for cls, inner in re.findall(r'<p class="(se-text-paragraph[^"]*)"[^>]*>(.*?)</p>', body, flags=re.S):
         n = len(re.sub(r"<[^>]+>", "", inner).replace("​", "").strip())
         total += n
+        paras[re.sub(r"<[^>]+>", "", inner).replace("​", "").strip()] += 1
         centered += n if "se-text-paragraph-align-center" in cls else 0
         for fs, seg in re.findall(r'<span[^>]*class="[^"]*se-fs-fs(\d+)[^"]*"[^>]*>(.*?)</span>', inner, flags=re.S):
             size[fs] += len(re.sub(r"<[^>]+>", "", seg))
+        # 크기가 아예 없는 스팬(se-fs- )은 위에서 안 세어진다. 13편은 그런 스팬이 148개 중 37개였는데 통과했다.
+        # 사진 출처 줄(가운데 정렬)과 소제목(20 이상)은 본문이 아니므로 뺀다.
+        if "se-text-paragraph-align-center" not in cls:
+            for fs, ff, seg in re.findall(r'<span[^>]*class="[^"]*se-fs-(?:fs(\d+))?\s+se-ff-(\w*)[^"]*"[^>]*>(.*?)</span>',
+                                          inner, flags=re.S):
+                k = len(re.sub(r"<[^>]+>", "", seg).replace("​", "").strip())
+                if not (fs and int(fs) >= 20):
+                    spans += k
+                    off += k if (fs, ff) != (BODY_FONT, BODY_FACE) else 0
 
     return {
+        # 13편은 본문 문장과 내부 링크 소개 문장이 같아 한 문장이 두 번 발행됐다(2026-10-10)
+        "repeats": [t for t, c in paras.items() if c > 1 and len(t) >= 20],
+        "off_pct": round(100 * off / spans) if spans else 0,
         "font": size.most_common(1)[0][0] if size else "",
         "center_pct": round(100 * centered / total) if total else 0,
         "tables": len(re.findall(r'se-component se-table[ "]', body)),
@@ -147,6 +165,22 @@ def selftest():
     assert 10 < r["chars"] < 80, r["chars"]        # 본문 뒤 스크립트가 글자수에 섞이면 안 된다
     assert (r["font"], r["tables"]) == ("16", 1), (r["font"], r["tables"])
     assert 10 < r["center_pct"] < 20, r["center_pct"]      # 5자(출처) / 36자 — 글자 수로 가중한다
+    assert r["off_pct"] == 100, r["off_pct"]               # 본문이 16·폰트 없음 — 전부 어긋난 글자다
+
+    def para(cls, text):
+        return f'<p class="se-text-paragraph se-text-paragraph-align- "><span class="{cls}">{text}</span></p>'
+    fmt = parse('<div class="se-main-container"><div class="se-component se-text">'
+                + para("se-fs-fs15 se-ff-nanumbarungothic", "가" * 60)       # 기준대로
+                + para("se-fs- se-ff-nanumbarungothic", "나" * 20)          # 크기 없음(13편의 표 셀)
+                + para("se-fs-fs15 se-ff-system", "다" * 20)                # 폰트가 다름
+                + para("se-fs-fs24 se-ff-", "소제목은 세지 않는다")
+                + '</div></div><script>var gsTagName = "x";</script>')
+    assert fmt["off_pct"] == 40, fmt["off_pct"]            # (20 + 20) / 100
+    assert fmt["repeats"] == [] and r["repeats"] == []
+    twice = para("se-fs-fs15 se-ff-nanumbarungothic", "배우자 이름으로 계약했다면 기본공제 대상자인지 확인합니다.")
+    rep = parse('<div class="se-main-container"><div class="se-component se-text">' + twice + para("x", "짧은 줄") * 2 + twice
+                + '</div></div><script>var gsTagName = "x";</script>')
+    assert len(rep["repeats"]) == 1, rep["repeats"]        # 20자 미만 줄(빈 줄·표 셀)은 겹쳐도 세지 않는다
     try:
         parse("<html><body>본문 없음</body></html>")
         raise AssertionError("본문을 못 찾았는데 0자로 통과시켰다")
@@ -176,11 +210,17 @@ def main(argv):
             print(f"  발행 {p['when']:%Y-%m-%d %H:%M}  |  카테고리 {p['category']}")
         print(f"  {r['chars']}자 / 이미지 {r['images']} / 소제목 {r['subheads']} "
               f"/ 태그 {len(r['tags'])} / 내부링크 {r['inlinks']}")
-        print(f"  글자 크기 {r['font'] or '?'} / 가운데 정렬 {r['center_pct']}% / 표 {r['tables']}")
+        print(f"  글자 크기 {r['font'] or '?'} / 가운데 정렬 {r['center_pct']}% / 표 {r['tables']}"
+              f" / 서식 어긋난 글자 {r['off_pct']}%")
 
         ok_fonts = {BODY_FONT} if int(p["logNo"]) >= FONT_15_FROM else {BODY_FONT, LEGACY_FONT}
         if r["font"] and r["font"] not in ok_fonts:
             problems.append(f"{p['logNo']} 본문 글자 크기가 {r['font']} (기준 {BODY_FONT})")
+        if int(p["logNo"]) >= FACE_FROM and r["off_pct"] > MAX_OFF_PCT:
+            problems.append(f"{p['logNo']} 본문 글자의 {r['off_pct']}%가 크기 {BODY_FONT}·나눔바른고딕이 아니다 "
+                            f"({MAX_OFF_PCT}% 이하) — 붙여넣기 서식이 안 먹혔는지 확인")
+        for t in r["repeats"]:
+            problems.append(f"{p['logNo']} 같은 문장이 두 번 있다: {t[:40]}")
         if r["center_pct"] > MAX_CENTER_PCT:
             problems.append(f"{p['logNo']} 가운데 정렬이 {r['center_pct']}% (사진 출처 줄만, {MAX_CENTER_PCT}% 이하)")
 

@@ -5,6 +5,7 @@
 > 티스토리(j2gblog)는 2026-10-10부터 **동결**이다 — 새 글을 쓰지 않고 기존 130편과 `assets/`(라이브 글이 jsDelivr 경로로 참조)는 그대로 둔다.
 > 티스토리용 작성 규칙·발행 파이프라인·기술 노트는 [`TISTORY_LEGACY.md`](../TISTORY_LEGACY.md)로 옮겼다. 티스토리 스크립트(`03_`·`04_`·`verify_post.py` 등)나 `blog-writer` 계열 에이전트를 손댈 때만 읽는다.
 > 애드센스 재도전은 별도 저장소(자체 도메인 사이트)에서 진행한다. 경과는 [`ADSENSE_PROGRESS.md`](../ADSENSE_PROGRESS.md) 최상단.
+> 네이버 블로그 수익화(애드포스트 등)를 언제 켜는지는 [`MONETIZATION.md`](../MONETIZATION.md). 광고·제휴 이야기가 나오면 먼저 읽는다.
 
 ## 저장소 운영 — 한 저장소에 프로젝트가 둘이다
 

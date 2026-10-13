@@ -11,6 +11,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+from naver_paste import PALETTE
+
 OUT = Path(__file__).parent / "assets" / "naver_img"
 CALC_DIR = Path(__file__).parent / "assets" / "calc"
 W = 860  # 네이버 본문 기준 넉넉한 폭
@@ -94,6 +96,16 @@ h2 {{ font-size: 30px; color: #1a1a1a; margin-bottom: 6px; letter-spacing: -0.5p
 
 # 카테고리마다 강조색 하나. 흰 바탕에 회색 줄만 있던 카드가 '글 같은 이미지'로 보였다.
 ACCENT = {"실업급여": "#1b64da", "근로장려금": "#12b886", "세금": "#f76707", "연금·건강보험": "#7048e8"}
+CARD_ZOOM = 1.5
+
+
+def post_look(num: int) -> str:
+    """14편부터 카드의 accent 자리에 넣는다 — 그 글의 박스·표와 같은 색(naver_paste.PALETTE) + 글자 1.5배.
+
+    카드는 860px로 그리지만 폰에서는 360px 안팎으로 줄어든다. 15px 설명 줄이 6px 남짓이 돼 34번 카드가 안 읽혔다.
+    `_framed`의 `style='--accent:…'`에 그대로 들어가므로 색 뒤에 zoom 선언을 붙여 보낸다. 13편까지는 ACCENT 그대로다.
+    """
+    return f"{PALETTE[num % len(PALETTE)][1]};zoom:{CARD_ZOOM}"
 
 
 def card_html(body: str) -> str:
@@ -538,7 +550,18 @@ CARDS = {
          ("전용 85㎡ 이하이거나 기준시가 4억 원 이하인가", "주거용 오피스텔과 고시원도 포함됩니다"),
          ("계약서 주소로 전입신고를 했는가", "주민등록등본 주소와 계약서 주소가 같아야 합니다")],
         "확정일자는 요건이 아닙니다."),
+    "34_연말정산_중도퇴사_순서": timeline_card(
+        post_look(14), "2026년에 퇴사했다면 이 순서로", "소득세법 제137조·제138조·제143조",
+        [("퇴사하는 달", "회사가 그날까지의 급여로 먼저 정산", "공제신고서를 안 냈다면 본인 기본공제와 표준세액공제 13만 원만"),
+         ("다음 달 말일까지", "근로소득 원천징수영수증 받기", "전 회사가 발급합니다"),
+         ("2027년 1~2월", "같은 해에 재취업했다면", "새 회사에 영수증을 내고 합산해 연말정산"),
+         ("2027년 5월", "재취업하지 않았다면", "홈택스에서 종합소득세 신고로 빠진 공제 넣기")],
+        "영수증의 결정세액에 금액이 있어야 더 돌려받을 세금이 있습니다."),
 }
+
+# 34번(14편)부터는 글 색 + 글자 1.5배다. ACCENT를 습관대로 쓰면 작은 글자·다른 색 카드가 조용히 나온다.
+_old_look = [k for k in CARDS if int(k[:2]) >= 34 and f"zoom:{CARD_ZOOM}" not in CARDS[k]]
+assert not _old_look, f"post_look(편 번호)를 쓰지 않은 카드: {_old_look}"
 
 
 def find_overflow(page) -> list:
@@ -706,5 +729,18 @@ if __name__ == "__main__":
         sys.exit(1 if bad else 0)
     elif "--thumb" in sys.argv:
         sys.exit(thumb_cmd(sys.argv[sys.argv.index("--thumb") + 1]))
+    elif "--card" in sys.argv:      # 이름 일부로 골라 그 카드만 다시 만든다
+        key = sys.argv[sys.argv.index("--card") + 1]
+        picked = {k: v for k, v in CARDS.items() if key in k}
+        if not picked:
+            sys.exit(f"'{key}'가 들어간 카드가 없습니다")
+        with sync_playwright() as pw:
+            b = pw.chromium.launch(headless=True)
+            bad = shoot_cards(b.new_page(device_scale_factor=2), picked)
+            b.close()
+        sys.exit(1 if bad else 0)
+    elif len(sys.argv) > 1:
+        # 인자 없이 돌리면 카드 전체를 다시 만든다. `--help`를 쳤다가 발행된 카드까지 전부 다시 그려졌다(2026-10-13).
+        sys.exit("사용법: make_naver_images.py [--card 이름 | --thumb NN | --samples]  (인자 없음 = 전체 재생성)")
     else:
         main()

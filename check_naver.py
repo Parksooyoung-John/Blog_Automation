@@ -173,6 +173,25 @@ def structure_issues(body: str, keyword) -> list:
     return issues + summary_issues(blocks)
 
 
+HEAD_RULES_FROM = 14   # 소제목 문구 기준을 적용하기 시작하는 편
+MAX_HEAD = 22          # 에디터 소제목 한 줄이 13자 안팎 — 14편 초안의 27자 소제목이 "5월 종/합소득세"로 단어 중간에서 끊겼다
+MAX_SAME_START = 2     # 같은 첫 어절로 시작하는 소제목 허용 개수 (13편은 5개 중 4개가 "연말정산 …"이었다)
+
+
+def heading_issues(heads: list) -> list:
+    """heads: 소제목 문자열 목록(`## ` 제외). → 문제 설명 목록
+
+    추적 질의의 단어는 소제목이 아니라 바로 다음 문장에 넣는다(NAVER_GUIDE). 소제목마다 키워드로 시작하면
+    길어지고, 같은 말이 줄줄이 반복된다.
+    """
+    issues = [f"소제목이 {len(h)}자 ({MAX_HEAD}자 이하): {h[:16]}…" for h in heads if len(h) > MAX_HEAD]
+    starts = [h.split()[0] for h in heads if h.split()]
+    for w in dict.fromkeys(starts):
+        if starts.count(w) > MAX_SAME_START:
+            issues.append(f"소제목 {starts.count(w)}개가 '{w}'(으)로 시작한다 ({MAX_SAME_START}개 이하)")
+    return issues
+
+
 def format_issues(chars: int, heads: int, images: int, tables: int, thumb: bool) -> list:
     """12편부터 보는 분량·시각 요소 기준. → 문제 설명 목록"""
     issues = []
@@ -257,6 +276,8 @@ def measure(path, tistory, volumes=None):
     }
     if r["new_format"]:
         r["format"] = format_issues(r["chars"], r["heads"], r["images"], tables, r["thumb"])
+        if num and int(num.group()) >= HEAD_RULES_FROM:
+            r["format"] += heading_issues(re.findall(r'^## (.+?)\s*$', b, flags=re.M))
     else:       # 11편까지는 발행 당시 기준 그대로
         lo, hi = LENGTH_OLD
         r["format"] = [] if lo <= r["chars"] <= hi else [f"분량 {r['chars']}자 ({lo}~{hi}자)"]
@@ -370,6 +391,19 @@ def selftest():
         bxr = measure(path, set())
     assert bxr["boxes"] == ["가"] and bxr["tables"] == 0, (bxr["boxes"], bxr["tables"])
     assert bxr["chars"] == r["chars"] + len("\n\n가\n- 나"), (bxr["chars"], r["chars"])     # `>`·[안내]는 글자 수에 안 든다
+
+    # 14편부터의 소제목 문구: 길이와 같은 말로 시작하는 반복
+    assert heading_issues(["퇴사하는 달에 회사가 먼저 정산합니다", "서류는 원천징수영수증부터", "재취업 안 했다면 5월에 직접 신고"]) == []
+    assert any("23자" in i for i in heading_issues(["가" * 23]))
+    assert heading_issues(["가" * MAX_HEAD]) == []
+    same = heading_issues(["연말정산 월세 공제", "연말정산 월세 환급", "연말정산 월세 서류", "월세 한도"])
+    assert len(same) == 1 and "3개가 '연말정산'" in same[0], same
+    assert heading_issues(["연말정산 월세 공제", "연말정산 월세 환급", "월세 한도"]) == []          # 2개까지는 허용
+    for n, want in (("13", False), ("14", True)):          # 13편까지는 발행 당시 기준 그대로
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, f"{n}_t.md")
+            open(path, "w", encoding="utf-8").write(doc)   # 소제목 셋이 모두 '소제목'으로 시작한다
+            assert any("'소제목'" in i for i in measure(path, set())["format"]) == want, n
 
     # 12편부터의 분량·시각 요소 기준
     assert format_issues(2000, 4, 4, 1, True) == []

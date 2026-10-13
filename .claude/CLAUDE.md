@@ -1,6 +1,6 @@
 # 네이버 블로그 하네스
 
-네이버 블로그(`blog.naver.com/education_blog`, 머니브리핑) 원고 작성·검수·판정을 돕는 하네스. 규칙은 [`NAVER_GUIDE.md`](../NAVER_GUIDE.md).
+네이버 블로그(`blog.naver.com/education_blog`, 돈살림표 — 2026-10-13에 머니브리핑에서 변경) 원고 작성·검수·판정을 돕는 하네스. 규칙은 [`NAVER_GUIDE.md`](../NAVER_GUIDE.md).
 
 > 티스토리(j2gblog)는 2026-10-10부터 **동결**이다 — 새 글을 쓰지 않고 기존 130편과 `assets/`(라이브 글이 jsDelivr 경로로 참조)는 그대로 둔다.
 > 티스토리용 작성 규칙·발행 파이프라인·기술 노트는 [`TISTORY_LEGACY.md`](../TISTORY_LEGACY.md)로 옮겼다. 티스토리 스크립트(`03_`·`04_`·`verify_post.py` 등)나 `blog-writer` 계열 에이전트를 손댈 때만 읽는다.

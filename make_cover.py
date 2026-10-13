@@ -24,7 +24,7 @@ AMBER = (245, 159, 0)
 BLUE = (27, 100, 218)         # 프로필 마크와 동일
 CHIP_BG = (219, 231, 251)
 
-TITLE = "머니브리핑"
+TITLE = "돈살림표"
 SUB = "지원금·세금, 숫자로 정리합니다"
 CHIPS = ["근로장려금", "실업급여", "연말정산"]
 
@@ -93,11 +93,11 @@ def naver_preview(img: Image.Image) -> Image.Image:
     좌표는 실제 앱 화면을 재서 얻은 값이다(전체 높이의 80%, 88% 부근)."""
     p = img.copy()
     d = ImageDraw.Draw(p)
-    d.text((26, 1020), "머니브리핑 | 지원금·세금 정리",
+    d.text((26, 1020), "돈살림표 | 세금·연금·지원금",
            font=ImageFont.truetype(BOLD, 38), fill=(255, 255, 255),
            stroke_width=2, stroke_fill=(90, 90, 90))
     d.ellipse([32, 1120, 84, 1172], fill=(170, 170, 170))
-    d.text((100, 1132), "머니브리핑", font=ImageFont.truetype(REG, 28), fill=(255, 255, 255),
+    d.text((100, 1132), "돈살림표", font=ImageFont.truetype(REG, 28), fill=(255, 255, 255),
            stroke_width=2, stroke_fill=(90, 90, 90))
     return p
 

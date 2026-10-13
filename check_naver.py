@@ -55,6 +55,54 @@ def is_table(block: str) -> bool:
     return all(ln.lstrip().startswith('|') for ln in block.strip().split('\n'))
 
 
+# 박스(2026-10-12): 인용 블록의 첫 줄에 종류를 적는다 — `> [요약] 제목` 다음 줄부터 `> - 항목`.
+# 붙여넣기 파일에는 배경색 1칸 표로 나간다. 시각 요소 개수에는 넣지 않는다(박스로 `소제목+1`을 채우게 된다).
+# `[질문]`은 제목이 Q, 나머지 줄이 A다.
+BOX_RE = re.compile(r'> ?\[(요약|주의|안내|출처|질문)\] ?')
+MAX_SUMMARY_ITEMS = 6
+
+
+def is_box(block: str) -> bool:
+    block = block.strip()
+    return bool(BOX_RE.match(block)) and all(ln.startswith('>') for ln in block.split('\n'))
+
+
+def box_lines(block: str) -> list:
+    """박스 블록 → [제목, 줄, …]. `>`와 종류 표지를 걷어낸다."""
+    return [re.sub(r'^> ?', '', ln) for ln in BOX_RE.sub('> ', block.strip(), count=1).split('\n')]
+
+
+def _nums(text: str) -> set:
+    return set(re.findall(r'\d+(?:[.,]\d+)*', text))
+
+
+def summary_issues(blocks: list) -> list:
+    """요약 박스가 본문과 다른 숫자를 말하면 안 된다 — 요약만 읽고 나가는 사람이 틀린 값을 가져간다."""
+    issues = []
+    rest = _nums('\n'.join(b for b in blocks if not is_box(b)))
+    for blk in blocks:
+        if not (is_box(blk) and BOX_RE.match(blk).group(1) == '요약'):
+            continue
+        _, *items = box_lines(blk)
+        if len(items) > MAX_SUMMARY_ITEMS:
+            issues.append(f"요약 박스가 {len(items)}줄 ({MAX_SUMMARY_ITEMS}줄 이하)")
+        missing = sorted(_nums('\n'.join(items)) - rest)
+        if missing:
+            issues.append(f"요약 박스의 숫자가 본문에 없다: {', '.join(missing)}")
+    return issues
+
+
+def same_box_title(results: dict) -> list:
+    """박스 제목이 같은 원고 쌍. 제목을 글마다 똑같이 쓰면 그 줄이 고정 블록이 된다."""
+    seen, pairs = {}, []
+    for name, titles in results.items():
+        for t in titles:
+            if seen.get(t, name) != name:
+                pairs.append((seen[t], name, t))
+            seen.setdefault(t, name)
+    return pairs
+
+
 def table_rows(block: str) -> list:
     """마크다운 표 블록 → 칸 목록의 목록. `|---|---|` 구분선 행은 뺀다."""
     rows = [[c.strip() for c in ln.strip().strip('|').split('|')] for ln in block.strip().split('\n')]
@@ -102,7 +150,10 @@ def structure_issues(body: str, keyword) -> list:
             if cols > MAX_TABLE_COLS:
                 issues.append(f"표가 {cols}열 — 폰에서 깨진다 ({MAX_TABLE_COLS}열 이하)")
             continue
-        is_list =all(re.match(r'(- |\d+\. )', ln) for ln in blk.split('\n'))
+        box = is_box(blk)
+        if box:
+            blk = '\n'.join(box_lines(blk))
+        is_list = box or all(re.match(r'(- |\d+\. )', ln) for ln in blk.split('\n'))
         units = blk.split('\n') if is_list else [blk]     # 목록은 줄 단위, 문단은 통째로
         for u in units:
             if len(re.findall(r'\*\*.+?\*\*', u)) > 1:
@@ -119,7 +170,7 @@ def structure_issues(body: str, keyword) -> list:
     big = [b for b in re.findall(r'\*\*(.+?)\*\*', body) if len(b) > MAX_BOLD]
     if big:
         issues.append(f"볼드가 {MAX_BOLD}자를 넘는 곳 {len(big)}개: {big[0][:24]}…")
-    return issues
+    return issues + summary_issues(blocks)
 
 
 def format_issues(chars: int, heads: int, images: int, tables: int, thumb: bool) -> list:
@@ -179,10 +230,13 @@ def measure(path, tistory, volumes=None):
     # 처음엔 c를 덮어써서 12편의 표가 82자짜리 '문장'으로 잡혔다.
     counted = re.sub(r'^\s*\|.*$', lambda t: '' if re.fullmatch(r'[\s|:\-]+', t.group()) else t.group().replace('|', ''),
                      c, flags=re.M)
+    counted = re.sub(r'^> ?', '', BOX_RE.sub('', counted), flags=re.M)     # 박스의 `>`와 종류 표지도 글자가 아니다
+    boxes = [box_lines(blk)[0] for blk in re.split(r'\n\s*\n', b) if is_box(blk)]
     tables = sum(is_table(blk) for blk in re.split(r'\n\s*\n', b) if blk.strip())
     r = {
         "title": m.group(1),
         "tables": tables,
+        "boxes": boxes,
         "thumb": bool(re.search(r'^- 썸네일 문구:\s*\S', n, flags=re.M)),
         "chars": len(counted.strip()),
         "heads": len(re.findall(r'^## ', b, flags=re.M)),
@@ -300,6 +354,23 @@ def selftest():
     assert not has(base + tbl, "볼드가 둘 이상") and not has(base + tbl, "열")
     assert has(base + "| a | b | c | d |\n|---|---|---|---|\n| 1 | 2 | 3 | 4 |", "4열")
 
+    # 박스: 줄 단위로 보고(목록처럼), 표지는 글자 수에 안 들며, 요약의 숫자는 본문에 있어야 한다
+    bx = "> [요약] 월세 공제 한눈에\n> - 한도는 **연 120일**\n> - 기준은 **1년**"
+    assert all(is_box(f"> [{k}] 제목\n> 줄") for k in ("요약", "주의", "안내", "출처", "질문"))
+    assert is_box(bx) and not is_box("> 그냥 인용문") and not is_box("> [요약] 제목\n본문 줄")
+    assert box_lines(bx) == ["월세 공제 한눈에", "- 한도는 **연 120일**", "- 기준은 **1년**"]
+    assert structure_issues(good + "\n" + bx, "실업급여수급기간") == []          # 120·1 모두 본문에 있다
+    assert has(base + bx, "본문에 없다: 1, 120")
+    assert not has(base + bx.replace("요약", "주의"), "본문에 없다")               # 수치 대조는 요약만
+    assert has(base + "> [요약] 제목\n" + "\n".join("> - 줄" for _ in range(7)), "요약 박스가 7줄")
+    assert same_box_title({"14": ["가", "나"], "15": ["다"], "16": ["나"]}) == [("14", "16", "나")]
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "t.md")
+        open(path, "w", encoding="utf-8").write(doc.replace("[경험 한 줄 ①]", "[경험 한 줄 ①]\n\n> [안내] 가\n> - 나"))
+        bxr = measure(path, set())
+    assert bxr["boxes"] == ["가"] and bxr["tables"] == 0, (bxr["boxes"], bxr["tables"])
+    assert bxr["chars"] == r["chars"] + len("\n\n가\n- 나"), (bxr["chars"], r["chars"])     # `>`·[안내]는 글자 수에 안 든다
+
     # 12편부터의 분량·시각 요소 기준
     assert format_issues(2000, 4, 4, 1, True) == []
     assert any("분량" in i for i in format_issues(1499, 4, 4, 1, True))
@@ -324,16 +395,18 @@ def main():
     if not volumes:
         print(f'⚠ {VOLUME_CSV} 없음 — 태그 검색량 검사를 건너뜁니다\n')
     allok = True
-    cover_kws = {}
+    cover_kws, box_titles = {}, {}
     for p in sorted(glob.glob('content/naver/*.md')):
         r = measure(p, tistory, volumes)
         if r is None:          # 제목 줄이 없으면 원고가 아니다(메모·프롬프트 파일)
             continue
         cover_kws[os.path.basename(p)] = r["cover_kw"]
+        box_titles[os.path.basename(p)] = r["boxes"]
         ok = passes(r)
         allok &= ok
         print(('OK   ' if ok else 'CHECK'), os.path.basename(p))
         print(f"       {r['chars']}자 / 소제목 {r['heads']} / 이미지 {r['images']} / 표 {r['tables']}"
+              f"{' / 박스 ' + str(len(r['boxes'])) if r['boxes'] else ''}"
               f" / 경험 {r['exp']} / 내부링크 {r['links']}"
               f" / 태그 {len(r['tags'])} / 티스토리 중복 {len(r['dup'])}")
         print(f"       제목: {r['title']}")
@@ -360,6 +433,9 @@ def main():
     for a, b in same_cover_kw(cover_kws):
         allok = False
         print(f'CHECK 대표사진 검색어가 같다: {a} = {b} — 후보가 똑같이 나온다')
+    for a, b, t in same_box_title(box_titles):
+        allok = False
+        print(f'CHECK 박스 제목이 같다: {a} = {b} — "{t}"')
     print('\n전체 통과' if allok else '\n확인 필요')
     return 0 if allok else 1
 

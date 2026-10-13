@@ -13,14 +13,53 @@ import re
 import sys
 from pathlib import Path
 
-from check_naver import is_table, split_sentences, table_rows
+from check_naver import BOX_RE, box_lines, is_box, is_table, split_sentences, table_rows
 
-CELL = 'style="border:1px solid #c8c8c8;padding:6px 10px"'
+# 색과 박스 모양(2026-10-12). 벤치마킹한 글(blog.naver.com/sky09020/224426006669)의 라이브 HTML에서 에디터가
+# 받아준 것으로 확인된 형태만 쓴다 — 셀 배경색, pt 단위의 면별 테두리, 글자 색.
+# 그 블로그는 글마다 색을 바꾼다(최근 12편에서 실측). 우리도 편 번호로 돌려 쓴다 — 이웃한 글은 색이 다르다.
+# (이름, 주 색, 연한 배경). 주의의 빨강과 헷갈리는 붉은 계열은 뺐다.
+PALETTE = [("남색", "#1a5276", "#ebf5fb"), ("갈색", "#6e2c00", "#fbeee6"), ("초록", "#0b5345", "#e8f8f5"),
+           ("보라", "#5b2c6f", "#f5eef8"), ("청록", "#006064", "#e0f7fa")]
+LINE, WARN, GRAY = "#BFBFBF", "#c0392b", "#7f8c8d"
+
+
+def tone_of(path) -> int:
+    """원고 파일 이름의 편 번호 → PALETTE 순번. 번호가 없으면 0."""
+    m = re.match(r"\d+", Path(path).name)
+    return int(m.group()) % len(PALETTE) if m else 0
+
+
+def _cell(bg="", border=f"border:1.0pt solid {LINE}") -> str:
+    return f'style="{border};padding:6px 10px' + (f";background-color:{bg}" if bg else "") + '"'
+
+
+def _left(color) -> str:
+    return f"border-top:none;border-right:none;border-bottom:none;border-left:4.5pt solid {color}"
+
+
+CELL, A_CELL = _cell(), _cell("", "border:none")      # 일반 셀, 질문 박스의 답 줄
+
+
+def _tone(n: int) -> tuple:
+    """→ (주 색, 표 머리글 셀, 첫 열 셀, 박스 종류별 (셀, 제목 색), 질문 줄 셀)"""
+    _, main, tint = PALETTE[n % len(PALETTE)]
+    box = {"요약": (_cell(tint, f"border:2.25pt solid {main}"), main),
+           "안내": (_cell("#f8f9f9", _left(main)), main),
+           "주의": (_cell("#fff0ee", _left(WARN)), WARN),
+           "출처": (_cell("#f4f6f7", _left(GRAY)), GRAY)}
+    return main, _cell(main), _cell(tint), box, _cell(tint, f"border:none;border-top:1.0pt solid {main}")
+TABLE = '<table style="border-collapse:collapse;width:100%">'
 BODY_PX = 15      # verify_naver.BODY_FONT와 같은 값(16은 폰에서 한두 글자 줄바꿈이 잦아 15로)
 BODY_FONT = "나눔바른고딕"      # 라이브 글의 se-ff-nanumbarungothic
 # 문단·표 셀·빈 줄 전부에 싣는다. 13편은 표 셀과 빈 줄에 크기가 없어 스팬 148개 중 37개가 에디터 기본값으로 들어갔다.
 SPAN = f'<span style="font-size:{BODY_PX}px;font-family:\'{BODY_FONT}\',NanumBarunGothic">'
 BLANK = f"<p>{SPAN}<br></span></p>"
+
+
+def _p(inner: str, color="") -> str:
+    """본문 한 줄. 크기와 폰트는 늘 같고(verify_naver가 15·나눔바른고딕이 아닌 글자를 센다) 색만 바꾼다."""
+    return "<p>" + (SPAN[:-2] + f';color:{color}">' if color else SPAN) + inner + "</span></p>"
 
 # 해시태그 줄: '#실업급여 #실업급여조건 ...'. '## 소제목'과 헷갈리면 안 된다.
 TAG_RE = re.compile(r"^#\S+(?: +#\S+)+$", re.M)
@@ -95,7 +134,7 @@ def parts(md: str) -> tuple:
     body = TAG_RE.sub("", body)
     body = re.sub(r"^-{3,}$", "", body, flags=re.M)
     body = re.sub(r"^#{2,} (.+)$", r"[소제목] \1", body, flags=re.M)
-    body = re.sub(r"^- ", "· ", body, flags=re.M)
+    body = re.sub(r"^(> ?)?- ", r"\1· ", body, flags=re.M)
     body = body.replace("`", "")
     body = OPTIONS_RE.sub(_options, body)
     body = re.sub(r"\n{3,}", "\n\n", body).strip()
@@ -107,7 +146,7 @@ def parts(md: str) -> tuple:
     # 문장 중간은 끊지 않는다. 플레이스홀더([이미지 …] 등)·목록·표는 덩어리째 둔다.
     blocks = []
     for blk in body.split("\n\n"):
-        plain_para = not is_table(blk) and not re.match(r"(\[|· |\d+\. )", blk)
+        plain_para = not is_table(blk) and not re.match(r"(\[|· |\d+\. |>|※)", blk)
         blocks += split_sentences(blk) if plain_para else [blk]
     return title, "\n\n".join(blocks), tags
 
@@ -119,22 +158,38 @@ def _rich(text: str) -> str:
 def convert(md: str) -> str:
     """일반 텍스트(볼드 없음) — 서식을 받지 못하는 곳에 붙일 때 쓰이는 쪽. 표는 `a — b` 줄로 낸다."""
     _, body, _ = parts(md)
-    blocks = ["\n".join(" — ".join(r) for r in table_rows(b)) if is_table(b) else b for b in body.split("\n\n")]
+    blocks = ["\n".join(" — ".join(r) for r in table_rows(b)) if is_table(b)
+              else "\n".join(box_lines(b)) if is_box(b) else b for b in body.split("\n\n")]
     return "\n\n".join(blocks).replace("**", "")
 
 
-def to_html(md: str) -> str:
+def to_html(md: str, tone: int = 0) -> str:
     title, body, tags = parts(md)
+    MAIN, HEAD, FIRST, BOX, Q_CELL = _tone(tone)
     paras = []
     for blk in body.split("\n\n"):
         if is_table(blk):       # 에디터가 자기 표로 바꾸도록 테두리만 준다
             head, *rest = table_rows(blk)
-            rows = ["<tr>" + "".join(f"<th {CELL}>{SPAN}{_rich(c)}</span></th>" for c in head) + "</tr>"]
-            rows += ["<tr>" + "".join(f"<td {CELL}>{SPAN}{_rich(c)}</span></td>" for c in r) + "</tr>" for r in rest]
-            paras.append('<table style="border-collapse:collapse">' + "".join(rows) + "</table>")
+            rows = ["<tr>" + "".join(f"<th {HEAD}>{_p('<b>' + _rich(c) + '</b>', '#ffffff')}</th>" for c in head) + "</tr>"]
+            # 칸 전체가 볼드인 값은 강조색으로(답이 되는 숫자)
+            rows += ["<tr>" + "".join(f"<td {CELL if i else FIRST}>"
+                                      + _p(_rich(c), MAIN if re.fullmatch(r"\*\*[^*]+\*\*", c) else "") + "</td>"
+                                      for i, c in enumerate(r)) + "</tr>" for r in rest]
+            paras.append(TABLE + "".join(rows) + "</table>")
+        elif is_box(blk):       # 에디터에 박스가 없어 1칸 표로 낸다
+            kind, (head, *rest) = BOX_RE.match(blk).group(1), box_lines(blk)
+            if kind == "질문":
+                rows = (f"<tr><td {Q_CELL}>{_p('<b>Q. ' + _rich(head) + '</b>', MAIN)}</td></tr><tr><td {A_CELL}>"
+                        + "".join(_p(("" if i else "A. ") + _rich(x)) for i, x in enumerate(rest)) + "</td></tr>")
+            else:
+                cell, color = BOX[kind]
+                rest = [x.replace("· ", "✓ ", 1) if kind == "요약" else x for x in rest]
+                rows = f"<tr><td {cell}>{_p('<b>' + _rich(head) + '</b>', color)}{''.join(_p(_rich(x)) for x in rest)}</td></tr>"
+            paras.append(TABLE + rows + "</table>")
         else:
             # 글자 크기와 폰트를 실어 보낸다 — 에디터 기본값이 바뀌어도 같은 모양으로 들어가게.
-            paras += [f"<p>{SPAN}" + _rich(line) + "</span></p>" for line in blk.split("\n")]
+            # `※`로 시작하는 줄은 표·문단에 딸린 주석이다(기준 연도·예외).
+            paras += [_p(_rich(line), WARN if line.startswith("※") else "") for line in blk.split("\n")]
         paras.append(BLANK)          # 덩어리 사이 빈 줄
     assert "**" not in "".join(paras), "닫히지 않은 볼드 표시가 남았다"
     return PAGE.format(title=html.escape(title), body="\n".join(paras[:-1]), tags=html.escape(tags),
@@ -156,6 +211,7 @@ def selftest():
     assert "메모" not in text and "#태그하나" not in text
 
     page = to_html(md)
+    MAIN, HEAD, FIRST, BOX, Q_CELL = _tone(0)
     P, E = f"<p>{SPAN}", "</span></p>"      # 본문 줄은 글자 크기와 폰트를 달고 나간다
     assert "font-size:15px" in SPAN and "나눔바른고딕" in SPAN
     assert f"{P}보험료율은 <b>7.19%</b>입니다.{E}" in page
@@ -168,9 +224,18 @@ def selftest():
 
     tmd = md.replace("- 항목 **강조**\n- 둘째 항목", "| 가입기간 | 일수 |\n|---|---|\n| 1년 미만 | **120일** |")
     tpage, ttext = to_html(tmd), convert(tmd)
-    assert "<table" in tpage and f"<th {CELL}>{SPAN}가입기간</span></th>" in tpage      # 표 셀도 크기·폰트를 단다
+    assert "<table" in tpage and f"<th {HEAD}>{_p('<b>가입기간</b>', '#ffffff')}</th>" in tpage      # 표 셀도 크기·폰트를 단다
     assert "<p><br></p>" not in tpage                             # 크기 없는 빈 줄이 남으면 안 된다
-    assert f"<td {CELL}>{SPAN}<b>120일</b></span></td>" in tpage and "|---" not in tpage and "---|" not in tpage
+    assert f"<td {FIRST}>{P}1년 미만{E}</td>" in tpage and f"background-color:{MAIN}" in HEAD      # 머리글·첫 열에 배경색
+    assert f"<td {CELL}>{_p('<b>120일</b>', MAIN)}</td>" in tpage                                # 통째 볼드인 칸은 강조색
+    assert 'font-size:15px' in _p("x", MAIN) and "나눔바른고딕" in _p("x", MAIN)                   # 색을 바꿔도 크기·폰트는 실린다
+    assert "|---" not in tpage and "---|" not in tpage
+    # 글마다 색이 다르다: 이웃한 편은 다른 색, 주의·출처 색은 그대로
+    assert [tone_of(f"content/naver/{n}_x.md") for n in (14, 15, 16)] == [4, 0, 1] and tone_of("paste_test.md") == 0
+    assert len({m for _, m, _ in PALETTE}) == len(PALETTE) and WARN not in {m for _, m, _ in PALETTE}
+    t1 = to_html(tmd, 1)
+    assert f"background-color:{PALETTE[1][1]}" in t1 and f"background-color:{PALETTE[0][1]}" not in t1
+    assert _tone(1)[3]["주의"] == BOX["주의"] and _tone(1)[3]["요약"] != BOX["요약"]
     assert "가입기간 — 일수\n1년 미만 — 120일" in ttext, ttext
 
     # 후보를 품은 자리는 전부 펼쳐진다. 후보 문장은 표시 없이 한 줄씩이라 남긴 줄을 그대로 쓸 수 있다
@@ -182,6 +247,20 @@ def selftest():
     assert "▶ B안\n먼저 이 글을 보세요.\n▶ 아래 주소를 잘라내" in otext and otext.count("https://blog.naver.com/x/1") == 1, otext
     assert f"{P}직접 <b>확인</b>했어요.{E}\n{P}▶ B안(해당될 때만){E}" in opage
     assert "[경험 한 줄 ②]" in convert(md.replace("## 첫 소제목", "[경험 한 줄 ②]\n\n## 첫 소제목"))   # 후보 없는 옛 표기는 그대로
+
+    # 박스: 문장으로 쪼개지 않고 배경색 1칸 표 하나로 나간다. 일반 텍스트에는 `>`와 종류 표지가 남지 않는다
+    bmd = md.replace("## 첫 소제목", "> [요약] 한눈에 보기\n> - 한도는 **1,000만원**입니다. 예외도 있습니다.\n> - 둘째 줄\n\n## 첫 소제목")
+    btext, bpage = convert(bmd), to_html(bmd)
+    assert "한눈에 보기\n· 한도는 1,000만원입니다. 예외도 있습니다.\n· 둘째 줄" in btext and "[요약]" not in btext and ">" not in btext, btext
+    assert (f'<td {BOX["요약"][0]}>{_p("<b>한눈에 보기</b>", MAIN)}{P}✓ 한도는 <b>1,000만원</b>입니다. 예외도 있습니다.{E}'
+            f'{P}✓ 둘째 줄{E}</td>') in bpage
+    assert f"<title>붙여넣기용 — 테스트 제목</title>" in bpage              # 박스 제목이 글 제목을 덮어쓰면 안 된다
+    qmd = md.replace("## 첫 소제목", "> [질문] 언제부터 되나요?\n> 2027년부터입니다.\n\n※ 기준은 2026년입니다. 예외가 있습니다.\n\n## 첫 소제목")
+    qpage = to_html(qmd)
+    assert f"<td {Q_CELL}>{_p('<b>Q. 언제부터 되나요?</b>', MAIN)}</td></tr><tr><td {A_CELL}>{P}A. 2027년부터입니다.{E}</td>" in qpage
+    assert _p("※ 기준은 2026년입니다. 예외가 있습니다.", WARN) in qpage      # 주석 줄은 문장으로 쪼개지 않고 통째로 색을 단다
+    assert "Q. 언제부터" not in convert(qmd) and "언제부터 되나요?\n2027년부터입니다." in convert(qmd)
+    assert "&gt;" not in bpage.split('id="body">')[1].split("</section>")[0]
     print("selftest ok")
 
 
@@ -191,5 +270,6 @@ if __name__ == "__main__":
     else:
         src = Path(sys.argv[1])
         out = src.with_name(src.stem + "_붙여넣기용.html")
-        out.write_text(to_html(src.read_text(encoding="utf-8")), encoding="utf-8")
-        print(out)
+        tone = int(sys.argv[2]) if len(sys.argv) > 2 else tone_of(src)      # 둘째 인자로 색 순번을 직접 줄 수 있다
+        out.write_text(to_html(src.read_text(encoding="utf-8"), tone), encoding="utf-8")
+        print(out, "· 색:", PALETTE[tone % len(PALETTE)][0])

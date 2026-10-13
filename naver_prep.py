@@ -71,7 +71,7 @@ def prep(num: str) -> int:
         return 1
 
     page = src.with_name(src.stem + "_붙여넣기용.html")
-    page.write_text(naver_paste.to_html(md), encoding="utf-8")
+    page.write_text(naver_paste.to_html(md, naver_paste.tone_of(src)), encoding="utf-8")
 
     out = WS / f"publish_{num}"
     shutil.rmtree(out, ignore_errors=True)

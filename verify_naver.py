@@ -19,10 +19,11 @@ BLOG = "education_blog"
 UA = {"User-Agent": "Mozilla/5.0", "Referer": f"https://m.blog.naver.com/{BLOG}"}
 
 # 제목 키워드 → 들어가야 할 카테고리. 위에서부터 먼저 맞는 것을 쓴다.
+# 연말정산을 실업급여보다 먼저 본다 — 14편 "연말정산 중도퇴사자 …"가 '퇴사'에 걸려 실업급여로 가야 한다고 잘못 경고했다(2026-10-15).
 CATEGORY_RULES = [
     (["근로장려금", "자녀장려금", "장려금"], "근로장려금·자녀장려금"),
-    (["실업급여", "구직급여", "고용보험", "퇴사"], "실업급여·고용보험"),
     (["연말정산", "종합소득세", "재산세", "자동차세", "부가세"], "연말정산·세금"),
+    (["실업급여", "구직급여", "고용보험", "퇴사"], "실업급여·고용보험"),
     (["국민연금", "건강보험", "연금"], "연금·건강보험"),
 ]
 MAX_SHARED_TAGS = 3
@@ -36,6 +37,15 @@ MAX_CENTER_PCT = 10
 BODY_FACE = "nanumbarungothic"
 MAX_OFF_PCT = 10
 FACE_FROM = 224436979055 + 1     # 13편 logNo 다음부터
+# 15편(템플릿 시험)부터 본문·표·박스 16 — 사용자가 16으로 발행했고 그대로 기준으로 삼았다(2026-10-15).
+# 분량도 템플릿 원고 기준(2,500~4,000자)에 Q&A·경험 문장·링크 카드 글자가 붙는다.
+TEMPLATE_FROM_LOG = 224441974726
+TEMPLATE_FONT = "16"
+TEMPLATE_CHARS = (2300, 4500)
+
+
+def body_font(log_no) -> str:
+    return TEMPLATE_FONT if int(log_no) >= TEMPLATE_FROM_LOG else BODY_FONT
 
 
 def _get(url):
@@ -68,10 +78,10 @@ def expected_category(title: str) -> str:
 
 
 def inspect(log_no: str) -> dict:
-    return parse(_get(f"https://m.blog.naver.com/{BLOG}/{log_no}").text)
+    return parse(_get(f"https://m.blog.naver.com/{BLOG}/{log_no}").text, body_font(log_no))
 
 
-def parse(html: str) -> dict:
+def parse(html: str, font: str = BODY_FONT) -> dict:
     # 본문은 se-main-container부터 마지막 se-component 뒤 첫 <script> 앞까지다.
     # 전에는 본문 뒤의 `{&#034;title&#034;` 표지로 끊었는데 2026-10-07에 그 표지가 사라져서
     # 뒤따르는 스크립트 6만 자가 본문으로 세어졌다(10편 1,400자를 12,994자로 보고).
@@ -109,7 +119,7 @@ def parse(html: str) -> dict:
                 k = len(re.sub(r"<[^>]+>", "", seg).replace("​", "").strip())
                 if not (fs and int(fs) >= 20):
                     spans += k
-                    off += k if (fs, ff) != (BODY_FONT, BODY_FACE) else 0
+                    off += k if (fs, ff) != (font, BODY_FACE) else 0
 
     return {
         # 13편은 본문 문장과 내부 링크 소개 문장이 같아 한 문장이 두 번 발행됐다(2026-10-10)
@@ -177,6 +187,11 @@ def selftest():
                 + para("se-fs-fs24 se-ff-", "소제목은 세지 않는다")
                 + '</div></div><script>var gsTagName = "x";</script>')
     assert fmt["off_pct"] == 40, fmt["off_pct"]            # (20 + 20) / 100
+    t16 = parse('<div class="se-main-container"><div class="se-component se-text">'
+                + para("se-fs-fs16 se-ff-nanumbarungothic", "가" * 60) + para("se-fs-fs15 se-ff-nanumbarungothic", "나" * 20)
+                + '</div></div><script>var gsTagName = "x";</script>', TEMPLATE_FONT)
+    assert t16["off_pct"] == 25, t16["off_pct"]            # 15편부터는 16이 기준 — 15가 어긋난 글자다
+    assert body_font(TEMPLATE_FROM_LOG) == "16" and body_font(TEMPLATE_FROM_LOG - 1) == BODY_FONT
     assert fmt["repeats"] == [] and r["repeats"] == []
     twice = para("se-fs-fs15 se-ff-nanumbarungothic", "배우자 이름으로 계약했다면 기본공제 대상자인지 확인합니다.")
     rep = parse('<div class="se-main-container"><div class="se-component se-text">' + twice + para("x", "짧은 줄") * 2 + twice
@@ -190,6 +205,7 @@ def selftest():
 
     assert expected_category("실업급여 조건 2026, 6개월 다녔는데") == "실업급여·고용보험"
     assert expected_category("2026 근로장려금 대상 기준") == "근로장려금·자녀장려금"
+    assert expected_category("연말정산 중도퇴사자 환급받는 두 가지 경로와 필요한 서류") == "연말정산·세금"
     assert title_shape("가, 나 하는 이유") == title_shape("다, 라 되는 이유")
     assert title_shape("가, 나 하는 이유") != title_shape("다, 라 되는 순서")
     print("selftest ok")
@@ -214,11 +230,12 @@ def main(argv):
         print(f"  글자 크기 {r['font'] or '?'} / 가운데 정렬 {r['center_pct']}% / 표 {r['tables']}"
               f" / 서식 어긋난 글자 {r['off_pct']}%")
 
-        ok_fonts = {BODY_FONT} if int(p["logNo"]) >= FONT_15_FROM else {BODY_FONT, LEGACY_FONT}
+        want_font = body_font(p["logNo"])
+        ok_fonts = {want_font} if int(p["logNo"]) >= FONT_15_FROM else {BODY_FONT, LEGACY_FONT}
         if r["font"] and r["font"] not in ok_fonts:
-            problems.append(f"{p['logNo']} 본문 글자 크기가 {r['font']} (기준 {BODY_FONT})")
+            problems.append(f"{p['logNo']} 본문 글자 크기가 {r['font']} (기준 {want_font})")
         if int(p["logNo"]) >= FACE_FROM and r["off_pct"] > MAX_OFF_PCT:
-            problems.append(f"{p['logNo']} 본문 글자의 {r['off_pct']}%가 크기 {BODY_FONT}·나눔바른고딕이 아니다 "
+            problems.append(f"{p['logNo']} 본문 글자의 {r['off_pct']}%가 크기 {want_font}·나눔바른고딕이 아니다 "
                             f"({MAX_OFF_PCT}% 이하) — 붙여넣기 서식이 안 먹혔는지 확인")
         for t in r["repeats"]:
             problems.append(f"{p['logNo']} 같은 문장이 두 번 있다: {t[:40]}")
@@ -229,8 +246,9 @@ def main(argv):
             problems.append(f"{p['logNo']} 태그가 비어 있다")
         if r["images"] < 2:
             problems.append(f"{p['logNo']} 이미지가 {r['images']}장 (최소 2장)")
-        if not 800 <= r["chars"] <= 2800:    # 원고 기준(12편부터 1,500~2,500자)에 경험 문장·출처 줄이 더 붙는다
-            problems.append(f"{p['logNo']} 분량 {r['chars']}자 (800~2800)")
+        lo, hi = TEMPLATE_CHARS if int(p["logNo"]) >= TEMPLATE_FROM_LOG else (800, 2800)   # 원고 기준에 경험 문장·출처 줄이 더 붙는다
+        if not lo <= r["chars"] <= hi:
+            problems.append(f"{p['logNo']} 분량 {r['chars']}자 ({lo}~{hi})")
         if r["tistory"]:
             problems.append(f"{p['logNo']} 티스토리 링크가 있다 — 유입을 내보내고 유사문서 위험")
         if r["inlinks"] == 0:

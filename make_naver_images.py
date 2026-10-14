@@ -23,7 +23,7 @@ CARD_CSS = f"""
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 body {{ font-family: {FONT}; background: #fff; }}
 .card {{ width: {W}px; padding: 34px 38px; background: #fff; }}
-h2 {{ font-size: 30px; color: #1a1a1a; margin-bottom: 6px; letter-spacing: -0.5px; }}
+h2 {{ font-size: 30px; color: #1a1a1a; margin-bottom: 6px; letter-spacing: -0.5px; word-break: keep-all; }}
 .sub {{ font-size: 16px; color: #888; margin-bottom: 24px; }}
 .row {{ display: flex; align-items: center; gap: 14px; padding: 16px 18px;
         border-radius: 12px; background: #f6f8fa; margin-bottom: 10px; }}
@@ -656,6 +656,14 @@ CARDS = {
          ("2027년 1~2월", "같은 해에 재취업했다면", "새 회사에 영수증을 내고 합산해 연말정산"),
          ("2027년 5월", "재취업하지 않았다면", "홈택스에서 종합소득세 신고로 빠진 공제 넣기")],
         "영수증의 결정세액에 금액이 있어야 더 돌려받을 세금이 있습니다."),
+    "35_연말정산_의료비_문턱": hero_card(
+        post_look(15), "의료비는 여기서부터 공제됩니다", "국세청 특별세액공제 안내 · 2026년 귀속",
+        "3", "% 초과", "총급여의 3%를 넘긴 의료비에만 15%를 공제합니다. 총급여 5,000만원이면 150만원까지는 공제되지 않습니다.",
+        "실손보험으로 돌려받은 금액은 의료비에서 먼저 뺍니다."),
+    "36_연말정산_의료비_부부": bar_card(
+        post_look(15), "병원비 300만원, 낸 사람에 따라", "의료비 15% · 실손보험금 없음 가정",
+        [("총급여 6,000만원인 사람이 냄 (문턱 180만원)", "18만원", 57), ("총급여 3,000만원인 사람이 냄 (문턱 90만원)", "31만 5천원", 100)],
+        "줄어드는 세금은 그 사람이 낼 세금(결정세액)보다 클 수 없습니다."),
 }
 
 # 34번(14편)부터는 글 색 + 글자 1.5배다. ACCENT를 습관대로 쓰면 작은 글자·다른 색 카드가 조용히 나온다.
@@ -791,8 +799,12 @@ SAMPLES = {
 
 
 def find_cover(num: str):
+    """표지 원본은 편마다 하나여야 한다. 15편에서 card용 cover_15.jpg가 남아 있어 AI 그림 cover_15.png 대신 사진을 집을 뻔했다."""
     ws = Path(__file__).parent / "_workspace" / "naver"
-    return next((p for ext in ("jpg", "jpeg", "png", "webp") for p in ws.glob(f"cover_{num}.{ext}")), None)
+    found = [p for ext in ("jpg", "jpeg", "png", "webp") for p in ws.glob(f"cover_{num}.{ext}")]
+    if len(found) > 1:
+        raise SystemExit(f"표지 원본이 {len(found)}개다 — 쓸 것 하나만 남기고 이름을 바꾸세요: {', '.join(p.name for p in found)}")
+    return found[0] if found else None
 
 
 def draft_md(num: str):

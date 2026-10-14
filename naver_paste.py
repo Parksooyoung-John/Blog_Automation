@@ -13,7 +13,7 @@ import re
 import sys
 from pathlib import Path
 
-from check_naver import BOX_RE, box_lines, is_box, is_table, split_sentences, table_rows
+from check_naver import BOX_RE, TEMPLATE_FROM, box_lines, is_box, is_table, split_sentences, table_rows
 
 # 색과 박스 모양(2026-10-12). 벤치마킹한 글(blog.naver.com/sky09020/224426006669)의 라이브 HTML에서 에디터가
 # 받아준 것으로 확인된 형태만 쓴다 — 셀 배경색, pt 단위의 면별 테두리, 글자 색.
@@ -57,10 +57,16 @@ SPAN = f'<span style="font-size:{BODY_PX}px;font-family:\'{BODY_FONT}\',NanumBar
 BLANK = f"<p>{SPAN}<br></span></p>"
 
 
-# 벤치마크 글(sky09020) 3편 공통: 첫 컴포넌트가 따옴표 질문 — 가운데, 볼드, 나눔마루부리, #222222
+# 15편부터의 템플릿 서식은 사용자가 15편을 발행한 모양 그대로다(2026-10-15, 라이브 HTML에서 읽음).
+# 맨 위 질문: 일반 글자 24·나눔명조·볼드·가운데·#222222. 처음엔 '소제목' 컴포넌트로 바꾸게 했는데 사용자는 일반 글자로 썼다.
 HOOK_RE = re.compile(r'"[^"\n]{2,40}\?"')
-HOOK = ('<p style="text-align:center"><span style="font-family:\'나눔마루부리\',NanumMaruBuri;color:#222222">'
+HOOK = ('<p style="text-align:center"><span style="font-size:24px;font-family:\'나눔명조\',NanumMyeongjo;color:#222222">'
         '<b>{}</b></span></p>')
+# 번호 소제목(## 1. …)과 Q&A 제목(## 🐷 …): 일반 글자 24·나눔명조·볼드·글 색. 인용구를 입히지 않고 이대로 들어간다.
+BIG_HEAD_RE = re.compile(r"(\d+\. |🐷 )")
+BIG_HEAD = ('<p><span style="font-size:24px;font-family:\'나눔명조\',NanumMyeongjo;color:{color}">'
+            '<b>{text}</b></span></p>')
+TEMPLATE_PX = 16      # 15편부터 본문·표·박스 16 (사용자가 16으로 발행, 2026-10-15). 14편까지는 BODY_PX 15
 
 
 def _p(inner: str, color="") -> str:
@@ -70,9 +76,10 @@ def _p(inner: str, color="") -> str:
 # 해시태그 줄: '#실업급여 #실업급여조건 ...'. '## 소제목'과 헷갈리면 안 된다.
 TAG_RE = re.compile(r"^#\S+(?: +#\S+)+$", re.M)
 
-CHECKLIST = """· (15편~) 맨 위 질문 줄은 '소제목'으로 바꾸고 가운데 정렬 — 벤치마크 글의 첫 컴포넌트가 그렇다
-· 태그 10개 입력 — 1편에서 빠뜨렸던 항목이다. 발행 설정 창에서 확인
-· [소제목] 줄은 '인용구' 스타일 적용 후 표시는 지우기 (앞뒤 빈 줄은 넣지 말 것)
+CHECKLIST = """· 태그 10개 입력 — 1편에서 빠뜨렸던 항목이다. 발행 설정 창에서 확인
+· [소제목] 줄은 '인용구'(선) 스타일 적용 후 표시는 지우기 (앞뒤 빈 줄은 넣지 말 것)
+· (15편~) 근거 자료는 제목과 목록을 함께 인용구(선) 안에 넣는다. 번호 소제목과 🐷 Q&A 앞에 구분선
+· (15편~) 내부 링크 소개 문장은 인용구(말풍선)로
 · [이미지] 자리에 PNG 넣기. 첫 이미지가 썸네일이 된다
 · [경험 한 줄] 두 곳 — 후보 중 하나만 남기고 [ ] 줄·▶ 줄·나머지 후보 지우기 (가장 중요)
 · [내부 링크] 소개 문장 하나만 남기고, 줄을 바꾼 뒤 주소 붙여넣기 → 카드 생성
@@ -140,7 +147,8 @@ def parts(md: str) -> tuple:
     body = re.sub(r"^제목: .+$", "", body, flags=re.M)
     body = TAG_RE.sub("", body)
     body = re.sub(r"^-{3,}$", "", body, flags=re.M)
-    body = re.sub(r"^#{2,} (.+)$", r"[소제목] \1", body, flags=re.M)
+    body = re.sub(r"^#{2,} (.+)$", lambda m: ("[큰제목] " if BIG_HEAD_RE.match(m.group(1)) else "[소제목] ") + m.group(1),
+                  body, flags=re.M)
     body = re.sub(r"^(> ?)?- ", r"\1· ", body, flags=re.M)
     body = body.replace("`", "")
     body = OPTIONS_RE.sub(_options, body)
@@ -170,13 +178,16 @@ def convert(md: str) -> str:
     return "\n\n".join(blocks).replace("**", "")
 
 
-def to_html(md: str, tone: int = 0) -> str:
+def to_html(md: str, tone: int = 0, template: bool = False) -> str:
+    """template: 15편부터의 서식 — 본문·표·박스 16, 표 가운데 정렬(사용자가 15편을 이렇게 발행했다)."""
     title, body, tags = parts(md)
     MAIN, HEAD, FIRST, BOX, Q_CELL = _tone(tone)
     paras = []
     for k, blk in enumerate(body.split("\n\n")):
-        if k == 0 and HOOK_RE.fullmatch(blk):       # 15편~ 맨 위 질문. 에디터에서 '소제목'으로 바꾼다(붙여넣기로는 못 만든다)
+        if k == 0 and HOOK_RE.fullmatch(blk):       # 15편~ 맨 위 질문
             paras.append(HOOK.format(html.escape(blk)))
+        elif blk.startswith("[큰제목] "):
+            paras.append(BIG_HEAD.format(color=MAIN, text=_rich(blk[len("[큰제목] "):])))
         elif is_table(blk):       # 에디터가 자기 표로 바꾸도록 테두리만 준다
             head, *rest = table_rows(blk)
             rows = ["<tr>" + "".join(f"<th {HEAD}>{_p('<b>' + _rich(c) + '</b>', '#ffffff')}</th>" for c in head) + "</tr>"]
@@ -184,7 +195,8 @@ def to_html(md: str, tone: int = 0) -> str:
             rows += ["<tr>" + "".join(f"<td {CELL if i else FIRST}>"
                                       + _p(_rich(c), MAIN if re.fullmatch(r"\*\*[^*]+\*\*", c) else "") + "</td>"
                                       for i, c in enumerate(r)) + "</tr>" for r in rest]
-            paras.append(TABLE + "".join(rows) + "</table>")
+            tbl = TABLE + "".join(rows) + "</table>"
+            paras.append(tbl.replace("<p>", '<p style="text-align:center">') if template else tbl)
         elif is_box(blk):       # 에디터에 박스가 없어 1칸 표로 낸다
             kind, (head, *rest) = BOX_RE.match(blk).group(1), box_lines(blk)
             if kind == "질문":
@@ -201,7 +213,10 @@ def to_html(md: str, tone: int = 0) -> str:
             paras += [_p(_rich(line), WARN if line.startswith("※") else "") for line in blk.split("\n")]
         paras.append(BLANK)          # 덩어리 사이 빈 줄
     assert "**" not in "".join(paras), "닫히지 않은 볼드 표시가 남았다"
-    return PAGE.format(title=html.escape(title), body="\n".join(paras[:-1]), tags=html.escape(tags),
+    out = "\n".join(paras[:-1])
+    if template:      # ponytail: SPAN·BLANK에 박힌 15px를 통째로 바꾼다. 크기를 글마다 따로 고르게 되면 _p에 인자로 넘긴다
+        out = out.replace(f"font-size:{BODY_PX}px", f"font-size:{TEMPLATE_PX}px")
+    return PAGE.format(title=html.escape(title), body=out, tags=html.escape(tags),
                        checklist=html.escape(CHECKLIST),
                        plain=json.dumps(convert(md), ensure_ascii=False).replace("</", "<\\/"))
 
@@ -279,6 +294,20 @@ def selftest():
     assert _p("🪙 살림 메모: 2026년 기준입니다. 예외가 있습니다.") in hpage
     assert hpage.count('text-align:center') == 1
     assert HOOK.split("{")[0] not in to_html(md.replace("도입부입니다.", '도입부입니다.\n\n"중간에 있는 질문은요?"'))  # 맨 위만
+    assert "font-size:24px" in HOOK and "나눔명조" in HOOK
+
+    # 15편 발행 모양: 번호 소제목·🐷 Q&A는 24·명조·글 색 글자로, 나머지 소제목은 인용구용 [소제목] 표시로
+    gmd = tmd.replace("## 첫 소제목", "## 1. 첫 결론입니다\n\n## 오늘의 살림 정리\n\n## 🐷 새싹돼지 Q&A")
+    gpage, gtext = to_html(gmd, 1, template=True), convert(gmd)
+    main1 = PALETTE[1][1]
+    assert BIG_HEAD.format(color=main1, text="1. 첫 결론입니다") in gpage
+    assert BIG_HEAD.format(color=main1, text="🐷 새싹돼지 Q&amp;A") in gpage
+    gbody = gpage.split('id="body">')[1].split("</section>")[0]
+    assert _p("[소제목] 오늘의 살림 정리").replace("15px", "16px") in gbody and "[큰제목]" not in gbody
+    assert "font-size:15px" not in gpage.split('id="body">')[1] and "font-size:16px" in gpage      # 본문·표·빈 줄 전부 16
+    assert '<p style="text-align:center">' in gpage.split("<table")[1]                           # 표 칸은 가운데
+    assert "font-size:15px" in to_html(gmd, 1) and 'text-align:center">' not in to_html(gmd, 1).split("<table")[1]  # 14편까지는 그대로
+    assert "[큰제목] 1. 첫 결론입니다" in gtext
     print("selftest ok")
 
 
@@ -289,5 +318,7 @@ if __name__ == "__main__":
         src = Path(sys.argv[1])
         out = src.with_name(src.stem + "_붙여넣기용.html")
         tone = int(sys.argv[2]) if len(sys.argv) > 2 else tone_of(src)      # 둘째 인자로 색 순번을 직접 줄 수 있다
-        out.write_text(to_html(src.read_text(encoding="utf-8"), tone), encoding="utf-8")
+        num = re.match(r"\d+", src.name)
+        template = bool(num) and int(num.group()) >= TEMPLATE_FROM
+        out.write_text(to_html(src.read_text(encoding="utf-8"), tone, template), encoding="utf-8")
         print(out, "· 색:", PALETTE[tone % len(PALETTE)][0])

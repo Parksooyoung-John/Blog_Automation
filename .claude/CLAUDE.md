@@ -6,6 +6,7 @@
 > 티스토리용 작성 규칙·발행 파이프라인·기술 노트는 [`TISTORY_LEGACY.md`](../TISTORY_LEGACY.md)로 옮겼다. 티스토리 스크립트(`03_`·`04_`·`verify_post.py` 등)나 `blog-writer` 계열 에이전트를 손댈 때만 읽는다.
 > 애드센스 재도전은 별도 저장소(자체 도메인 사이트)에서 진행한다. 경과는 [`ADSENSE_PROGRESS.md`](../ADSENSE_PROGRESS.md) 최상단.
 > 네이버 블로그 수익화(애드포스트 등)를 언제 켜는지는 [`MONETIZATION.md`](../MONETIZATION.md). 광고·제휴 이야기가 나오면 먼저 읽는다.
+> 15편부터는 벤치마크 템플릿 시험 중이다(명세 [`donsalimpyo-post-harness.md`](../donsalimpyo-post-harness.md), 적용 방식·판정 기준은 `NAVER_GUIDE.md` 「벤치마크 템플릿 시험」). 원고를 쓰기 전에 그 절을 읽는다.
 
 ## 저장소 운영 — 한 저장소에 프로젝트가 둘이다
 
@@ -21,6 +22,8 @@ SNS 쪽 옛 작업물 34개 파일이 미커밋으로 남아 `git pull`도 막�
 **블로그 세션(이 폴더)의 규칙**
 
 - 순서는 `git pull` → 작업 → `git add <파일 지정>` → 커밋 → `git push`. `git add -A`·`git add .`는 쓰지 않는다.
+- 커밋 전에 `git diff --stat`로 바뀐 줄 수가 고친 범위와 맞는지 본다. 2026-10-14에 파이썬 패치 스크립트가
+  텍스트 모드로 써서 `check_naver.py` 전체를 CRLF로 바꿨다(639줄 전부 변경). 스크립트로 파일을 고칠 때는 `newline=''`로 읽고 쓴다.
 - `sns_harness/`·`.github/`는 **읽기만 한다.** 수정·커밋하지 않고, 문제를 발견하면 사용자에게 전달한다.
 - 이 폴더에서 `sns_harness/`·`.github/`가 미커밋 변경으로 보이면 이상 신호다. 커밋하지 말고 보고한다.
 - 푸시가 거부되면 강제 푸시하지 않는다. `git pull`(이 저장소는 `pull.rebase=true`) 후 다시 푸시한다.
@@ -188,7 +191,7 @@ python -X utf8 naver_prep.py --selftest     # 원고에서 이미지 경로를 �
 |--------|------|
 | `NOTION_API_KEY` | Notion API 인증 |
 | `NOTION_DATABASE_ID` | 발행 관리 DB ID |
-| `OPENAI_API_KEY` | DALL-E 썸네일 + GPT 제목 생성 |
+| `OPENAI_API_KEY` | DALL-E 썸네일 + GPT 제목 생성 (티스토리), 네이버 15편~ scene 썸네일 `make_naver_images.py --gen` |
 | `PEXELS_API_KEY` | Pexels 이미지 검색 (선택) |
 | `TISTORY_KAKAO_EMAIL` | 카카오 로그인 이메일 |
 | `TISTORY_KAKAO_PASSWORD` | 카카오 로그인 비밀번호 |

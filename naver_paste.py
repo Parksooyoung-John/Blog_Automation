@@ -57,6 +57,12 @@ SPAN = f'<span style="font-size:{BODY_PX}px;font-family:\'{BODY_FONT}\',NanumBar
 BLANK = f"<p>{SPAN}<br></span></p>"
 
 
+# 벤치마크 글(sky09020) 3편 공통: 첫 컴포넌트가 따옴표 질문 — 가운데, 볼드, 나눔마루부리, #222222
+HOOK_RE = re.compile(r'"[^"\n]{2,40}\?"')
+HOOK = ('<p style="text-align:center"><span style="font-family:\'나눔마루부리\',NanumMaruBuri;color:#222222">'
+        '<b>{}</b></span></p>')
+
+
 def _p(inner: str, color="") -> str:
     """본문 한 줄. 크기와 폰트는 늘 같고(verify_naver가 15·나눔바른고딕이 아닌 글자를 센다) 색만 바꾼다."""
     return "<p>" + (SPAN[:-2] + f';color:{color}">' if color else SPAN) + inner + "</span></p>"
@@ -64,7 +70,8 @@ def _p(inner: str, color="") -> str:
 # 해시태그 줄: '#실업급여 #실업급여조건 ...'. '## 소제목'과 헷갈리면 안 된다.
 TAG_RE = re.compile(r"^#\S+(?: +#\S+)+$", re.M)
 
-CHECKLIST = """· 태그 10개 입력 — 1편에서 빠뜨렸던 항목이다. 발행 설정 창에서 확인
+CHECKLIST = """· (15편~) 맨 위 질문 줄은 '소제목'으로 바꾸고 가운데 정렬 — 벤치마크 글의 첫 컴포넌트가 그렇다
+· 태그 10개 입력 — 1편에서 빠뜨렸던 항목이다. 발행 설정 창에서 확인
 · [소제목] 줄은 '인용구' 스타일 적용 후 표시는 지우기 (앞뒤 빈 줄은 넣지 말 것)
 · [이미지] 자리에 PNG 넣기. 첫 이미지가 썸네일이 된다
 · [경험 한 줄] 두 곳 — 후보 중 하나만 남기고 [ ] 줄·▶ 줄·나머지 후보 지우기 (가장 중요)
@@ -146,7 +153,7 @@ def parts(md: str) -> tuple:
     # 문장 중간은 끊지 않는다. 플레이스홀더([이미지 …] 등)·목록·표는 덩어리째 둔다.
     blocks = []
     for blk in body.split("\n\n"):
-        plain_para = not is_table(blk) and not re.match(r"(\[|· |\d+\. |>|※)", blk)
+        plain_para = not is_table(blk) and not re.match(r"(\[|· |\d+\. |>|※|🪙)", blk)
         blocks += split_sentences(blk) if plain_para else [blk]
     return title, "\n\n".join(blocks), tags
 
@@ -167,8 +174,10 @@ def to_html(md: str, tone: int = 0) -> str:
     title, body, tags = parts(md)
     MAIN, HEAD, FIRST, BOX, Q_CELL = _tone(tone)
     paras = []
-    for blk in body.split("\n\n"):
-        if is_table(blk):       # 에디터가 자기 표로 바꾸도록 테두리만 준다
+    for k, blk in enumerate(body.split("\n\n")):
+        if k == 0 and HOOK_RE.fullmatch(blk):       # 15편~ 맨 위 질문. 에디터에서 '소제목'으로 바꾼다(붙여넣기로는 못 만든다)
+            paras.append(HOOK.format(html.escape(blk)))
+        elif is_table(blk):       # 에디터가 자기 표로 바꾸도록 테두리만 준다
             head, *rest = table_rows(blk)
             rows = ["<tr>" + "".join(f"<th {HEAD}>{_p('<b>' + _rich(c) + '</b>', '#ffffff')}</th>" for c in head) + "</tr>"]
             # 칸 전체가 볼드인 값은 강조색으로(답이 되는 숫자)
@@ -261,6 +270,15 @@ def selftest():
     assert _p("※ 기준은 2026년입니다. 예외가 있습니다.", WARN) in qpage      # 주석 줄은 문장으로 쪼개지 않고 통째로 색을 단다
     assert "Q. 언제부터" not in convert(qmd) and "언제부터 되나요?\n2027년부터입니다." in convert(qmd)
     assert "&gt;" not in bpage.split('id="body">')[1].split("</section>")[0]
+
+    # 15편~ 템플릿: 맨 위 질문은 가운데 볼드 한 줄, 살림 메모 줄은 문장으로 쪼개지 않고 본문 색 그대로
+    hmd = md.replace("도입부입니다.", '"연말정산은 1월에 하는 거 아니에요?"\n\n도입부입니다.').replace(
+        "## 첫 소제목", "🪙 살림 메모: 2026년 기준입니다. 예외가 있습니다.\n\n## 첫 소제목")
+    hpage = to_html(hmd)
+    assert HOOK.format("&quot;연말정산은 1월에 하는 거 아니에요?&quot;") in hpage, hpage[:900]
+    assert _p("🪙 살림 메모: 2026년 기준입니다. 예외가 있습니다.") in hpage
+    assert hpage.count('text-align:center') == 1
+    assert HOOK.split("{")[0] not in to_html(md.replace("도입부입니다.", '도입부입니다.\n\n"중간에 있는 질문은요?"'))  # 맨 위만
     print("selftest ok")
 
 

@@ -119,6 +119,7 @@ def parse(html: str) -> dict:
         "center_pct": round(100 * centered / total) if total else 0,
         "tables": len(re.findall(r'se-component se-table[ "]', body)),
         "chars": len(text),
+        "text": text,
         "images": len(re.findall(r'se-component se-image[ "]', body)),
         "subheads": len(re.findall(r'se-component se-quotation[ "]', body)),
         "tags": tags,

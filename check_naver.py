@@ -96,7 +96,7 @@ def same_box_title(results: dict) -> list:
     """박스 제목이 같은 원고 쌍. 제목을 글마다 똑같이 쓰면 그 줄이 고정 블록이 된다."""
     seen, pairs = {}, []
     for name, titles in results.items():
-        for t in titles:
+        for t in (x for x in titles if x != SUMMARY_TITLE):
             if seen.get(t, name) != name:
                 pairs.append((seen[t], name, t))
             seen.setdefault(t, name)
@@ -192,10 +192,159 @@ def heading_issues(heads: list) -> list:
     return issues
 
 
-def format_issues(chars: int, heads: int, images: int, tables: int, thumb: bool) -> list:
+# 벤치마크 템플릿 시험(2026-10-14, 15~17편). 명세 `donsalimpyo-post-harness.md`를 기존 원고 형식으로 옮긴 것이다 —
+# 적용 방식과 판정 기준은 NAVER_GUIDE 「벤치마크 템플릿 시험」. 철회하면 TEMPLATE_FROM을 올린다.
+TEMPLATE_FROM = 15
+LENGTH_TEMPLATE = (2500, 4000)      # 벤치마크 최근 3편 공백 제외 2,681~3,410자
+TITLE_LEN = (45, 55)
+BANNED_TITLE = ("충격", "무조건", "필독")
+SUMMARY_TITLE = "돼지가 먼저 알려줘요 (3초 요약)"      # 템플릿 고정 제목이라 박스 제목 중복 검사에서 뺀다
+SUMMARY_ITEMS = 5
+FIXED_HEADS = ["6. 오늘 바로 할 살림 체크", "오늘의 살림 정리", "근거 자료", "새싹돼지 Q&A"]
+MEMO_LINE = "🪙 살림 메모:"
+THUMB_TYPES = ("scene", "card")     # scene = Gemini가 글자까지 그린 그림, card = 사진 + 코드로 얹은 카드
+POST_TYPES = ("서식·절차형", "기준·한도형", "오류·누락형", "제도 변경형", "선택·비교형", "계산·실수령형", "혜택·지원금형")
+# 본문에서 근거 표와 대조할 수치 — 단위가 붙은 것만 본다(소제목 번호·'5가지' 같은 말은 빼려고).
+UNIT_NUM = re.compile(r'(\d+(?:[.,]\d+)*)\s?(%|만\s?원|억\s?원|천\s?원|원|세|년|개월|일|명|배)')
+BENCH_DIR = '_workspace/benchmark'
+BENCH_BLOG = 'sky09020'
+
+
+def memo_value(md: str, key: str):
+    m = re.search(rf'^- {re.escape(key)}:\s*(.+?)\s*$', md, flags=re.M)
+    return m.group(1) if m else None
+
+
+def facts(md: str) -> list:
+    """작성 메모의 `### 수치 근거` 표 → [[항목, 값, 출처·식, 확인일, 상태], …]. 명세의 facts.md를 원고 안에 둔 것이다."""
+    sec = md.split('### 수치 근거', 1)
+    blk = re.match(r'\s*((?:[ \t]*\|.*(?:\n|$))+)', sec[1]) if len(sec) == 2 else None
+    return [r + [''] * (5 - len(r)) for r in table_rows(blk.group(1))[1:]] if blk else []
+
+
+def thumb_lines(md: str):
+    """`- 썸네일 문구: 윗줄 | 아랫줄` → (윗줄, 아랫줄). `/`(줄바꿈 표시)는 뺀 글자로 센다."""
+    v = memo_value(md, '썸네일 문구')
+    if not v or '|' not in v:
+        return None
+    a, b = (x.strip().replace('/', '') for x in v.split('|', 1))
+    return a, b
+
+
+def template_issues(md: str, body: str, text: str, keyword) -> list:
+    """15편부터의 벤치마크 템플릿. body: 플레이스홀더가 남은 본문, text: 플레이스홀더를 뺀 본문. → 문제 설명 목록"""
+    issues = []
+    blocks = [x.strip() for x in re.split(r'\n\s*\n', body) if x.strip() and not re.fullmatch(r'-{3,}', x.strip())]
+    title = re.search(r'^제목: (.+)$', md, re.M).group(1).strip()
+
+    # G1 순서: 훅 → 썸네일 → (도입) → 요약 → 1~5 → 6 체크 → 정리 → 근거 → Q&A
+    if not blocks or not re.fullmatch(r'"[^"\n]{2,40}\?"', blocks[0]):
+        issues.append('본문 첫 줄이 따옴표로 감싼 질문("…?", 40자 이하)이 아니다')
+    if len(blocks) < 2 or not blocks[1].startswith('[이미지 ①'):
+        issues.append('질문 바로 다음이 [이미지 ①] 썸네일이 아니다')
+    order = [("요약 박스", lambda x: is_box(x) and BOX_RE.match(x).group(1) == '요약')]
+    order += [(f"## {i}.", lambda x, i=i: x.startswith(f'## {i}. ')) for i in range(1, 6)]
+    order += [(f"## {h}", lambda x, h=h: x == f'## {h}') for h in FIXED_HEADS]
+    pos = 0
+    for name, ok in order:
+        i = next((k for k in range(pos, len(blocks)) if ok(blocks[k])), None)
+        if i is None:
+            issues.append(f'템플릿 순서: `{name}`이(가) 없거나 앞 블록보다 먼저 나온다')
+        else:
+            pos = i + 1
+    # G4 번호 소제목은 정확히 1~6
+    nums = re.findall(r'^## (\d+)\. ', body, flags=re.M)
+    if nums != [str(i) for i in range(1, 7)]:
+        issues.append(f'번호 소제목이 {", ".join(nums) or "없음"} — 1~5와 6(살림 체크)이어야 한다')
+
+    # G2 제목
+    lo, hi = TITLE_LEN
+    if not lo <= len(title) <= hi:
+        issues.append(f'제목 {len(title)}자 ({lo}~{hi}자)')
+    if not re.search(r'20\d\d', title[:15]):
+        issues.append('제목 앞 15자에 연도가 없다')
+    if keyword and not 0 <= title.replace(' ', '').find(keyword) < 15:
+        issues.append(f'제목 앞부분에 목표 키워드({keyword})가 없다')
+    if not re.search(r'\d', re.sub(r'20\d\d', '', title)):
+        issues.append('제목에 연도 말고 숫자가 없다')
+    issues += [f'제목 금지어: {w}' for w in BANNED_TITLE if w in title]
+
+    # G3 요약 박스
+    for blk in blocks:
+        if is_box(blk) and BOX_RE.match(blk).group(1) == '요약':
+            head, *items = box_lines(blk)
+            if head.strip() != SUMMARY_TITLE:
+                issues.append(f'요약 박스 제목이 "{SUMMARY_TITLE}"가 아니다')
+            if len(items) != SUMMARY_ITEMS or not all(re.search(r'\d', x) for x in items):
+                issues.append(f'요약 박스는 {SUMMARY_ITEMS}줄, 줄마다 숫자 (지금 {len(items)}줄)')
+    # G5 표 아래 살림 메모
+    for k, blk in enumerate(blocks):
+        if is_table(blk) and not (k + 1 < len(blocks) and blocks[k + 1].startswith(MEMO_LINE)):
+            issues.append(f'표 다음 줄이 `{MEMO_LINE}`이 아니다: {blk.splitlines()[0][:24]}…')
+
+    # G6·G7 수치 근거
+    rows = facts(md)
+    if not rows:
+        issues.append('작성 메모에 `### 수치 근거` 표가 없다')
+    else:
+        for r in rows:
+            if r[4] not in ('VERIFIED', 'UNVERIFIED', '계산'):
+                issues.append(f'수치 근거 상태가 VERIFIED·UNVERIFIED·계산 중 하나가 아니다: {r[0]}')
+            if r[4] == '계산' and not re.search(r'[=×*/÷+−]|\d\s*-\s*\d', r[2]):
+                issues.append(f'계산 행에 식이 없다: {r[0]}')
+        ok = set().union(*(_nums(r[1]) for r in rows if r[4] in ('VERIFIED', '계산')))
+        unverified = set().union(*(_nums(r[1]) for r in rows if r[4] == 'UNVERIFIED')) - ok
+        used = {m.group(1) for m in UNIT_NUM.finditer(text)
+                if not (m.group(2) == '년' and re.fullmatch(r'20\d\d', m.group(1)))}
+        if used - ok:
+            issues.append(f'수치 근거 표에 없는 수치: {", ".join(sorted(used - ok)[:6])}')
+        if used & unverified:
+            issues.append(f'UNVERIFIED 수치가 본문에 있다: {", ".join(sorted(used & unverified))}')
+
+    # G9 근거 자료
+    src = body.split('## 근거 자료', 1)[1].split('\n## ', 1)[0] if '## 근거 자료' in body else ''
+    if not re.search(r'https?://|[가-힣](법|청|공단|부)(?![가-힣])', src):
+        issues.append('근거 자료에 URL이나 기관·법령 이름이 없다')
+
+    # 썸네일(G8·G11·G12의 원고 쪽 절반 — 연속 유형은 main에서 본다)
+    kind, post_type = memo_value(md, '썸네일 유형'), memo_value(md, '글 유형')
+    if kind not in THUMB_TYPES:
+        issues.append(f'작성 메모 `- 썸네일 유형:`이 {"·".join(THUMB_TYPES)} 중 하나가 아니다')
+    if post_type not in POST_TYPES:
+        issues.append(f'작성 메모 `- 글 유형:`이 {"·".join(POST_TYPES)} 중 하나가 아니다')
+    lines = thumb_lines(md)
+    if lines:
+        a, b = lines
+        if kind == 'card' and not (8 <= len(a) <= 12 and 8 <= len(b) <= 12):
+            issues.append(f'card 썸네일 문구는 두 줄 각 8~12자 (지금 {len(a)}·{len(b)}자)')
+        elif len(a) > 12 or len(b) > 22:
+            issues.append(f'썸네일 문구는 윗줄 12자·아랫줄 22자 이하 (지금 {len(a)}·{len(b)}자)')
+        if re.search(r'(못|안) ?\S*니다|없습니다', a + ' ' + b):
+            issues.append('썸네일 문구에 단정 표현이 있다 — 조건을 남긴다("못 받을 수 있어요")')
+    if kind == 'scene':
+        scene = memo_value(md, '썸네일 장면')
+        if not scene:
+            issues.append('scene인데 작성 메모에 `- 썸네일 장면:`(영어 장면 설명)이 없다')
+        elif re.search(r'[가-힣0-9]', scene):
+            issues.append('썸네일 장면 설명에 한글·숫자가 있다 — 글자는 썸네일 문구로만 넣는다')
+    if kind == 'card':
+        big = (memo_value(md, '썸네일 강조 숫자') or '').split('|')[0]      # `6% | 1년당 감액` — 앞이 숫자, 뒤는 목업 설명
+        if not big or not _nums(big) or not _nums(big) <= _nums(text):
+            issues.append('card인데 `- 썸네일 강조 숫자:`가 없거나 그 숫자가 본문에 없다')
+    return issues
+
+
+def thumb_streak(kinds: dict) -> list:
+    """편 번호 순 썸네일 유형 → 같은 유형이 3편째 이어진 원고. 명세 6-2 '같은 유형 3편 연속 금지'
+    (scene 3연속도 막으므로 '3편 중 1편은 card'도 같이 지켜진다)."""
+    seq = [(k, v) for k, v in sorted(kinds.items()) if v]
+    return [seq[i][0] for i in range(2, len(seq)) if seq[i][1] == seq[i - 1][1] == seq[i - 2][1]]
+
+
+def format_issues(chars: int, heads: int, images: int, tables: int, thumb: bool, length=LENGTH_NEW) -> list:
     """12편부터 보는 분량·시각 요소 기준. → 문제 설명 목록"""
     issues = []
-    lo, hi = LENGTH_NEW
+    lo, hi = length
     if not lo <= chars <= hi:
         issues.append(f"분량 {chars}자 ({lo}~{hi}자)")
     if images + tables < heads + 1:
@@ -239,7 +388,7 @@ def load_volumes() -> dict:
         return {r['keyword']: int(r['total']) for r in csv.DictReader(f) if r.get('total')}
 
 
-def measure(path, tistory, volumes=None):
+def measure(path, tistory, volumes=None, bench=frozenset()):
     n, b, c, tags = parts(path)
     m = re.search(r'^제목: (.+)$', n, flags=re.M)
     if not m:
@@ -265,6 +414,7 @@ def measure(path, tistory, volumes=None):
         "tags": tags,
         "vol": {t: volumes.get(t.lstrip('#')) for t in tags} if volumes else {},
         "dup": sents(c) & tistory,
+        "bench_dup": sents(c) & bench,
         "stale": [f"{k}→{v}" for k, v in STALE_TERMS.items()
                   if re.search(f'(?<!옛 ){k}', c)],
         "cover_kw": (re.findall(r'^- 대표사진 검색어:\s*(.+?)\s*$', n, flags=re.M) or [None])[0],
@@ -273,8 +423,14 @@ def measure(path, tistory, volumes=None):
         "geo": geo_queries(n),
         "geo_required": not num or int(num.group()) >= GEO_FROM,
         "new_format": not num or int(num.group()) >= LENGTH_FROM,
+        "template": bool(num) and int(num.group()) >= TEMPLATE_FROM,
+        "thumb_type": memo_value(n, '썸네일 유형'),
     }
-    if r["new_format"]:
+    if r["template"]:          # 소제목 9개 중 번호 1~5만 본문 구간이다 — 분량·시각 요소·소제목 문구는 그 다섯으로 본다
+        r["format"] = format_issues(r["chars"], 5, r["images"], tables, r["thumb"], LENGTH_TEMPLATE)
+        r["format"] += heading_issues(re.findall(r'^## [1-5]\. (.+?)\s*$', b, flags=re.M))
+        r["format"] += template_issues(n, b, c, target_keyword(n))
+    elif r["new_format"]:
         r["format"] = format_issues(r["chars"], r["heads"], r["images"], tables, r["thumb"])
         if num and int(num.group()) >= HEAD_RULES_FROM:
             r["format"] += heading_issues(re.findall(r'^## (.+?)\s*$', b, flags=re.M))
@@ -296,9 +452,9 @@ def same_cover_kw(results: dict) -> list:
 
 
 def passes(r):
-    return (not r["format"] and 3 <= r["heads"] <= (6 if r["new_format"] else 5) and r["images"] >= 2
+    return (not r["format"] and (r["template"] or 3 <= r["heads"] <= (6 if r["new_format"] else 5)) and r["images"] >= 2
             and r["exp"] >= 1 and r["links"] >= 1 and 8 <= len(r["tags"]) <= 12
-            and not r["dup"] and not r["stale"]
+            and not r["dup"] and not r["bench_dup"] and not r["stale"]
             and not (r["judged"] and r["structure"])
             and not (r["geo_required"] and len(r["geo"]) < MIN_GEO_QUERIES))
 
@@ -419,7 +575,96 @@ def selftest():
     assert (t["tables"], t["thumb"]) == (1, True), (t["tables"], t["thumb"])
     assert not any("볼드가 둘 이상" in i for i in t["structure"]), t["structure"]   # 파일로 읽어도 표는 표로 본다
     assert "|" not in str(t["chars"]) and t["chars"] < 160, t["chars"]        # 세로선·구분선은 글자 수에 안 든다
+
+    # 15편부터의 벤치마크 템플릿 — 원고에 실제로 쓰는 표기 그대로
+    sec = "\n\n".join(
+        f"## {i}. 소제목{'일이삼사오'[i - 1]} 결론입니다\n\n[이미지 {'②③④⑤⑥'[i - 1]}: 카드]\n\n본문은 6% 감액입니다.\n\n"
+        f"| 구분 | 값 |\n|---|---|\n| 조기 | **6%** |\n\n🪙 살림 메모: 1년당 기준입니다.\n\n결론 한 줄입니다.\n\n---"
+        for i in range(1, 6))
+    tdoc = (
+        "제목: 2026 국민연금 수령나이 | 조기수령 vs 연기수령, 5년 당기면 얼마나 깎일까 확인할 5가지\n\n---\n\n"
+        "\"국민연금 일찍 받으면 손해 아니에요?\"\n\n"
+        "[이미지 ①: 썸네일]\n\n"
+        "국민연금 수령나이는 2026년 기준 63세입니다. 1년 당겨 받으면 6% 줄어듭니다.\n\n"
+        f"> [요약] {SUMMARY_TITLE}\n> - 수령나이 63세\n> - 1년당 6% 감액\n> - 최대 30%\n> - 연기 1년당 7.2%\n> - 최대 36%\n\n"
+        f"{sec}\n\n"
+        "## 6. 오늘 바로 할 살림 체크\n\n- 출생연도 확인\n- 예상 연금액 조회\n\n"
+        "## 오늘의 살림 정리\n\n당겨 받으면 줄어듭니다.\n\n"
+        "## 근거 자료\n\n- 국민연금법 제61조, 국민연금공단\n\n"
+        "## 새싹돼지 Q&A\n\n> [질문] 다시 늦출 수 있나요?\n> 조건이 있습니다.\n\n"
+        "#국민연금수령나이 #국민연금 #조기수령 #연기수령 #노령연금 #국민연금감액 #국민연금조기수령 #국민연금연기\n\n"
+        "---\n\n## 작성 메모 (발행 시 삭제)\n\n"
+        "- 썸네일 유형: scene\n- 글 유형: 선택·비교형\n"
+        "- 썸네일 장면: a woman holding a phone at a kitchen table, warm evening light\n"
+        "- 썸네일 문구: 일찍 받으면 손해? | 2026 국민연금 수령나이 총정리\n\n"
+        "### 수치 근거\n\n| 항목 | 값 | 출처·식 | 확인일 | 상태 |\n|---|---|---|---|---|\n"
+        "| 수령나이 | 63세 | 국민연금법 | 2026-10-14 | VERIFIED |\n| 조기 감액 | 1년당 6%, 최대 30% | 공단 | 2026-10-14 | VERIFIED |\n"
+        "| 연기 가산 | 7.2%, 최대 36% | 공단 | 2026-10-14 | VERIFIED |\n| 건보료 영향 | 3% | 블로그 | 2026-10-14 | UNVERIFIED |\n"
+    )
+
+    def tissues(src, num="15"):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, f"{num}_t.md")
+            open(path, "w", encoding="utf-8").write(src)
+            n_, b_, c_, _ = parts(path)
+            return template_issues(n_, b_, c_, target_keyword(n_)), measure(path, set())
+
+    ti, tm = tissues(tdoc)
+    assert ti == [], ti
+    assert tm["template"] and not tissues(tdoc, "14")[1]["template"]                   # 14편까지는 템플릿 판정이 없다
+    assert any("분량" in i for i in tm["format"]) and not any("시각 요소" in i for i in tm["format"]), tm["format"]
+
+    def fails(old, new, word):
+        assert old in tdoc, old
+        got = tissues(tdoc.replace(old, new, 1))[0]
+        assert any(word in i for i in got), (word, got)
+    fails('"국민연금 일찍 받으면 손해 아니에요?"', "국민연금 일찍 받으면 손해일까요.", "따옴표로 감싼 질문")
+    fails("[이미지 ①: 썸네일]\n\n", "", "[이미지 ①]")
+    fails("## 오늘의 살림 정리", "## 마무리", "`## 오늘의 살림 정리`")
+    fails("## 3. 소제목삼", "## 소제목삼", "번호 소제목")
+    fails("제목: 2026 국민연금", "제목: 국민연금", "앞 15자에 연도")
+    fails("확인할 5가지", "확인할 5가지와 그 밖의 여러 이야기", "제목 6")
+    fails("5년 당기면 얼마나 깎일까 확인할 5가지", "당기면 얼마나 깎일까 확인할 여러 가지", "연도 말고 숫자")
+    fails("얼마나 깎일까", "무조건 깎일까", "금지어")
+    fails("> - 최대 36%", "> - 최대 36%\n> - 여섯째 줄 7%", "5줄")
+    fails("> - 수령나이 63세", "> - 수령나이 확인", "줄마다 숫자")
+    fails(f"> [요약] {SUMMARY_TITLE}", "> [요약] 한눈에 보기", "요약 박스 제목")
+    fails("\n\n🪙 살림 메모: 1년당 기준입니다.", "", "살림 메모")
+    fails("본문은 6% 감액입니다.", "본문은 9% 감액입니다.", "근거 표에 없는 수치: 9")
+    fails("본문은 6% 감액입니다.", "본문은 3% 감액입니다.", "UNVERIFIED 수치")
+    fails("| 공단 | 2026-10-14 | VERIFIED |\n| 연기", "| 공단 | 2026-10-14 | 계산 |\n| 연기", "계산 행에 식이 없다")
+    fails("### 수치 근거", "### 근거", "수치 근거` 표가 없다")
+    fails("- 국민연금법 제61조, 국민연금공단", "- 아래 글 참고", "근거 자료에")
+    fails("- 썸네일 유형: scene", "- 썸네일 유형: photo", "썸네일 유형")
+    fails("- 글 유형: 선택·비교형", "- 글 유형: 기타", "글 유형")
+    fails("warm evening light", "warm evening light, 국민연금", "한글·숫자")
+    fails("일찍 받으면 손해?", "일찍 받으면 정말 손해일까요?", "12자")
+    fails("일찍 받으면 손해?", "일찍은 못 받습니다", "단정 표현")
+    fails("- 썸네일 유형: scene", "- 썸네일 유형: card", "8~12자")
+    card = tdoc.replace("- 썸네일 유형: scene", "- 썸네일 유형: card\n- 썸네일 강조 숫자: 6% | 9년 예시").replace(
+        "일찍 받으면 손해? | 2026 국민연금 수령나이 총정리", "국민연금 일찍 받으면 | 6% 줄 수 있어요")
+    assert tissues(card)[0] == [], tissues(card)[0]
+    assert any("강조 숫자" in i for i in tissues(card.replace("강조 숫자: 6%", "강조 숫자: 8%"))[0])
+    assert thumb_streak({"15": "card", "16": "card", "17": "card", "18": "scene"}) == ["17"]
+    assert thumb_streak({"15": "card", "16": "scene", "17": "card", "14": None}) == []
+    assert same_box_title({"15": [SUMMARY_TITLE], "16": [SUMMARY_TITLE]}) == []        # 템플릿 고정 제목은 중복으로 안 본다
     print("selftest ok")
+
+
+def fetch_benchmark(n=50) -> int:
+    """벤치마크 블로그 최근 n편 본문 → BENCH_DIR/{logNo}.txt. 문장을 베끼지 않았는지 대조하는 데만 쓴다(gitignore)."""
+    import requests
+    from verify_naver import parse
+    rss = requests.get(f'https://rss.blog.naver.com/{BENCH_BLOG}.xml', timeout=15).text
+    nos = list(dict.fromkeys(re.findall(rf'blog\.naver\.com/{BENCH_BLOG}/(\d+)', rss)))[:n]
+    if not nos:
+        raise RuntimeError(f'{BENCH_BLOG} RSS에서 글 번호를 못 읽었다 — RSS 형식이 바뀌었을 수 있다')
+    os.makedirs(BENCH_DIR, exist_ok=True)
+    for no in nos:
+        html = requests.get(f'https://m.blog.naver.com/{BENCH_BLOG}/{no}', headers={'User-Agent': 'Mozilla/5.0'}, timeout=15).text
+        open(f'{BENCH_DIR}/{no}.txt', 'w', encoding='utf-8').write(parse(html)['text'])
+    print(f'{len(nos)}편 → {BENCH_DIR}')
+    return 0
 
 
 def main():
@@ -428,14 +673,18 @@ def main():
     volumes = load_volumes()
     if not volumes:
         print(f'⚠ {VOLUME_CSV} 없음 — 태그 검색량 검사를 건너뜁니다\n')
+    bench = sents("".join(open(f, encoding='utf-8').read() for f in glob.glob(f'{BENCH_DIR}/*.txt')))
     allok = True
-    cover_kws, box_titles = {}, {}
+    cover_kws, box_titles, thumb_kinds = {}, {}, {}
     for p in sorted(glob.glob('content/naver/*.md')):
-        r = measure(p, tistory, volumes)
+        r = measure(p, tistory, volumes, bench)
         if r is None:          # 제목 줄이 없으면 원고가 아니다(메모·프롬프트 파일)
             continue
         cover_kws[os.path.basename(p)] = r["cover_kw"]
         box_titles[os.path.basename(p)] = r["boxes"]
+        thumb_kinds[os.path.basename(p)] = r["thumb_type"]
+        if r["template"] and not bench:
+            print(f'⚠ {BENCH_DIR} 비어 있음 — 벤치마크 문장 중복을 못 봤다. `check_naver.py --fetch-benchmark` 후 다시 실행')
         ok = passes(r)
         allok &= ok
         print(('OK   ' if ok else 'CHECK'), os.path.basename(p))
@@ -464,9 +713,14 @@ def main():
             print(f'         (발행됨 — 판정 제외) 구조 {len(r["structure"])}건')
         for d in list(r["dup"])[:3]:
             print('         중복:', d[:55])
+        for d in list(r["bench_dup"])[:3]:
+            print('         벤치마크 문장과 같다:', d[:55])
     for a, b in same_cover_kw(cover_kws):
         allok = False
         print(f'CHECK 대표사진 검색어가 같다: {a} = {b} — 후보가 똑같이 나온다')
+    for name in thumb_streak(thumb_kinds):
+        allok = False
+        print(f'CHECK 썸네일 유형이 3편 연속 같다: {name}까지')
     for a, b, t in same_box_title(box_titles):
         allok = False
         print(f'CHECK 박스 제목이 같다: {a} = {b} — "{t}"')
@@ -477,5 +731,7 @@ def main():
 if __name__ == "__main__":
     if "--selftest" in sys.argv:
         selftest()
+    elif "--fetch-benchmark" in sys.argv:
+        sys.exit(fetch_benchmark())
     else:
         sys.exit(main())

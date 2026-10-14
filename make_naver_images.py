@@ -223,6 +223,105 @@ def shoot_thumb(page, photo: Path, line1: str, line2: str, out: Path, font: Path
     return not problems
 
 
+# ── 15편~ 썸네일 두 유형 (NAVER_GUIDE 「벤치마크 템플릿 시험」) ─────────────
+# scene: 벤치마크(sky09020) 대표 이미지는 Gemini가 글자까지 그린 그림이다(구석에 Gemini 표시가 남아 있었다).
+#        글꼴을 얹어 흉내 내지 않고 같은 방식으로 만든다 — `--prompt NN`이 프롬프트를 내고, 코드는 정사각형 맞춤과 AI 표시만 한다.
+# card:  사진 위에 카드를 코드로 얹는다. 글꼴은 상업 이용이 확인된 잘난체 2(G마켓 산스는 라이선스 원문을 못 찾았다, 2026-10-14).
+OLIVE, CORAL = "#556b2f", "#ff6f61"
+
+# 그림체는 2026-10-14 컨셉 시험에서 S1(반실사 페인팅 + 새싹돼지 조연)으로 정했다 — NAVER_GUIDE 「썸네일 컨셉 결정」.
+# 새싹돼지는 글마다 같은 모습이어야 해서 MASCOT 문구를 바꾸지 않는다.
+MASCOT = ("a chubby pastel-pink baby piglet with a small two-leaf green sprout on its head, "
+          "round black eyes, rosy cheeks, tiny olive-green scarf")
+SCENE_PROMPT = """Square 1:1 image, semi-realistic Korean webtoon digital painting with realistic human proportions and detailed faces, soft painterly shading, cinematic warm indoor lighting, olive, beige and coral tones.
+A small cute mascot character appears beside the people, reacting to the situation, drawn in a soft 3D-like style that blends into the scene: """ + MASCOT + """.
+Scene: {scene}
+Generic characters only (no real people), no brand logos, no real company or government names, marks or documents.
+Keep the top 28% of the image a calm, uncluttered background for the title.
+Title at the top, centered, in a heavy, clean Korean gothic typeface with a thick white outline and a soft drop shadow:
+Line 1 — large, about 9% of the image height, color {color}: "{line1}"
+Line 2 — about half the size of line 1, color #1a1a1a: "{line2}"
+Render the Korean title exactly as written. No other text, numbers or labels anywhere in the image."""
+
+
+def memo_value(md: str, key: str):
+    import re
+    m = re.search(rf"^- {re.escape(key)}:\s*(.+?)\s*$", md, flags=re.M)
+    return m.group(1) if m else None
+
+
+def scene_prompt(md: str, num: int) -> str:
+    line1, line2 = (t.replace("/", " ").strip() for t in thumb_text(md))
+    return SCENE_PROMPT.format(scene=memo_value(md, "썸네일 장면"), color=PALETTE[num % len(PALETTE)][1],
+                               line1=line1, line2=line2)
+
+
+def _img_url(photo: Path) -> str:
+    import base64
+    mime = {".jpg": "jpeg", ".jpeg": "jpeg", ".png": "png", ".webp": "webp"}[photo.suffix.lower()]
+    return f"data:image/{mime};base64,{base64.b64encode(photo.read_bytes()).decode()}"
+
+
+def shoot_thumb_scene(page, photo: Path, out: Path):
+    """Gemini 그림(글자 포함) → 정사각형 860 + 왼쪽 아래 'AI 활용' 표시. 오른쪽 아래는 Gemini 표시 자리라 피한다."""
+    page.set_viewport_size({"width": THUMB, "height": THUMB})
+    page.set_content(f"<style>*{{margin:0}} .t{{width:{THUMB}px;height:{THUMB}px;position:relative;background:url('{_img_url(photo)}') center/cover}}"
+                     f".ai{{position:absolute;left:18px;bottom:18px;font:700 18px {FONT};color:#333;background:rgba(255,255,255,.82);"
+                     f"padding:5px 12px;border-radius:14px}}</style><div class='t'><span class='ai'>AI 활용</span></div>")
+    page.wait_for_timeout(300)
+    page.query_selector(".t").screenshot(path=str(out))
+
+
+def shoot_thumb_card(page, photo: Path, line1: str, line2: str, big: str, label: str, out: Path, font: Path = None):
+    """사진(20% 어둡게) 위 흰 카드: 윗줄 올리브 글자, 아랫줄 올리브 띠, 오른쪽 아래 '예시' 서류에 코랄 원으로 숫자 강조.
+    카드 글자는 가로 크롭 띠(BAND) 안에 둔다. → 글자가 카드 안에 다 들어갔으면 True"""
+    import base64
+    import html as html_lib
+    font = font or thumb_font()
+    face = f"@font-face {{ font-family: 'Thumb'; src: url(data:font/ttf;base64,{base64.b64encode(font.read_bytes()).decode()}); }}"
+    e = html_lib.escape
+    css = f"""{face} *{{margin:0;padding:0;box-sizing:border-box}}
+.t{{width:{THUMB}px;height:{THUMB}px;position:relative;overflow:hidden;font-family:'Thumb'}}
+.bg{{position:absolute;inset:0;background:url('{_img_url(photo)}') center/cover;filter:brightness(.8) blur(1.5px)}}
+.card{{position:absolute;left:8%;right:8%;top:{BAND[0] + 14}px;height:236px;background:#fff;border:6px solid {OLIVE};
+      border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.28);text-align:center;overflow:hidden}}
+.l1{{color:{OLIVE};font-size:76px;line-height:1.1;padding:26px 20px 0;white-space:nowrap}}
+.l2{{position:absolute;left:0;right:0;bottom:0;background:{OLIVE};color:#fff;font-size:58px;line-height:1.1;padding:16px 20px 20px;white-space:nowrap}}
+.mock{{position:absolute;right:5%;top:{BAND[0] + 236}px;width:46%;background:#fdfcf8;border:2px solid #d9d4c7;border-radius:14px;
+      padding:22px 24px;box-shadow:0 12px 26px rgba(0,0,0,.3);transform:rotate(-3deg);font-family:{FONT}}}
+.mock .tag{{display:inline-block;font:700 15px {FONT};color:#777;border:1.5px solid #bbb;border-radius:6px;padding:2px 8px}}
+.mock .ln{{height:10px;background:#e6e2d8;border-radius:5px;margin:12px 0}}
+.mock .row{{display:flex;justify-content:space-between;align-items:center;margin-top:16px;font:700 20px {FONT};color:#444}}
+.mock .big{{font:900 34px {FONT};color:#222;border:4px solid {CORAL};border-radius:50%;padding:6px 14px}}"""
+    page.set_viewport_size({"width": THUMB, "height": THUMB})
+    page.set_content(f"<style>{css}</style><div class='t'><div class='bg'></div><div class='card'>"
+                     f"<div class='l1'>{e(line1)}</div><div class='l2'>{e(line2)}</div></div>"
+                     f"<div class='mock'><span class='tag'>예시</span><div class='ln'></div><div class='ln' style='width:70%'></div>"
+                     f"<div class='row'><span>{e(label)}</span><span class='big'>{e(big)}</span></div></div></div>")
+    page.evaluate("() => document.fonts.ready")
+    # 카드 폭에 맞춰 글자를 줄인다. 52px 밑으로 내려가야 들어가면 문구가 긴 것이다
+    small = page.evaluate("""() => { const bad = [];
+        for (const [sel, min] of [['.l1', 52], ['.l2', 40]]) { const el = document.querySelector(sel);
+            let fs = parseFloat(getComputedStyle(el).fontSize);
+            while (el.scrollWidth > el.clientWidth && fs > min) { fs -= 2; el.style.fontSize = fs + 'px'; }
+            if (el.scrollWidth > el.clientWidth) bad.push(sel); }
+        // 목업이 카드 글자를 가리면 안 된다(첫 견본에서 아랫줄 절반을 덮었다)
+        const m = document.querySelector('.mock').getBoundingClientRect(), r = document.createRange();
+        for (const sel of ['.l1', '.l2']) { r.selectNodeContents(document.querySelector(sel));
+            for (const q of r.getClientRects()) if (q.bottom > m.top && q.top < m.bottom && q.right > m.left && q.left < m.right)
+                { bad.push(sel + ' 겹침'); break; } }
+        return bad; }""")
+    page.wait_for_timeout(300)
+    page.query_selector(".t").screenshot(path=str(out))
+    font_ok = page.evaluate("() => document.fonts.check('52px Thumb')")
+    problems = (["폰트가 적용되지 않았다"] if not font_ok else []) + \
+               [f"{'윗줄' if s.startswith('.l1') else '아랫줄'}이 " + ("서류 목업에 가려진다" if "겹침" in s else "카드 폭을 넘는다 — 문구를 줄인다")
+                for s in small]
+    for x in problems:
+        print(f"  ⚠ 썸네일(card): {x}  [{line1} | {line2}]")
+    return not problems
+
+
 CARDS = {
     "01_근로장려금_가구유형": card_html("""
       <h2>근로장려금 가구 유형별 기준</h2>
@@ -696,24 +795,99 @@ def find_cover(num: str):
     return next((p for ext in ("jpg", "jpeg", "png", "webp") for p in ws.glob(f"cover_{num}.{ext}")), None)
 
 
-def thumb_cmd(num: str) -> int:
+def draft_md(num: str):
     drafts = list((Path(__file__).parent / "content" / "naver").glob(f"{num}_*.md"))
-    text = thumb_text(drafts[0].read_text(encoding="utf-8")) if drafts else None
+    return drafts[0].read_text(encoding="utf-8") if drafts else ""
+
+
+def scene_md(num: str):
+    md = draft_md(num)
+    if memo_value(md, "썸네일 유형") != "scene" or not memo_value(md, "썸네일 장면") or not thumb_text(md):
+        print(f"{num}편 작성 메모에 `- 썸네일 유형: scene`, `- 썸네일 장면:`, `- 썸네일 문구:` 줄이 모두 있어야 합니다")
+        return None
+    return md
+
+
+def prompt_cmd(num: str) -> int:
+    """scene 썸네일 프롬프트를 낸다(앱에서 손으로 만들 때). 장면·문구는 원고 작성 메모에서 읽는다."""
+    md = scene_md(num)
+    if not md:
+        return 1
+    print(scene_prompt(md, int(num)))
+    print(f"\n→ 만든 그림을 _workspace/naver/cover_{num}.png로 저장하고 `--thumb {num}`")
+    return 0
+
+
+# 2026-10-14 모델 시험(NAVER_GUIDE 「썸네일 모델 결정」): 문구 3개 × 4장에서 두 줄이 모두 정확한 비율이 100%였고
+# 1장 실측 비용이 후보 중 가장 낮았다(출력 토큰 × $30/1M). 가격이 바뀌면 GEN_COST만 고친다.
+GEN_MODEL, GEN_QUALITY, GEN_N = "gpt-image-2.5-flare", "medium", 4
+GEN_COST = 0.0132       # 달러, 1024×1024 medium 1장
+
+
+def gen_cmd(num: str) -> int:
+    """scene 썸네일 후보 GEN_N장을 만든다 → _workspace/naver/cover_NN_1~4.png. 고르는 것은 사람이 한다(글자 확인)."""
+    import base64
+    import os
+
+    import requests
+    from dotenv import load_dotenv
+    md = scene_md(num)
+    if not md:
+        return 1
+    load_dotenv(Path(__file__).parent / ".env")
+    if not os.environ.get("OPENAI_API_KEY"):
+        print(".env에 OPENAI_API_KEY가 없습니다")
+        return 1
+    print(f"{GEN_MODEL} {GEN_QUALITY} {GEN_N}장 생성 — 예상 비용 약 ${GEN_N * GEN_COST:.2f}")
+    r = requests.post("https://api.openai.com/v1/images/generations",
+                      headers={"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"},
+                      json={"model": GEN_MODEL, "prompt": scene_prompt(md, int(num)), "size": "1024x1024",
+                            "quality": GEN_QUALITY, "n": GEN_N}, timeout=300)
+    if not r.ok:
+        raise RuntimeError(f"OpenAI {r.status_code}: {r.text[:300]}")
+    data = r.json().get("data") or []
+    if not data:
+        raise RuntimeError(f"OpenAI 응답에 이미지가 없다: {r.text[:300]}")
+    ws = Path(__file__).parent / "_workspace" / "naver"
+    for i, d in enumerate(data, 1):
+        (ws / f"cover_{num}_{i}.png").write_bytes(base64.b64decode(d["b64_json"]))
+        print(ws / f"cover_{num}_{i}.png")
+    if len(data) < GEN_N:
+        print(f"⚠ {GEN_N}장을 요청했는데 {len(data)}장만 왔다")
+    tokens = r.json().get("usage", {}).get("output_tokens")
+    if tokens:
+        print(f"실제 비용 약 ${tokens * 30 / 1e6:.3f}")
+    print(f"\n→ 그림 속 글자가 `{' / '.join(thumb_text(md))}`와 같은 것을 골라 cover_{num}.png로 복사한 뒤 `--thumb {num}`")
+    return 0
+
+
+def thumb_cmd(num: str) -> int:
+    md = draft_md(num)
+    text, kind = thumb_text(md), memo_value(md, "썸네일 유형")
     photo = find_cover(num)
     if not text:
         print(f"{num}편 원고 작성 메모에 `- 썸네일 문구: 윗줄 | 아랫줄` 줄이 없습니다")
         return 1
     if not photo:
-        print(f"고른 대표 사진을 _workspace/naver/cover_{num}.jpg (또는 png·webp)로 저장한 뒤 다시 실행하세요")
+        print(f"{'Gemini 그림' if kind == 'scene' else '고른 대표 사진'}을 _workspace/naver/cover_{num}.jpg (또는 png·webp)로 저장한 뒤 다시 실행하세요")
         return 1
     out = OUT / f"{num}_썸네일.png"
     preview = Path(__file__).parent / "_workspace" / "naver" / f"{num}_썸네일_가로크롭.png"
     with sync_playwright() as pw:
         b = pw.chromium.launch(headless=True)
-        ok = shoot_thumb(b.new_page(device_scale_factor=2), photo, *text, out, crop_preview=preview)
+        page = b.new_page(device_scale_factor=2)
+        if kind == "scene":
+            shoot_thumb_scene(page, photo, out)
+            ok = True
+            print(f"  그림 속 글자가 문구와 같은지 눈으로 확인하세요: {' / '.join(text)}")
+        elif kind == "card":
+            big, _, label = (memo_value(md, "썸네일 강조 숫자") or "").partition("|")
+            ok = shoot_thumb_card(page, photo, *(t.replace("/", " ") for t in text), big.strip(), label.strip(), out)
+        else:       # 14편까지: 사진 + 아래 띠
+            ok = shoot_thumb(page, photo, *text, out, crop_preview=preview)
+            print(f"가로로 잘렸을 때: {preview}")
         b.close()
     print(out)
-    print(f"가로로 잘렸을 때: {preview}")
     return 0 if ok else 1
 
 
@@ -723,10 +897,21 @@ if __name__ == "__main__":
         dest.mkdir(parents=True, exist_ok=True)
         with sync_playwright() as pw:
             b = pw.chromium.launch(headless=True)
-            bad = shoot_cards(b.new_page(device_scale_factor=2), SAMPLES, dest)
+            page = b.new_page(device_scale_factor=2)
+            bad = shoot_cards(page, SAMPLES, dest)
+            photo = next(iter(sorted((Path(__file__).parent / "_workspace" / "naver").glob("cover_*.jpg"))), None)
+            if photo:       # card 썸네일 견본 — 글자가 카드에 다 들어가야 한다
+                bad += [] if shoot_thumb_card(page, photo, "국민연금 일찍 받으면", "6% 줄 수 있어요", "6%",
+                                              "1년당 감액", dest / "썸네일_card.png") else ["썸네일_card"]
+            else:
+                print("  ⚠ _workspace/naver/cover_*.jpg가 없어 card 썸네일 견본을 건너뜀")
             b.close()
         print(dest)
         sys.exit(1 if bad else 0)
+    elif "--gen" in sys.argv:
+        sys.exit(gen_cmd(sys.argv[sys.argv.index("--gen") + 1]))
+    elif "--prompt" in sys.argv:
+        sys.exit(prompt_cmd(sys.argv[sys.argv.index("--prompt") + 1]))
     elif "--thumb" in sys.argv:
         sys.exit(thumb_cmd(sys.argv[sys.argv.index("--thumb") + 1]))
     elif "--card" in sys.argv:      # 이름 일부로 골라 그 카드만 다시 만든다
@@ -741,6 +926,6 @@ if __name__ == "__main__":
         sys.exit(1 if bad else 0)
     elif len(sys.argv) > 1:
         # 인자 없이 돌리면 카드 전체를 다시 만든다. `--help`를 쳤다가 발행된 카드까지 전부 다시 그려졌다(2026-10-13).
-        sys.exit("사용법: make_naver_images.py [--card 이름 | --thumb NN | --samples]  (인자 없음 = 전체 재생성)")
+        sys.exit("사용법: make_naver_images.py [--card 이름 | --gen NN | --thumb NN | --prompt NN | --samples]  (인자 없음 = 전체 재생성)")
     else:
         main()

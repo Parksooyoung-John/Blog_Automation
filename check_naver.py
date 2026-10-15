@@ -335,9 +335,21 @@ def template_issues(md: str, body: str, text: str, keyword) -> list:
     return issues
 
 
-def thumb_streak(kinds: dict) -> list:
+# card 썸네일은 보류 중이다(2026-10-15 사용자 결정: 품질이 떨어져, Mirr 연계로 품질을 확보하면 다시 쓴다).
+# 그동안 scene만 쓰므로 3연속 금지는 끄고, 대신 card로 쓴 원고를 막는다. 다시 쓰면 True로 바꾼다.
+CARD_ENABLED = False
+
+
+def card_paused(kinds: dict) -> list:
+    """CARD_ENABLED가 꺼져 있는데 썸네일 유형이 card인 원고."""
+    return [] if CARD_ENABLED else [k for k, v in sorted(kinds.items()) if v == "card"]
+
+
+def thumb_streak(kinds: dict, enabled: bool = None) -> list:
     """편 번호 순 썸네일 유형 → 같은 유형이 3편째 이어진 원고. 명세 6-2 '같은 유형 3편 연속 금지'
-    (scene 3연속도 막으므로 '3편 중 1편은 card'도 같이 지켜진다)."""
+    (scene 3연속도 막으므로 '3편 중 1편은 card'도 같이 지켜진다). card 보류 중에는 보지 않는다."""
+    if not (CARD_ENABLED if enabled is None else enabled):
+        return []
     seq = [(k, v) for k, v in sorted(kinds.items()) if v]
     return [seq[i][0] for i in range(2, len(seq)) if seq[i][1] == seq[i - 1][1] == seq[i - 2][1]]
 
@@ -649,8 +661,11 @@ def selftest():
         "일찍 받으면 손해? | 2026 국민연금 수령나이 총정리", "국민연금 일찍 받으면 | 6% 줄 수 있어요")
     assert tissues(card)[0] == [], tissues(card)[0]
     assert any("강조 숫자" in i for i in tissues(card.replace("강조 숫자: 6%", "강조 숫자: 8%"))[0])
-    assert thumb_streak({"15": "card", "16": "card", "17": "card", "18": "scene"}) == ["17"]
-    assert thumb_streak({"15": "card", "16": "scene", "17": "card", "14": None}) == []
+    assert thumb_streak({"15": "card", "16": "card", "17": "card", "18": "scene"}, True) == ["17"]
+    assert thumb_streak({"15": "card", "16": "scene", "17": "card", "14": None}, True) == []
+    if not CARD_ENABLED:      # card 보류 중: scene 3연속은 통과, card 원고는 막는다
+        assert thumb_streak({"15": "scene", "16": "scene", "17": "scene"}) == []
+        assert card_paused({"15": "scene", "16": "card", "14": None}) == ["16"]
     assert same_box_title({"15": [SUMMARY_TITLE], "16": [SUMMARY_TITLE]}) == []        # 템플릿 고정 제목은 중복으로 안 본다
     print("selftest ok")
 
@@ -725,6 +740,9 @@ def main():
     for name in thumb_streak(thumb_kinds):
         allok = False
         print(f'CHECK 썸네일 유형이 3편 연속 같다: {name}까지')
+    for name in card_paused(thumb_kinds):
+        allok = False
+        print(f'CHECK {name} — card 썸네일은 보류 중이다(CARD_ENABLED). scene으로 만든다')
     for a, b, t in same_box_title(box_titles):
         allok = False
         print(f'CHECK 박스 제목이 같다: {a} = {b} — "{t}"')

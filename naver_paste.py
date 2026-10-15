@@ -49,7 +49,9 @@ def _tone(n: int) -> tuple:
            "주의": (_cell("#fff0ee", _left(WARN)), WARN),
            "출처": (_cell("#f4f6f7", _left(GRAY)), GRAY)}
     return main, _cell(main), _cell(tint), box, _cell(tint, f"border:none;border-top:1.0pt solid {main}")
-TABLE = '<table style="border-collapse:collapse;width:100%">'
+# 15편 라이브의 표는 전부 본문의 73%였다(에디터가 style 폭을 무시한 것으로 보인다). width 속성도 실어 보낸다 —
+# 받아 주는지는 16편 발행으로 확인한다. 안 되면 verify_naver.py가 표 폭 경고를 낸다(2026-10-15).
+TABLE = '<table width="100%" style="border-collapse:collapse;width:100%">'
 BODY_PX = 15      # verify_naver.BODY_FONT와 같은 값(16은 폰에서 한두 글자 줄바꿈이 잦아 15로)
 BODY_FONT = "나눔바른고딕"      # 라이브 글의 se-ff-nanumbarungothic
 # 문단·표 셀·빈 줄 전부에 싣는다. 13편은 표 셀과 빈 줄에 크기가 없어 스팬 148개 중 37개가 에디터 기본값으로 들어갔다.
@@ -66,7 +68,17 @@ HOOK = ('<p style="text-align:center"><span style="font-size:24px;font-family:\'
 BIG_HEAD_RE = re.compile(r"(\d+\. |🐷 )")
 BIG_HEAD = ('<p><span style="font-size:24px;font-family:\'나눔명조\',NanumMyeongjo;color:{color}">'
             '<b>{text}</b></span></p>')
-TEMPLATE_PX = 16      # 15편부터 본문·표·박스 16 (사용자가 16으로 발행, 2026-10-15). 14편까지는 BODY_PX 15
+# 본문·표·박스 크기: 14편까지 15(BODY_PX), 15편 16(사용자가 16으로 발행), 16편부터 19(2026-10-15 사용자 결정 — 벤치마크 본문도 19)
+TEMPLATE_PX = 19
+PX_BY_POST = {15: 16}
+# '오늘 바로 할 살림 체크'·'오늘의 살림 정리': 15편에서 손으로 입힌 인용구(선) 느낌을 1칸 표로 낸다 —
+# 왼쪽 글 색 굵은 선 + 연한 글 색 배경 + 24·명조·볼드. 붙여넣기로 바로 들어간다(2026-10-15).
+BAND_HEADS = ("오늘 바로 할 살림 체크", "오늘의 살림 정리")
+BAND_HEAD = ('<tr><td style="border-top:none;border-right:none;border-bottom:none;border-left:4.5pt solid {main};'
+             'padding:6px 10px;background-color:{tint}"><p><span style="font-size:24px;font-family:\'나눔명조\','
+             'NanumMyeongjo;color:{main}"><b>{text}</b></span></p></td></tr>')
+# 근거 자료: 제목과 목록을 한 박스로(연한 글 색 배경 + 글 색 테두리). 원고는 `## 근거 자료` + 목록 그대로 쓴다.
+SOURCE_RE = re.compile(r"^## 근거 자료[ \t]*\n\s*\n((?:- .*(?:\n|$))+)", re.M)
 
 
 def _p(inner: str, color="") -> str:
@@ -78,7 +90,8 @@ TAG_RE = re.compile(r"^#\S+(?: +#\S+)+$", re.M)
 
 CHECKLIST = """· 태그 10개 입력 — 1편에서 빠뜨렸던 항목이다. 발행 설정 창에서 확인
 · [소제목] 줄은 '인용구'(선) 스타일 적용 후 표시는 지우기 (앞뒤 빈 줄은 넣지 말 것)
-· (15편~) 근거 자료는 제목과 목록을 함께 인용구(선) 안에 넣는다. 번호 소제목과 🐷 Q&A 앞에 구분선
+· (15편~) 번호 소제목과 🐷 Q&A 앞에 구분선. 살림 체크·정리 띠와 근거 자료 박스는 붙여넣기로 들어간다(16편~)
+· (15편~) 표·박스가 본문보다 좁게 들어가면 본문 폭에 꽉 차게 늘린다 (15편은 전부 73%였다)
 · (15편~) 내부 링크 소개 문장은 인용구(말풍선)로
 · [이미지] 자리에 PNG 넣기. 첫 이미지가 썸네일이 된다
 · [경험 한 줄] 두 곳 — 후보 중 하나만 남기고 [ ] 줄·▶ 줄·나머지 후보 지우기 (가장 중요)
@@ -147,8 +160,11 @@ def parts(md: str) -> tuple:
     body = re.sub(r"^제목: .+$", "", body, flags=re.M)
     body = TAG_RE.sub("", body)
     body = re.sub(r"^-{3,}$", "", body, flags=re.M)
-    body = re.sub(r"^#{2,} (.+)$", lambda m: ("[큰제목] " if BIG_HEAD_RE.match(m.group(1)) else "[소제목] ") + m.group(1),
+    body = SOURCE_RE.sub(lambda m: "> [출처] 근거 자료\n" + "".join(f"> {ln}\n" for ln in m.group(1).strip().split("\n")), body)
+    body = re.sub(r"^#{2,} (.+)$", lambda m: ("[큰제목] " if BIG_HEAD_RE.match(m.group(1)) else
+                                              "[띠제목] " if m.group(1).strip() in BAND_HEADS else "[소제목] ") + m.group(1),
                   body, flags=re.M)
+    body = re.sub(r"^- ✔", "✔", body, flags=re.M)        # 살림 체크 줄은 ✔만(15편 발행 모양) — "· ✔"로 겹치지 않게
     body = re.sub(r"^(> ?)?- ", r"\1· ", body, flags=re.M)
     body = body.replace("`", "")
     body = OPTIONS_RE.sub(_options, body)
@@ -178,16 +194,21 @@ def convert(md: str) -> str:
     return "\n\n".join(blocks).replace("**", "")
 
 
-def to_html(md: str, tone: int = 0, template: bool = False) -> str:
-    """template: 15편부터의 서식 — 본문·표·박스 16, 표 가운데 정렬(사용자가 15편을 이렇게 발행했다)."""
+def to_html(md: str, tone: int = 0, template: bool = False, px: int = TEMPLATE_PX) -> str:
+    """template: 15편부터의 서식 — 본문·표·박스 px, 표 가운데 정렬, 살림 소제목 띠·근거 자료 박스."""
     title, body, tags = parts(md)
     MAIN, HEAD, FIRST, BOX, Q_CELL = _tone(tone)
+    tint = PALETTE[tone % len(PALETTE)][2]
+    if template:
+        BOX = {**BOX, "출처": (_cell(tint, f"border:1.5pt solid {MAIN}"), MAIN)}
     paras = []
     for k, blk in enumerate(body.split("\n\n")):
         if k == 0 and HOOK_RE.fullmatch(blk):       # 15편~ 맨 위 질문
             paras.append(HOOK.format(html.escape(blk)))
         elif blk.startswith("[큰제목] "):
             paras.append(BIG_HEAD.format(color=MAIN, text=_rich(blk[len("[큰제목] "):])))
+        elif blk.startswith("[띠제목] "):
+            paras.append(TABLE + BAND_HEAD.format(main=MAIN, tint=tint, text=_rich(blk[len("[띠제목] "):])) + "</table>")
         elif is_table(blk):       # 에디터가 자기 표로 바꾸도록 테두리만 준다
             head, *rest = table_rows(blk)
             rows = ["<tr>" + "".join(f"<th {HEAD}>{_p('<b>' + _rich(c) + '</b>', '#ffffff')}</th>" for c in head) + "</tr>"]
@@ -215,7 +236,7 @@ def to_html(md: str, tone: int = 0, template: bool = False) -> str:
     assert "**" not in "".join(paras), "닫히지 않은 볼드 표시가 남았다"
     out = "\n".join(paras[:-1])
     if template:      # ponytail: SPAN·BLANK에 박힌 15px를 통째로 바꾼다. 크기를 글마다 따로 고르게 되면 _p에 인자로 넘긴다
-        out = out.replace(f"font-size:{BODY_PX}px", f"font-size:{TEMPLATE_PX}px")
+        out = out.replace(f"font-size:{BODY_PX}px", f"font-size:{px}px")
     return PAGE.format(title=html.escape(title), body=out, tags=html.escape(tags),
                        checklist=html.escape(CHECKLIST),
                        plain=json.dumps(convert(md), ensure_ascii=False).replace("</", "<\\/"))
@@ -303,9 +324,19 @@ def selftest():
     assert BIG_HEAD.format(color=main1, text="1. 첫 결론입니다") in gpage
     assert BIG_HEAD.format(color=main1, text="🐷 새싹돼지 Q&amp;A") in gpage
     gbody = gpage.split('id="body">')[1].split("</section>")[0]
-    assert _p("[소제목] 오늘의 살림 정리").replace("15px", "16px") in gbody and "[큰제목]" not in gbody
-    assert "font-size:15px" not in gpage.split('id="body">')[1] and "font-size:16px" in gpage      # 본문·표·빈 줄 전부 16
-    assert '<p style="text-align:center">' in gpage.split("<table")[1]                           # 표 칸은 가운데
+    assert "[소제목]" not in gbody and "[큰제목]" not in gbody and "[띠제목]" not in gbody
+    tint1 = PALETTE[1][2]
+    assert BAND_HEAD.format(main=main1, tint=tint1, text="오늘의 살림 정리") in gbody              # 살림 소제목은 띠로
+    assert f"font-size:{TEMPLATE_PX}px" in gbody and "font-size:15px" not in gbody                  # 본문·표·빈 줄 전부 19
+    assert "font-size:16px" in to_html(gmd, 1, template=True, px=16)                                  # 15편은 16으로 발행
+    smd = gmd.replace("## 🐷 새싹돼지 Q&A", "## 🐷 새싹돼지 Q&A\n\n## 근거 자료\n\n- 국민건강보험법 제91조\n- 공단 안내")
+    sbody = to_html(smd, 1, template=True).split('id="body">')[1].split("</section>")[0]
+    assert f"border:1.5pt solid {main1}" in sbody and "<b>근거 자료</b>" in sbody and "· 국민건강보험법 제91조" in sbody
+    assert "[소제목] 근거 자료" not in sbody                                                       # 제목과 목록이 한 박스
+    cmd = gmd.replace("## 오늘의 살림 정리", "## 오늘 바로 할 살림 체크\n\n- ✔ 조회하기\n- ✔ 신청하기")
+    assert "✔ 조회하기\n✔ 신청하기" in convert(cmd) and "· ✔" not in convert(cmd)
+    data_tbl = next(t for t in gbody.split("<table")[1:] if "가입기간" in t)
+    assert '<p style="text-align:center">' in data_tbl                                            # 표 칸은 가운데
     assert "font-size:15px" in to_html(gmd, 1) and 'text-align:center">' not in to_html(gmd, 1).split("<table")[1]  # 14편까지는 그대로
     assert "[큰제목] 1. 첫 결론입니다" in gtext
     print("selftest ok")
@@ -320,5 +351,6 @@ if __name__ == "__main__":
         tone = int(sys.argv[2]) if len(sys.argv) > 2 else tone_of(src)      # 둘째 인자로 색 순번을 직접 줄 수 있다
         num = re.match(r"\d+", src.name)
         template = bool(num) and int(num.group()) >= TEMPLATE_FROM
-        out.write_text(to_html(src.read_text(encoding="utf-8"), tone, template), encoding="utf-8")
+        px = PX_BY_POST.get(int(num.group()), TEMPLATE_PX) if num else TEMPLATE_PX
+        out.write_text(to_html(src.read_text(encoding="utf-8"), tone, template, px), encoding="utf-8")
         print(out, "· 색:", PALETTE[tone % len(PALETTE)][0])

@@ -44,8 +44,12 @@ TEMPLATE_FONT = "16"
 TEMPLATE_CHARS = (2300, 4500)
 
 
+FONT_19 = "19"     # 16편부터 본문·표 19 (2026-10-15 사용자 결정, 벤치마크 본문도 19). 15편만 16으로 발행됐다
+
+
 def body_font(log_no) -> str:
-    return TEMPLATE_FONT if int(log_no) >= TEMPLATE_FROM_LOG else BODY_FONT
+    n = int(log_no)
+    return FONT_19 if n > TEMPLATE_FROM_LOG else TEMPLATE_FONT if n == TEMPLATE_FROM_LOG else BODY_FONT
 
 
 def _get(url):
@@ -128,6 +132,8 @@ def parse(html: str, font: str = BODY_FONT) -> dict:
         "font": size.most_common(1)[0][0] if size else "",
         "center_pct": round(100 * centered / total) if total else 0,
         "tables": len(re.findall(r'se-component se-table[ "]', body)),
+        # 표 폭(본문 대비 %). 에디터가 정한다 — 15편은 붙여넣기에서 100%를 보냈는데 전부 73%로 저장됐다
+        "table_widths": [float(w) for w in re.findall(r'se-section-table[^"]*"\s*style="width:\s*([\d.]+)%', body)],
         "chars": len(text),
         "text": text,
         "images": len(re.findall(r'se-component se-image[ "]', body)),
@@ -159,7 +165,9 @@ def selftest():
         '<p class="se-text-paragraph se-text-paragraph-align-center "><span class="se-fs-fs13 se-ff-">사진 출처</span></p>'
         '<p class="se-text-paragraph se-text-paragraph-align- "><span class="se-fs-fs16 se-ff-">본문 문장입니다. 왼쪽으로 정렬된 열여섯 크기 글자입니다.</span></p>'
         '</div>'
-        '<div class="se-component se-table se-l-default"><table><tr><td>표</td></tr></table></div>'
+        '<div class="se-component se-table se-l-default"><div class="se-component-content">'
+        '<div class="se-section se-section-table se-l-default se-section-align-" style="width: 73.0%;">'
+        '<table><tr><td>표</td></tr></table></div></div></div>'
         '<div class="se-component se-quotation se-l-quotation_line">소제목 둘</div>'
         '<div class="se-component se-oglink"><a href="https://blog.naver.com/education_blog/224422755053">링크</a></div>'
         '</div></div>'
@@ -175,6 +183,7 @@ def selftest():
     assert r["tistory"] == 0, r["tistory"]
     assert 10 < r["chars"] < 80, r["chars"]        # 본문 뒤 스크립트가 글자수에 섞이면 안 된다
     assert (r["font"], r["tables"]) == ("16", 1), (r["font"], r["tables"])
+    assert r["table_widths"] == [73.0], r["table_widths"]   # 에디터가 저장한 표 폭(15편 실제 마크업)
     assert 10 < r["center_pct"] < 20, r["center_pct"]      # 5자(출처) / 36자 — 글자 수로 가중한다
     assert r["off_pct"] == 100, r["off_pct"]               # 본문이 16·폰트 없음 — 전부 어긋난 글자다
 
@@ -192,6 +201,7 @@ def selftest():
                 + '</div></div><script>var gsTagName = "x";</script>', TEMPLATE_FONT)
     assert t16["off_pct"] == 25, t16["off_pct"]            # 15편부터는 16이 기준 — 15가 어긋난 글자다
     assert body_font(TEMPLATE_FROM_LOG) == "16" and body_font(TEMPLATE_FROM_LOG - 1) == BODY_FONT
+    assert body_font(TEMPLATE_FROM_LOG + 1) == "19"
     assert fmt["repeats"] == [] and r["repeats"] == []
     twice = para("se-fs-fs15 se-ff-nanumbarungothic", "배우자 이름으로 계약했다면 기본공제 대상자인지 확인합니다.")
     rep = parse('<div class="se-main-container"><div class="se-component se-text">' + twice + para("x", "짧은 줄") * 2 + twice
@@ -246,6 +256,9 @@ def main(argv):
             problems.append(f"{p['logNo']} 태그가 비어 있다")
         if r["images"] < 2:
             problems.append(f"{p['logNo']} 이미지가 {r['images']}장 (최소 2장)")
+        narrow = [w for w in r["table_widths"] if w < 100]
+        if int(p["logNo"]) >= TEMPLATE_FROM_LOG and narrow:      # 2026-10-15 사용자 요청: PC에서 표가 본문 폭에 꽉 차게
+            problems.append(f"{p['logNo']} 표 {len(narrow)}개가 본문보다 좁다 ({min(narrow):g}%~) — 에디터에서 본문 폭으로 늘린다")
         lo, hi = TEMPLATE_CHARS if int(p["logNo"]) >= TEMPLATE_FROM_LOG else (800, 2800)   # 원고 기준에 경험 문장·출처 줄이 더 붙는다
         if not lo <= r["chars"] <= hi:
             problems.append(f"{p['logNo']} 분량 {r['chars']}자 ({lo}~{hi})")

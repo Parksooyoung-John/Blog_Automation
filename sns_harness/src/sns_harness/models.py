@@ -374,6 +374,11 @@ class QueueItem(BaseModel):
     topic: str = ""
     hook_type: HookType | None = None
     blog_link_used: bool = False
+    thumbnail_number: int | None = None
+    thumbnail_file: str = ""
+    thumbnail_url: str = ""
+    thumbnail_status: str = "미사용"
+    image_review_reason: str = ""
     operator_note: str = ""
     auto_generated: bool = True
     human_edit_required: bool = False

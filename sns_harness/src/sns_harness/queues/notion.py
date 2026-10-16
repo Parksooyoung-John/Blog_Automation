@@ -53,6 +53,12 @@ PROPERTY_TYPES = {
     "상품해시": "rich_text",
     "게시물URL": "url",
     "Hook문구": "rich_text",
+    "게시번호": "number",
+    "썸네일파일": "rich_text",
+    "썸네일URL": "url",
+    "썸네일미리보기": "files",
+    "썸네일상태": "select",
+    "이미지검수사유": "rich_text",
 }
 
 DAILY_PROPERTY_DEFINITIONS = {
@@ -113,6 +119,19 @@ DAILY_PROPERTY_DEFINITIONS = {
     "측정출처": {"rich_text": {}},
     "표본상태": {"select": {"options": [{"name": value} for value in SampleStatus]}},
     "성과확인시각": {"date": {}},
+    "게시번호": {"number": {"format": "number"}},
+    "썸네일파일": {"rich_text": {}},
+    "썸네일URL": {"url": {}},
+    "썸네일미리보기": {"files": {}},
+    "썸네일상태": {
+        "select": {
+            "options": [
+                {"name": n}
+                for n in ("미사용", "번호필요", "준비", "누락", "검수필요", "완료")
+            ]
+        }
+    },
+    "이미지검수사유": {"rich_text": {}},
 }
 
 NAVER_SOURCE_FILTER = {
@@ -323,6 +342,9 @@ class NotionQueue:
             "사람수정필요": {"checkbox": content_type == "운영글"},
             "중복검사키": self._rich(f"{content_type}:{topic}:{text[:80]}"),
             "성과판정": self._select("미측정"),
+            "게시번호": {"number": None}, "썸네일파일": self._rich(""),
+            "썸네일URL": {"url": None}, "썸네일상태": self._select("미사용"),
+            "이미지검수사유": self._rich(""),
         }
         if hook_type:
             properties["Hook유형"] = self._select(hook_type)
@@ -475,6 +497,28 @@ class NotionQueue:
     def save_progress(self, page_id: str, threads_ids: list[str]) -> None:
         self._patch(page_id, {"ThreadsIDs": self._rich(threads_ids_to_text(threads_ids))})
 
+    def set_thumbnail(self, page_id: str, *, number: int, filename: str, url: str,
+                      status: str = "준비", reason: str = "") -> None:
+        self._patch(page_id, {
+            "게시번호": {"number": number}, "썸네일파일": self._rich(filename),
+            "썸네일URL": {"url": url}, "썸네일상태": self._select(status),
+            "썸네일미리보기": {
+                "files": [{
+                    "name": filename,
+                    "type": "external",
+                    "external": {"url": url},
+                }]
+            },
+            "이미지검수사유": self._rich(reason),
+        })
+
+    def hold_thumbnail(self, page_id: str, message: str, *, status: str = "검수필요") -> None:
+        self._patch(page_id, {
+            "상태": self._select(QueueStatus.HOLD.value), "예약시각": {"date": None},
+            "썸네일상태": self._select(status),
+            "이미지검수사유": self._rich(message[:1900]), "오류": self._rich(message[:1900]),
+        })
+
     def complete(self, page_id: str, threads_ids: list[str], published_at: datetime) -> None:
         self.complete_verified(page_id, threads_ids, published_at, "")
 
@@ -551,6 +595,13 @@ class NotionQueue:
             "사람수정필요": {"checkbox": False},
             "중복검사키": self._rich(f"블로그정보:{source.source_key}"),
             "성과판정": self._select("미측정"),
+            "게시번호": {"number": None},
+            "썸네일파일": self._rich(""),
+            "썸네일URL": {"url": None},
+            "썸네일상태": self._select(
+                "번호필요" if source.source_key.startswith("naver:") else "미사용"
+            ),
+            "이미지검수사유": self._rich(""),
         }
 
     def _query(
@@ -646,6 +697,15 @@ class NotionQueue:
             content_goal=self._select_name(props.get("콘텐츠목표", {})) or None,
             experiment_hypothesis=self._plain(props.get("실험가설", {})),
             metrics=self._metrics_from_properties(props),
+            thumbnail_number=props.get("게시번호", {}).get("number"),
+            thumbnail_file=self._plain(props.get("썸네일파일", {})),
+            thumbnail_url=str(props.get("썸네일URL", {}).get("url") or ""),
+            thumbnail_status=self._select_name(props.get("썸네일상태", {})) or (
+                "번호필요"
+                if self._plain(props.get("TistoryID", {})).startswith("naver:")
+                else "미사용"
+            ),
+            image_review_reason=self._plain(props.get("이미지검수사유", {})),
         )
 
     @classmethod

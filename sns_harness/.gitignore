@@ -1,4 +1,6 @@
 .env
+.canva_oauth.json
+.canva_tokens.json
 .venv/
 .coverage
 .pytest_cache/

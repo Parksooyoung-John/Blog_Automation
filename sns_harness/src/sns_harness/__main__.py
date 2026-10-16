@@ -4,11 +4,13 @@ import argparse
 import json
 import sys
 from datetime import UTC, date, datetime, timedelta
+from pathlib import Path
 
 import requests
 
 from sns_harness.agents.reviewer import ComplianceReviewer
 from sns_harness.agents.writer import ThreadsWriter
+from sns_harness.canva import CanvaOAuth, run_local_oauth
 from sns_harness.config import Settings, get_settings
 from sns_harness.operations.github_status import GitHubActionsStatus
 from sns_harness.operations.manager import DailyOperationsManager
@@ -21,6 +23,12 @@ from sns_harness.research.naver_datalab import NaverDataLabClient, default_date_
 from sns_harness.sources.naver import NaverSource
 from sns_harness.sources.router import PublishSourceRouter
 from sns_harness.sources.tistory import TistorySource
+from sns_harness.thumbnails import (
+    ThumbnailError,
+    ThumbnailResolver,
+    build_public_url,
+    resolve_thumbnail,
+)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -30,11 +38,19 @@ def parser() -> argparse.ArgumentParser:
     validate = commands.add_parser("validate-config")
     validate.add_argument(
         "--for-command",
-        choices=("sync", "publish", "prepare-sales", "setup-daily-schema", "all"),
+        choices=("sync", "publish", "prepare-sales", "setup-daily-schema", "canva", "all"),
         default="all",
     )
 
     commands.add_parser("setup-daily-schema")
+
+    thumbnail = commands.add_parser("thumbnail")
+    thumbnail_commands = thumbnail.add_subparsers(dest="thumbnail_operation", required=True)
+    resolve = thumbnail_commands.add_parser("resolve")
+    resolve.add_argument("--post-number", type=int, required=True)
+
+    canva = commands.add_parser("canva-auth")
+    canva.add_argument("--no-browser", action="store_true")
 
     daily = commands.add_parser("generate-daily")
     daily.add_argument("--type", choices=("재테크팁", "질문형", "운영글"), required=True)
@@ -204,6 +220,9 @@ def validate(settings: Settings, command: str) -> int:
     if missing:
         print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
         return 2
+    if command == "canva":
+        print("Canva environment configuration is valid.")
+        return 0
     try:
         errors = notion_queue(settings).validate_schema()
     except requests.HTTPError as exc:
@@ -232,6 +251,20 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     settings = get_settings()
 
+    if args.command == "thumbnail":
+        try:
+            resolution = resolve_thumbnail(args.post_number, settings.thumbnail_dir)
+            url = build_public_url(
+                settings.github_repository, settings.github_assets_ref,
+                settings.github_assets_path, resolution.filename,
+            )
+        except ThumbnailError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        print(json.dumps({"post_number": args.post_number, "filename": resolution.filename,
+                          "path": str(resolution.path), "url": url}, ensure_ascii=False))
+        return 0
+
     if args.command == "validate-config":
         return validate(settings, args.for_command)
 
@@ -242,6 +275,27 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         added = notion_queue(settings).ensure_daily_schema()
         print(json.dumps({"added": added}, ensure_ascii=False, sort_keys=True))
+        return 0
+
+    if args.command == "canva-auth":
+        missing = settings.missing_for("canva")
+        if missing:
+            print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
+            return 2
+        tokens = run_local_oauth(
+            CanvaOAuth(
+                settings.canva_client_id,
+                settings.canva_client_secret,
+                settings.canva_redirect_uri,
+                timeout=settings.request_timeout_seconds,
+            ),
+            Path(".canva_tokens.json"),
+            open_browser=not args.no_browser,
+        )
+        print(json.dumps({
+            "saved": ".canva_tokens.json",
+            "scope": tokens.get("scope", ""),
+        }, ensure_ascii=False))
         return 0
 
     if args.command == "research-topics":
@@ -473,7 +527,11 @@ def main(argv: list[str] | None = None) -> int:
                 timeout=settings.request_timeout_seconds,
             ),
         )
-        orchestrator = HarnessOrchestrator(source, None, None, queue)
+        thumbnail_resolver = ThumbnailResolver(
+            settings.thumbnail_dir, settings.github_repository, settings.github_assets_ref,
+            settings.github_assets_path, timeout=settings.request_timeout_seconds,
+        )
+        orchestrator = HarnessOrchestrator(source, None, None, queue, thumbnail_resolver)
         publisher = ThreadsPublisher(
             settings.threads_user_id,
             settings.threads_access_token,

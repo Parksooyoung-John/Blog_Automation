@@ -16,6 +16,10 @@ def _default_prompt_dir() -> Path:
     return Path(__file__).resolve().parents[2] / "prompts"
 
 
+def _default_thumbnail_dir() -> Path:
+    return Path(__file__).resolve().parents[3] / "assets" / "naver_img"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=(".env", "../.env"),
@@ -35,8 +39,17 @@ class Settings(BaseSettings):
     notion_operations_database_id: str = ""
     threads_user_id: str = ""
     threads_access_token: str = ""
+    canva_client_id: str = ""
+    canva_client_secret: str = ""
+    canva_redirect_uri: str = "http://127.0.0.1:8080/callback"
+    canva_access_token: str = ""
+    canva_refresh_token: str = ""
+    canva_brand_template_id: str = ""
     github_token: str = ""
     github_repository: str = ""
+    github_assets_ref: str = "main"
+    github_assets_path: str = "assets/naver_img"
+    thumbnail_dir: Path = Field(default_factory=_default_thumbnail_dir)
     timezone: str = Field("Asia/Seoul", alias="TZ")
     default_slots: Annotated[tuple[str, ...], NoDecode] = (
         "08:30", "12:30", "16:30", "21:30"
@@ -129,6 +142,11 @@ class Settings(BaseSettings):
                 "NOTION_SNS_DATABASE_ID": self.notion_sns_database_id,
                 "THREADS_USER_ID": self.threads_user_id,
                 "THREADS_ACCESS_TOKEN": self.threads_access_token,
+            },
+            "canva": {
+                "CANVA_CLIENT_ID": self.canva_client_id,
+                "CANVA_CLIENT_SECRET": self.canva_client_secret,
+                "CANVA_REDIRECT_URI": self.canva_redirect_uri,
             },
             "operations-schema": {
                 "NOTION_API_KEY": self.notion_api_key,

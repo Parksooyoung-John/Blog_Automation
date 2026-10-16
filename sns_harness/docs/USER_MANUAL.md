@@ -44,3 +44,15 @@ Threads API에서 확인된 값만 자동 기록합니다. 제공되지 않는 �
 - 네이버에는 읽기 요청만 사용
 - 원문에 없는 금액·기한·수익률 추가 금지
 - API 키와 액세스 토큰을 로그·Notion·Git에 기록하지 않기
+
+## 네이버 썸네일 게시
+
+네이버 `블로그정보` 초안은 `게시번호`를 입력해야 이미지 게시가 가능합니다. 게시번호 17은
+저장소의 `assets/naver_img/17_썸네일.png`와 매칭되며, 첫 Threads 게시물에 이미지와 Hook이
+함께 올라가고 첫 답글에만 원문 링크가 들어갑니다. 파일이 없거나 중복·지원하지 않는 확장자이거나
+GitHub 공개 URL을 확인할 수 없으면 자동 게시하지 않고 `보류`로 기록합니다.
+
+```powershell
+$env:GITHUB_REPOSITORY = "owner/repository"
+.\.venv\Scripts\python.exe -m sns_harness thumbnail resolve --post-number 17
+```

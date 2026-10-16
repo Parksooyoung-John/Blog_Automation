@@ -78,6 +78,11 @@ class ThreadsPublisher:
                 text=text,
                 parent_id=parent_id,
                 topic_tag=item.draft.topic_tag if index == 0 else None,
+                image_url=(
+                    item.thumbnail_url
+                    if index == 0 and item.thumbnail_status in {"준비", "완료"}
+                    else None
+                ),
             )
             ids.append(media_id)
             save_progress(ids)
@@ -161,13 +166,16 @@ class ThreadsPublisher:
         text: str,
         parent_id: str | None,
         topic_tag: str | None,
+        image_url: str | None = None,
     ) -> str:
         payload: dict[str, Any] = {
-            "media_type": "TEXT",
+            "media_type": "IMAGE" if image_url else "TEXT",
             "text": text,
             "auto_publish_text": "true",
             "access_token": self.access_token,
         }
+        if image_url:
+            payload["image_url"] = image_url
         if parent_id:
             payload["reply_to_id"] = parent_id
         if topic_tag:

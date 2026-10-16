@@ -15,6 +15,7 @@ from sns_harness.models import (
     validate_draft_against_source,
 )
 from sns_harness.scheduling.slots import next_available_slots
+from sns_harness.thumbnails import ThumbnailError
 
 
 class Source(Protocol):
@@ -44,11 +45,13 @@ class HarnessOrchestrator:
         writer: Writer | None,
         reviewer: Reviewer | None,
         queue: object,
+        thumbnail_resolver: object | None = None,
     ) -> None:
         self.source = source
         self.writer = writer
         self.reviewer = reviewer
         self.queue = queue
+        self.thumbnail_resolver = thumbnail_resolver
 
     def _generate_blog_review(
         self, source: SourcePost, now: datetime
@@ -64,6 +67,8 @@ class HarnessOrchestrator:
             context = policy(now)
             hook_types = tuple(context["hook_types"])
             include_link = bool(context["include_link"])
+        if source.source_key.startswith("naver:"):
+            include_link = True
         candidate_generator = getattr(self.writer, "generate_candidates", None)
         if candidate_generator is None:
             candidates = [self.writer.generate(source)]  # type: ignore[union-attr]
@@ -264,7 +269,18 @@ class HarnessOrchestrator:
         dry_run: bool = False,
     ) -> dict[str, int]:
         if dry_run:
-            return {"scheduled": 0, "published": 0, "due": len(self.queue.due(now, limit=1))}
+            due = self.queue.due(now, limit=1)
+            result: dict[str, int | str] = {"scheduled": 0, "published": 0, "due": len(due)}
+            if due and self.thumbnail_resolver and due[0].thumbnail_status != "미사용":
+                try:
+                    resolution = self._resolve_thumbnail(due[0], persist=False)
+                    result.update({
+                        "thumbnail_file": resolution.filename,
+                        "thumbnail_url": resolution.public_url,
+                    })
+                except ThumbnailError as exc:
+                    result.update({"blocked": 1, "thumbnail_error": str(exc)})
+            return result  # type: ignore[return-value]
 
         scheduled = self.schedule_approved(now, slots, timezone)
         due = self.queue.due(now, limit=1)
@@ -294,6 +310,28 @@ class HarnessOrchestrator:
             message = "게시 직전 검증 실패: " + "; ".join(issues)
             self.queue.fail(item, message)
             raise RuntimeError(message)
+        try:
+            item = self._resolve_thumbnail(item, persist=True)
+        except ThumbnailError as exc:
+            if hasattr(self.queue, "hold_thumbnail"):
+                self.queue.hold_thumbnail(
+                    item.page_id,
+                    str(exc),
+                    status="누락" if "없습니다" in str(exc) else "검수필요",
+                )
+            raise RuntimeError(str(exc)) from exc
+        if item.thumbnail_status != "미사용":
+            posts = item.draft.posts
+            if len(posts) < 2 or item.source_url not in posts[1] or posts[0].count(item.source_url):
+                message = "썸네일 게시물은 첫 답글에만 블로그 링크가 있어야 합니다."
+                if hasattr(self.queue, "hold_thumbnail"):
+                    self.queue.hold_thumbnail(item.page_id, message)
+                raise RuntimeError(message)
+            if posts[1].count(item.source_url) != 1:
+                message = "첫 답글의 블로그 링크는 정확히 한 번이어야 합니다."
+                if hasattr(self.queue, "hold_thumbnail"):
+                    self.queue.hold_thumbnail(item.page_id, message)
+                raise RuntimeError(message)
         if not self.queue.claim(item):
             return {"scheduled": scheduled, "published": 0, "due": 0}
         try:
@@ -320,3 +358,28 @@ class HarnessOrchestrator:
             "failed": 0,
             "permalink": verification["permalink"],
         }
+
+    def _resolve_thumbnail(self, item, *, persist: bool):
+        if item.thumbnail_status == "미사용":
+            return item
+        if self.thumbnail_resolver is None:
+            raise ThumbnailError("썸네일 resolver가 설정되지 않았습니다.")
+        resolution = self.thumbnail_resolver.resolve(item.thumbnail_number)
+        if not persist:
+            return item.model_copy(update={
+                "thumbnail_file": resolution.filename,
+                "thumbnail_url": resolution.public_url,
+            })
+        self.thumbnail_resolver.verify(resolution.public_url)
+        if hasattr(self.queue, "set_thumbnail"):
+            self.queue.set_thumbnail(
+                item.page_id,
+                number=resolution.number,
+                filename=resolution.filename,
+                url=resolution.public_url,
+            )
+        return item.model_copy(update={
+            "thumbnail_file": resolution.filename,
+            "thumbnail_url": resolution.public_url,
+            "thumbnail_status": "준비",
+        })

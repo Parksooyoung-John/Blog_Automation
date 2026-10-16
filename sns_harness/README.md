@@ -118,3 +118,21 @@ Notion의 `기획키워드`, `검색의도`, `트렌드지수`, `트렌드방향
 
 `NOTION_OPERATIONS_DATABASE_ID`에는 Title 속성명이 `이름`인 별도 데이터베이스 ID를 넣습니다.
 4주·측정 가능 게시물 20건·3개 실험을 충족하기 전에는 콘셉트 실패를 단정하지 않습니다.
+
+## 네이버 썸네일 게시
+
+새 네이버 블로그 정보글은 Notion의 `게시번호`로 `assets/naver_img/{번호}_썸네일.png`를
+정확히 매칭합니다. 첫 게시물은 썸네일과 Hook, 첫 답글은 네이버 원문 링크와 CTA입니다.
+`게시번호`가 없거나 파일·공개 URL 검증에 실패하면 텍스트만으로 대체하지 않고 `보류`로 남깁니다.
+
+```powershell
+# 번호와 GitHub 공개 URL을 외부 상태 변경 없이 확인
+$env:GITHUB_REPOSITORY = "owner/repository"
+.\.venv\Scripts\python.exe -m sns_harness thumbnail resolve --post-number 17
+
+# Notion에 새 속성 추가
+.\.venv\Scripts\python.exe -m sns_harness setup-daily-schema
+```
+
+GitHub Actions 게시 작업에는 `GITHUB_REPOSITORY`가 자동으로 주입되며, 썸네일 파일은 저장소의
+`assets/naver_img` 추적 경로에 있어야 합니다. Mirr·Canva는 보관용이며 신규 자동 게시에는 사용하지 않습니다.

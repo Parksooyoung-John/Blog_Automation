@@ -132,6 +132,21 @@ def test_publishes_root_then_reply_chain_and_saves_each_id() -> None:
     assert all(row["auto_publish_text"] == "true" for row in session.created)
 
 
+def test_publishes_thumbnail_only_on_root_post() -> None:
+    session = FakeSession()
+    draft_item = item()
+    draft_item = draft_item.model_copy(update={
+        "thumbnail_status": "준비",
+        "thumbnail_url": "https://raw.githubusercontent.com/owner/repo/main/17.png",
+    })
+    ThreadsPublisher("user", "token", session=session, sleep=lambda _: None).publish(
+        draft_item, lambda _: None
+    )
+    assert session.created[0]["media_type"] == "IMAGE"
+    assert session.created[0]["image_url"].endswith("17.png")
+    assert all(row["media_type"] == "TEXT" for row in session.created[1:])
+
+
 def test_resumes_after_existing_root_without_reposting_it() -> None:
     session = FakeSession()
     publisher = ThreadsPublisher("user", "token", session=session, sleep=lambda _: None)

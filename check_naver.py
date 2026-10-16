@@ -335,6 +335,27 @@ def template_issues(md: str, body: str, text: str, keyword) -> list:
     return issues
 
 
+# scene 썸네일 구도(2026-10-16). 15~17편이 전부 '식탁에 앉아 턱 괴기'로 나왔다 — 작성 메모 `- 썸네일 구도:`에서
+# 하나를 고르고, 바로 앞 편과 같은 구도는 막는다. 값은 make_naver_images가 프롬프트에 넣는 영어 촬영 지시다.
+COMPOSITION_FROM = 16      # 15편은 구도 줄 없이 발행됐다
+COMPOSITIONS = {
+    "상반신 클로즈업": "close-up of one person from the chest up, facing the viewer, expressive face, softly blurred background",
+    "서서 걷는 장면": "full-body shot of the person standing or walking, for example on a street, in a hallway or at a building entrance",
+    "창가 옆모습": "side view of the person standing by a large window in natural daylight",
+    "소파에 기댄 자세": "wide room view of the person leaning back on a sofa in a relaxed posture",
+    "마주 앉은 두 사람": "two people facing each other and talking, over-the-shoulder view",
+    "위에서 내려다본 책상": "top-down view of a desk with hands holding papers or a phone; faces are not the focus",
+    "야외 장면": "outdoor scene such as a park, a bus stop, a parking lot or in front of a building",
+    "창구 앞": "person standing at a service counter or reception desk, seen from the side",
+}
+
+
+def composition_repeat(comps: dict) -> list:
+    """편 번호 순 구도 → 바로 앞 편과 같은 구도를 쓴 원고. 구도 줄이 없는 편(15편 이전)은 건너뛴다."""
+    seq = [(k, v) for k, v in sorted(comps.items()) if v]
+    return [seq[i][0] for i in range(1, len(seq)) if seq[i][1] == seq[i - 1][1]]
+
+
 # card 썸네일은 보류 중이다(2026-10-15 사용자 결정: 품질이 떨어져, Mirr 연계로 품질을 확보하면 다시 쓴다).
 # 그동안 scene만 쓰므로 3연속 금지는 끄고, 대신 card로 쓴 원고를 막는다. 다시 쓰면 True로 바꾼다.
 CARD_ENABLED = False
@@ -438,11 +459,14 @@ def measure(path, tistory, volumes=None, bench=frozenset()):
         "new_format": not num or int(num.group()) >= LENGTH_FROM,
         "template": bool(num) and int(num.group()) >= TEMPLATE_FROM,
         "thumb_type": memo_value(n, '썸네일 유형'),
+        "composition": memo_value(n, '썸네일 구도'),
     }
     if r["template"]:          # 소제목 9개 중 번호 1~5만 본문 구간이다 — 분량·시각 요소·소제목 문구는 그 다섯으로 본다
         r["format"] = format_issues(r["chars"], 5, r["images"], tables, r["thumb"], LENGTH_TEMPLATE)
         r["format"] += heading_issues(re.findall(r'^## [1-5]\. (.+?)\s*$', b, flags=re.M))
         r["format"] += template_issues(n, b, c, target_keyword(n))
+        if int(num.group()) >= COMPOSITION_FROM and r["thumb_type"] == "scene" and r["composition"] not in COMPOSITIONS:
+            r["format"].append(f'작성 메모 `- 썸네일 구도:`가 목록에 없다 — {" · ".join(COMPOSITIONS)}')
     elif r["new_format"]:
         r["format"] = format_issues(r["chars"], r["heads"], r["images"], tables, r["thumb"])
         if num and int(num.group()) >= HEAD_RULES_FROM:
@@ -663,6 +687,15 @@ def selftest():
     assert any("강조 숫자" in i for i in tissues(card.replace("강조 숫자: 6%", "강조 숫자: 8%"))[0])
     assert thumb_streak({"15": "card", "16": "card", "17": "card", "18": "scene"}, True) == ["17"]
     assert thumb_streak({"15": "card", "16": "scene", "17": "card", "14": None}, True) == []
+    # 썸네일 구도: 바로 앞 편과 같으면 막고, 16편부터는 목록에 있어야 한다
+    assert composition_repeat({"15": None, "16": "야외 장면", "17": "야외 장면", "18": "창구 앞"}) == ["17"]
+    assert composition_repeat({"16": "야외 장면", "17": "창구 앞", "18": "야외 장면"}) == []
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "16_t.md")
+        open(path, "w", encoding="utf-8").write(tdoc)          # tdoc은 scene인데 구도 줄이 없다
+        assert any("썸네일 구도" in i for i in measure(path, set())["format"])
+        open(path, "w", encoding="utf-8").write(tdoc + "- 썸네일 구도: 야외 장면\n")
+        assert not any("썸네일 구도" in i for i in measure(path, set())["format"])
     if not CARD_ENABLED:      # card 보류 중: scene 3연속은 통과, card 원고는 막는다
         assert thumb_streak({"15": "scene", "16": "scene", "17": "scene"}) == []
         assert card_paused({"15": "scene", "16": "card", "14": None}) == ["16"]
@@ -694,7 +727,7 @@ def main():
         print(f'⚠ {VOLUME_CSV} 없음 — 태그 검색량 검사를 건너뜁니다\n')
     bench = sents("".join(open(f, encoding='utf-8').read() for f in glob.glob(f'{BENCH_DIR}/*.txt')))
     allok = True
-    cover_kws, box_titles, thumb_kinds = {}, {}, {}
+    cover_kws, box_titles, thumb_kinds, comps = {}, {}, {}, {}
     for p in sorted(glob.glob('content/naver/*.md')):
         r = measure(p, tistory, volumes, bench)
         if r is None:          # 제목 줄이 없으면 원고가 아니다(메모·프롬프트 파일)
@@ -702,6 +735,7 @@ def main():
         cover_kws[os.path.basename(p)] = r["cover_kw"]
         box_titles[os.path.basename(p)] = r["boxes"]
         thumb_kinds[os.path.basename(p)] = r["thumb_type"]
+        comps[os.path.basename(p)] = r["composition"]
         if r["template"] and not bench:
             print(f'⚠ {BENCH_DIR} 비어 있음 — 벤치마크 문장 중복을 못 봤다. `check_naver.py --fetch-benchmark` 후 다시 실행')
         ok = passes(r)
@@ -740,6 +774,9 @@ def main():
     for name in thumb_streak(thumb_kinds):
         allok = False
         print(f'CHECK 썸네일 유형이 3편 연속 같다: {name}까지')
+    for name in composition_repeat(comps):
+        allok = False
+        print(f'CHECK {name} — 썸네일 구도가 바로 앞 편과 같다. 다른 구도를 고른다')
     for name in card_paused(thumb_kinds):
         allok = False
         print(f'CHECK {name} — card 썸네일은 보류 중이다(CARD_ENABLED). scene으로 만든다')

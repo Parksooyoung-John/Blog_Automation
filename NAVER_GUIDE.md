@@ -344,6 +344,10 @@ AI 브리핑에 인용된 블로그 글 24편과 우리 11편의 라이브 서�
 - **`- 썸네일 장면:`에는 인물 상황 + 돼지 자리를 영어로 쓴다.** 돼지 모습은 프롬프트가 넣으므로 쓰지 않는다.
   - `a mother in her fifties and her adult son looking at a smartphone together at a dining table, the piglet mascot sitting on the table peeking at the phone`
   - `a young woman in a cafe apron checking her phone with a worried look, the piglet mascot on the counter tilting its head`
+- **구도는 글마다 바꾼다(2026-10-16).** 15~17편이 전부 '식탁에 앉아 턱 괴고 종이·폰 보기'로 나왔다. 작성 메모에
+  `- 썸네일 구도:`를 `check_naver.COMPOSITIONS`(상반신 클로즈업 · 서서 걷는 장면 · 창가 옆모습 · 소파에 기댄 자세 ·
+  마주 앉은 두 사람 · 위에서 내려다본 책상 · 야외 장면 · 창구 앞)에서 하나 고른다. 바로 앞 편과 같으면 `check_naver.py`가 막고,
+  프롬프트에는 "턱 괴기·식탁에 앉은 장면을 기본으로 쓰지 않기"가 고정으로 들어간다. 장면 설명도 장소를 매번 다르게 쓴다.
 - 돼지 모습은 시험 30여 장에서 거의 같게 나왔다. 글마다 달라지기 시작하면 기준 그림을 참조 이미지로 넣는 방식을 검토한다.
 
 ### 벤치마크 문장 중복

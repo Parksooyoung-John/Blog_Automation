@@ -236,6 +236,8 @@ MASCOT = ("a chubby pastel-pink baby piglet with a small two-leaf green sprout o
 SCENE_PROMPT = """Square 1:1 image, semi-realistic Korean webtoon digital painting with realistic human proportions and detailed faces, soft painterly shading, cinematic warm indoor lighting, olive, beige and coral tones.
 A small cute mascot character appears beside the people, reacting to the situation, drawn in a soft 3D-like style that blends into the scene: """ + MASCOT + """.
 Scene: {scene}
+Composition: {composition}
+Do not use the pose of resting the chin on a hand, and do not default to people sitting at a dining table.
 Generic characters only (no real people), no brand logos, no real company or government names, marks or documents.
 Keep the top 28% of the image a calm, uncluttered background for the title.
 Title at the top, centered, in a heavy, clean Korean gothic typeface with a thick white outline and a soft drop shadow:
@@ -250,10 +252,16 @@ def memo_value(md: str, key: str):
     return m.group(1) if m else None
 
 
+# 15~17편 썸네일이 전부 '식탁에 앉아 턱 괴고 종이·폰 보기'였다(2026-10-16 사용자 지적). 구도를 작성 메모에서 고르고
+# 바로 앞 편과 같은 구도는 check_naver가 막는다. 목록은 check_naver.COMPOSITIONS와 같은 키를 쓴다.
+from check_naver import COMPOSITIONS
+
+
 def scene_prompt(md: str, num: int) -> str:
     line1, line2 = (t.replace("/", " ").strip() for t in thumb_text(md))
-    return SCENE_PROMPT.format(scene=memo_value(md, "썸네일 장면"), color=PALETTE[num % len(PALETTE)][1],
-                               line1=line1, line2=line2)
+    comp = COMPOSITIONS.get(memo_value(md, "썸네일 구도") or "", "a natural, varied composition that fits the scene")
+    return SCENE_PROMPT.format(scene=memo_value(md, "썸네일 장면"), composition=comp,
+                               color=PALETTE[num % len(PALETTE)][1], line1=line1, line2=line2)
 
 
 def _img_url(photo: Path) -> str:
@@ -675,6 +683,16 @@ CARDS = {
          ("확정 뒤", "지급신청서가 든 안내문 받기", "홈페이지·앱·전화·지사·팩스·우편으로 신청"),
          ("3년 안", "신청해야 받을 수 있음", "국민건강보험법 제91조")],
         "한 병원에서 843만원을 넘긴 몫은 병원 창구에서 바로 빠집니다(사전급여)."),
+    "39_노령연금_10년": hero_card(
+        post_look(17), "노령연금을 받는 기준은 하나", "국민연금법 제61조",
+        "10", "년 이상", "국민연금 가입기간이 10년 이상이면 노령연금을 평생 매달 받습니다. 자동차나 재산은 보지 않습니다.",
+        "10년 미만이면 낸 보험료에 이자를 더해 반환일시금으로 받습니다."),
+    "40_노령연금_기간채우기": checklist_card(
+        post_look(17), "10년이 모자랄 때 확인할 것", "국민연금법 제13조·제78조·제92조",
+        [("보험료를 못 낸 기간이 있는가", "추후납부 — 10년 미만의 범위에서 신청"),
+         ("반환일시금을 받은 적이 있는가", "반납하면 그 기간을 다시 가입기간으로 셉니다"),
+         ("60세가 지났는가", "65세까지 임의계속가입을 신청할 수 있습니다")],
+        "내 가입 이력은 국민연금공단에서 확인합니다."),
 }
 
 # 34번(14편)부터는 글 색 + 글자 1.5배다. ACCENT를 습관대로 쓰면 작은 글자·다른 색 카드가 조용히 나온다.
@@ -818,6 +836,12 @@ def find_cover(num: str):
     return found[0] if found else None
 
 
+def unreferenced(names) -> list:
+    """원고 어디에도 `이름.png`가 없는 카드. 17편에서 40번 카드를 만들어 놓고 원고에 자리를 안 만들었다(2026-10-16)."""
+    text = "".join(p.read_text(encoding="utf-8") for p in (Path(__file__).parent / "content" / "naver").glob("[0-9][0-9]_*.md"))
+    return [n for n in names if f"{n}.png" not in text]
+
+
 def draft_md(num: str):
     drafts = list((Path(__file__).parent / "content" / "naver").glob(f"{num}_*.md"))
     return drafts[0].read_text(encoding="utf-8") if drafts else ""
@@ -946,7 +970,10 @@ if __name__ == "__main__":
             b = pw.chromium.launch(headless=True)
             bad = shoot_cards(b.new_page(device_scale_factor=2), picked)
             b.close()
-        sys.exit(1 if bad else 0)
+        missing = unreferenced(picked)
+        for n in missing:
+            print(f"  ⚠ {n}.png — 어느 원고에도 [이미지] 자리가 없다. 원고에 넣거나 카드를 지운다")
+        sys.exit(1 if bad or missing else 0)
     elif len(sys.argv) > 1:
         # 인자 없이 돌리면 카드 전체를 다시 만든다. `--help`를 쳤다가 발행된 카드까지 전부 다시 그려졌다(2026-10-13).
         sys.exit("사용법: make_naver_images.py [--card 이름 | --gen NN | --thumb NN | --prompt NN | --samples]  (인자 없음 = 전체 재생성)")

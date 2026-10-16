@@ -108,11 +108,17 @@ def parse(html: str, font: str = BODY_FONT) -> dict:
     # 서식: 문단별 정렬과 글자 크기를 글자 수로 가중해 본다(2026-10-09). 기준은 BODY_FONT·왼쪽 정렬이다.
     size, centered, total, spans, off = Counter(), 0, 0, 0, 0
     paras = Counter()
+    # 가운데 정렬은 표 밖 글자로만 센다. 15편부터 표 칸 가운데 정렬은 서식이라(사용자 발행 모양),
+    # 표 칸까지 세면 16·17편이 16~17%로 경고됐다(2026-10-16).
+    table_text = {m for comp in re.split(r'(?=<div class="se-component se-)', body)
+                  if comp.startswith('<div class="se-component se-table')
+                  for m in re.findall(r'<p class="se-text-paragraph[^"]*"[^>]*>(.*?)</p>', comp, flags=re.S)}
     for cls, inner in re.findall(r'<p class="(se-text-paragraph[^"]*)"[^>]*>(.*?)</p>', body, flags=re.S):
         n = len(re.sub(r"<[^>]+>", "", inner).replace("​", "").strip())
-        total += n
         paras[re.sub(r"<[^>]+>", "", inner).replace("​", "").strip()] += 1
-        centered += n if "se-text-paragraph-align-center" in cls else 0
+        if inner not in table_text:
+            total += n
+            centered += n if "se-text-paragraph-align-center" in cls else 0
         for fs, seg in re.findall(r'<span[^>]*class="[^"]*se-fs-fs(\d+)[^"]*"[^>]*>(.*?)</span>', inner, flags=re.S):
             size[fs] += len(re.sub(r"<[^>]+>", "", seg))
         # 크기가 아예 없는 스팬(se-fs- )은 위에서 안 세어진다. 13편은 그런 스팬이 148개 중 37개였는데 통과했다.
@@ -184,6 +190,13 @@ def selftest():
     assert 10 < r["chars"] < 80, r["chars"]        # 본문 뒤 스크립트가 글자수에 섞이면 안 된다
     assert (r["font"], r["tables"]) == ("16", 1), (r["font"], r["tables"])
     assert r["table_widths"] == [73.0], r["table_widths"]   # 에디터가 저장한 표 폭(15편 실제 마크업)
+    ctr = parse('<div class="se-main-container">'
+                '<div class="se-component se-text">' + '<p class="se-text-paragraph se-text-paragraph-align- ">'
+                '<span class="se-fs-fs19 se-ff-nanumbarungothic">' + "가" * 90 + '</span></p></div>'
+                '<div class="se-component se-table"><p class="se-text-paragraph se-text-paragraph-align-center ">'
+                '<span class="se-fs-fs19 se-ff-nanumbarungothic">' + "나" * 60 + '</span></p></div>'
+                '</div><script>var gsTagName = "x";</script>', "19")
+    assert ctr["center_pct"] == 0, ctr["center_pct"]       # 표 칸 가운데 정렬은 세지 않는다
     assert 10 < r["center_pct"] < 20, r["center_pct"]      # 5자(출처) / 36자 — 글자 수로 가중한다
     assert r["off_pct"] == 100, r["off_pct"]               # 본문이 16·폰트 없음 — 전부 어긋난 글자다
 
@@ -280,7 +293,9 @@ def main(argv):
         if len(ids) > 1:
             problems.append(f"{day}에 {len(ids)}편 발행 — 하루 1편 이내")
 
-    for shape, ids in Counter(title_shape(p["title"]) for p in posts if p["title"]).items():
+    # 템플릿 시험 글(15편~)은 제목 형식이 `… 확인할 N가지`로 고정이라 지문이 같을 수밖에 없다 — 이 검사에서 뺀다
+    for shape, ids in Counter(title_shape(p["title"]) for p in posts
+                              if p["title"] and int(p["logNo"]) < TEMPLATE_FROM_LOG).items():
         if ids > 1:
             problems.append(f"제목 구조 '{shape}'가 {ids}편에서 반복된다")
 

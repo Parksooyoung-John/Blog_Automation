@@ -117,31 +117,124 @@ def _framed(accent: str, title: str, sub: str, inner: str, foot: str) -> str:
                      f"<p class='sub'>{sub}</p>{inner}<p class='foot'>{foot}</p></div>")
 
 
+class Card(str):
+    """HTML 카드 + 만든 재료. `--canva-data`가 같은 재료로 Canva 템플릿을 채운다."""
+    kind: str
+    args: tuple
+
+
+def _card(html: str, kind: str, *args) -> Card:
+    c = Card(html)
+    c.kind, c.args = kind, args
+    return c
+
+
 def hero_card(accent, title, sub, big, unit, desc, foot) -> str:
     """답이 되는 숫자 하나를 크게."""
-    return _framed(accent, title, sub, f"<div class='hero'><span class='big'>{big}</span>"
-                   f"<span class='unit'>{unit}</span></div><p class='hero-desc'>{desc}</p>", foot)
+    return _card(_framed(accent, title, sub, f"<div class='hero'><span class='big'>{big}</span>"
+                         f"<span class='unit'>{unit}</span></div><p class='hero-desc'>{desc}</p>", foot),
+                 "hero", title, sub, big, unit, desc, foot)
 
 
 def bar_card(accent, title, sub, rows, foot) -> str:
     """값의 크기 차이를 막대 길이로. rows: [(이름, 표시값, 0~100 비율)]"""
     bars = "".join(f"<div class='b'><div class='lab'><span>{n}</span><b>{v}</b></div>"
                    f"<div class='track'><div class='fill' style='width:{p}%'></div></div></div>" for n, v, p in rows)
-    return _framed(accent, title, sub, f"<div class='bars'>{bars}</div>", foot)
+    return _card(_framed(accent, title, sub, f"<div class='bars'>{bars}</div>", foot), "bar", title, sub, rows, foot)
 
 
 def timeline_card(accent, title, sub, events, foot) -> str:
     """날짜·순서가 있는 절차. events: [(언제, 무엇, 설명)]"""
     evs = "".join(f"<div class='ev'><div class='when'>{w}</div><div class='what'>{x}</div>"
                   f"<div class='why'>{y}</div></div>" for w, x, y in events)
-    return _framed(accent, title, sub, f"<div class='tl'>{evs}</div>", foot)
+    return _card(_framed(accent, title, sub, f"<div class='tl'>{evs}</div>", foot), "timeline", title, sub, events, foot)
 
 
 def checklist_card(accent, title, sub, items, foot) -> str:
     """확인할 것의 목록. items: [(항목, 보충 설명)]"""
     its = "".join(f"<div class='it'><div class='box'>✓</div><div class='t'>{a}<small>{b}</small></div></div>"
                   for a, b in items)
-    return _framed(accent, title, sub, f"<div class='chk'>{its}</div>", foot)
+    return _card(_framed(accent, title, sub, f"<div class='chk'>{its}</div>", foot), "checklist", title, sub, items, foot)
+
+
+# ── Canva 브랜드 템플릿 (18편~) ─────────────────────────────────
+# 자동 채우기는 글자만 넣는다. 색·막대 길이는 채운 뒤 MCP 편집으로 바꾼다 — 그 값도 여기서 같이 낸다.
+CANVA_TEMPLATES = {"hero": "EAHYLqz_cuM", "bar": "EAHYL8tWtzI", "timeline": "EAHYL4ay_c4", "checklist": "EAHYLx47n-M"}
+CANVA_BAR_MAX = 657.9       # 막대 템플릿에서 100%일 때 막대 폭(px)
+CANVA_MAX_LEN = {"desc": 66, "row_label": 18}   # 큰숫자 설명 3줄×22자, 막대 이름 칸 2줄×9자 — 넘치면 칸 밖으로 나간다
+
+
+def _light(hex_color: str, k: float = 0.25) -> str:
+    """글 색을 흰색에 섞은 연한 색 — 짧은 막대용. PALETTE의 배경색은 흰 카드에서 안 보일 만큼 옅다."""
+    rgb = [int(hex_color[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(c * k + 255 * (1 - k)):02x}" for c in rgb)
+
+
+def canva_fields(card: Card) -> dict:
+    """카드 재료 → 템플릿 필드. 템플릿 칸 수와 안 맞으면 ValueError — 칸이 남거나 모자라면 시안 글자가 그대로 남는다."""
+    k, a = card.kind, card.args
+    if k == "hero":
+        title, sub, big, unit, desc, foot = a
+        if len(str(big)) > 2:      # 3자리부터 숫자가 오른쪽 단위·설명을 덮었다(큰숫자 템플릿 시험)
+            raise ValueError(f"큰 숫자는 2자리까지: {big}")
+        if len(desc) > CANVA_MAX_LEN["desc"]:
+            raise ValueError(f"설명 {len(desc)}자 > {CANVA_MAX_LEN['desc']}자: {desc}")
+        return {"title": title, "sub": sub, "big": str(big), "unit": unit, "desc": desc, "foot": foot}
+    title, sub, rows, foot = a
+    need = {"bar": 2, "timeline": 4, "checklist": 3}[k]
+    if len(rows) != need:
+        raise ValueError(f"{k} 템플릿은 {need}칸인데 {len(rows)}개다")
+    f = {"title": title, "sub": sub, "foot": foot}
+    for i, r in enumerate(rows, 1):
+        if k == "bar":
+            if len(r[0]) > CANVA_MAX_LEN["row_label"]:
+                raise ValueError(f"막대 이름 {len(r[0])}자 > {CANVA_MAX_LEN['row_label']}자: {r[0]}")
+            f[f"row{i}_label"], f[f"row{i}_value"] = r[0], r[1]
+        elif k == "timeline":
+            f[f"step{i}"] = f"{r[0]}\n{r[1]}"     # 설명(r[2])은 칸이 좁아 뺀다
+        else:
+            f[f"item{i}"], f[f"item{i}_desc"] = r
+    return f
+
+
+def canva_data(num: int) -> list:
+    """그 편 원고에 자리가 있는 카드들의 템플릿 ID·필드·색. 세션에서 이 값으로 자동 채우기 → 색 → 내보내기를 한다."""
+    md = draft_md(f"{num:02d}")
+    _, main_c, _ = PALETTE[num % len(PALETTE)]
+    out = []
+    for name, card in CARDS.items():
+        if f"{name}.png" not in md or not isinstance(card, Card):
+            continue
+        item = {"card": name, "kind": card.kind, "template": CANVA_TEMPLATES[card.kind],
+                "fields": canva_fields(card), "color": main_c}
+        if card.kind == "bar":
+            item["light"] = _light(main_c)
+            item["bar_widths"] = [round(CANVA_BAR_MAX * r[2] / 100, 1) for r in card.args[2]]
+        out.append(item)
+    return out
+
+
+def canva_selftest():
+    h = hero_card("#000", "제목", "부제", "10", "년", "설명", "주석")
+    assert canva_fields(h) == {"title": "제목", "sub": "부제", "big": "10", "unit": "년", "desc": "설명", "foot": "주석"}
+    b = bar_card("#000", "t", "s", [("가", "18만원", 57), ("나", "31만원", 100)], "f")
+    assert canva_fields(b)["row2_value"] == "31만원" and b.args[2][0][2] == 57
+    t = timeline_card("#000", "t", "s", [("1월", "내기", "x"), ("2월", "확정", "y"), ("3월", "받기", "z"), ("4월", "끝", "w")], "f")
+    assert canva_fields(t)["step3"] == "3월\n받기"
+    c = checklist_card("#000", "t", "s", [("a", "a설명"), ("b", "b설명"), ("c", "c설명")], "f")
+    assert canva_fields(c)["item2_desc"] == "b설명"
+    for bad in (hero_card("#000", "t", "s", "843", "만원", "d", "f"),
+                checklist_card("#000", "t", "s", [("a", "b")], "f"),
+                hero_card("#000", "t", "s", "3", "년", "가" * 67, "f"),
+                bar_card("#000", "t", "s", [("총급여 6,000만원인 사람이 냄 (문턱 180만원)", "18만원", 57), ("나", "1", 100)], "f")):
+        try:
+            canva_fields(bad)
+            raise AssertionError("칸 수·자릿수 위반을 못 잡음")
+        except ValueError:
+            pass
+    assert _light("#1a5276") == "#c6d4dd"
+    assert isinstance(CARDS["40_노령연금_기간채우기"], Card) and set(CANVA_TEMPLATES) == {"hero", "bar", "timeline", "checklist"}
+    print("selftest OK")
 
 
 # ── 제목 썸네일 ──────────────────────────────────────────────────
@@ -961,6 +1054,14 @@ if __name__ == "__main__":
         sys.exit(prompt_cmd(sys.argv[sys.argv.index("--prompt") + 1]))
     elif "--thumb" in sys.argv:
         sys.exit(thumb_cmd(sys.argv[sys.argv.index("--thumb") + 1]))
+    elif "--selftest" in sys.argv:
+        canva_selftest()
+    elif "--canva-data" in sys.argv:
+        import json
+        try:
+            print(json.dumps(canva_data(int(sys.argv[sys.argv.index("--canva-data") + 1])), ensure_ascii=False, indent=1))
+        except ValueError as e:
+            sys.exit(f"카드를 템플릿에 못 맞춤: {e}")
     elif "--card" in sys.argv:      # 이름 일부로 골라 그 카드만 다시 만든다
         key = sys.argv[sys.argv.index("--card") + 1]
         picked = {k: v for k, v in CARDS.items() if key in k}
@@ -976,6 +1077,6 @@ if __name__ == "__main__":
         sys.exit(1 if bad or missing else 0)
     elif len(sys.argv) > 1:
         # 인자 없이 돌리면 카드 전체를 다시 만든다. `--help`를 쳤다가 발행된 카드까지 전부 다시 그려졌다(2026-10-13).
-        sys.exit("사용법: make_naver_images.py [--card 이름 | --gen NN | --thumb NN | --prompt NN | --samples]  (인자 없음 = 전체 재생성)")
+        sys.exit("사용법: make_naver_images.py [--card 이름 | --canva-data NN | --gen NN | --thumb NN | --prompt NN | --samples | --selftest]  (인자 없음 = 전체 재생성)")
     else:
         main()

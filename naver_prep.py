@@ -9,6 +9,7 @@
 import glob
 import re
 import shutil
+import subprocess
 import sys
 import webbrowser
 from pathlib import Path
@@ -28,7 +29,15 @@ def image_paths(md: str) -> list:
     return list(dict.fromkeys(re.findall(r"assets/naver_img/[^`\s\]]+\.png", body)))
 
 
+def branch() -> str:
+    return subprocess.run(["git", "branch", "--show-current"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+
+
 def prep(num: str) -> int:
+    # 2026-10-16 다른 세션이 이 폴더를 SNS 브랜치(codex/canva-rest-oauth)로 바꿔 두었고, 다음 블로그 작업이 그 위에서 시작됐다.
+    if branch() != "main":
+        print(f"이 폴더가 '{branch()}' 브랜치다 — 블로그 작업은 main에서. git checkout main && git pull 후 다시 실행")
+        return 1
     drafts = sorted((ROOT / "content" / "naver").glob(f"{num}_*.md"))
     if not drafts:
         print(f"content/naver/{num}_*.md 원고가 없습니다")

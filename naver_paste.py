@@ -55,7 +55,8 @@ TABLE = '<table width="100%" style="border-collapse:collapse;width:100%">'
 BODY_PX = 15      # verify_naver.BODY_FONT와 같은 값(16은 폰에서 한두 글자 줄바꿈이 잦아 15로)
 BODY_FONT = "나눔바른고딕"      # 라이브 글의 se-ff-nanumbarungothic
 # 문단·표 셀·빈 줄 전부에 싣는다. 13편은 표 셀과 빈 줄에 크기가 없어 스팬 148개 중 37개가 에디터 기본값으로 들어갔다.
-SPAN = f'<span style="font-size:{BODY_PX}px;font-family:\'{BODY_FONT}\',NanumBarunGothic">'
+# 굵기도 싣는다. 18편을 지우고 다시 붙여넣었을 때 본문 전체가 굵게 들어갔다 — 지운 자리에 남은 맨 위 질문의 볼드를 이어받았다(2026-10-17).
+SPAN = f'<span style="font-size:{BODY_PX}px;font-family:\'{BODY_FONT}\',NanumBarunGothic;font-weight:normal">'
 BLANK = f"<p>{SPAN}<br></span></p>"
 
 
@@ -68,6 +69,9 @@ HOOK = ('<p style="text-align:center"><span style="font-size:24px;font-family:\'
 BIG_HEAD_RE = re.compile(r"(\d+\. |🐷 )")
 BIG_HEAD = ('<p><span style="font-size:24px;font-family:\'나눔명조\',NanumMyeongjo;color:{color}">'
             '<b>{text}</b></span></p>')
+# 번호 소제목·Q&A 앞 가로 구분선(본문 폭 전체). 15~18편은 에디터에서 손으로 넣었다 — 2026-10-17 사용자 요청으로 붙여넣기에 싣는다.
+# 에디터가 <hr>을 구분선 컴포넌트로 받는지는 18편 붙여넣기로 확인한다. 안 들어가면 체크리스트대로 손으로 넣는다.
+HR = '<hr style="border:none;border-top:1px solid #cccccc;width:100%">'
 # 본문·표·박스 크기: 14편까지 15(BODY_PX), 15편 16(사용자가 16으로 발행), 16편부터 19(2026-10-15 사용자 결정 — 벤치마크 본문도 19)
 TEMPLATE_PX = 19
 PX_BY_POST = {15: 16}
@@ -90,7 +94,7 @@ TAG_RE = re.compile(r"^#\S+(?: +#\S+)+$", re.M)
 
 CHECKLIST = """· 태그 10개 입력 — 1편에서 빠뜨렸던 항목이다. 발행 설정 창에서 확인
 · [소제목] 줄은 '인용구'(선) 스타일 적용 후 표시는 지우기 (앞뒤 빈 줄은 넣지 말 것)
-· (15편~) 번호 소제목과 🐷 Q&A 앞에 구분선. 살림 체크·정리 띠와 근거 자료 박스는 붙여넣기로 들어간다(16편~)
+· (15편~) 번호 소제목과 🐷 Q&A 앞 가로 구분선이 들어갔는지 확인(18편~ 붙여넣기로 들어간다). 없으면 손으로. 살림 띠·근거 박스도 붙여넣기로 들어간다(16편~)
 · (15편~) 표·박스가 본문보다 좁게 들어가면 본문 폭에 꽉 차게 늘린다 (15편은 전부 73%였다)
 · (15편~) 내부 링크 소개 문장은 인용구(말풍선)로
 · [이미지] 자리에 PNG 넣기. 첫 이미지가 썸네일이 된다
@@ -206,7 +210,7 @@ def to_html(md: str, tone: int = 0, template: bool = False, px: int = TEMPLATE_P
         if k == 0 and HOOK_RE.fullmatch(blk):       # 15편~ 맨 위 질문
             paras.append(HOOK.format(html.escape(blk)))
         elif blk.startswith("[큰제목] "):
-            paras.append(BIG_HEAD.format(color=MAIN, text=_rich(blk[len("[큰제목] "):])))
+            paras.append(HR + BIG_HEAD.format(color=MAIN, text=_rich(blk[len("[큰제목] "):])))
         elif blk.startswith("[띠제목] "):
             paras.append(TABLE + BAND_HEAD.format(main=MAIN, tint=tint, text=_rich(blk[len("[띠제목] "):])) + "</table>")
         elif is_table(blk):       # 에디터가 자기 표로 바꾸도록 테두리만 준다
@@ -316,18 +320,21 @@ def selftest():
     assert hpage.count('text-align:center') == 1
     assert HOOK.split("{")[0] not in to_html(md.replace("도입부입니다.", '도입부입니다.\n\n"중간에 있는 질문은요?"'))  # 맨 위만
     assert "font-size:24px" in HOOK and "나눔명조" in HOOK
+    assert all("나눔명조" in h for h in (BIG_HEAD, BAND_HEAD)), "소제목 폰트는 나눔명조(2026-10-17 사용자 규칙)"
 
     # 15편 발행 모양: 번호 소제목·🐷 Q&A는 24·명조·글 색 글자로, 나머지 소제목은 인용구용 [소제목] 표시로
     gmd = tmd.replace("## 첫 소제목", "## 1. 첫 결론입니다\n\n## 오늘의 살림 정리\n\n## 🐷 새싹돼지 Q&A")
     gpage, gtext = to_html(gmd, 1, template=True), convert(gmd)
     main1 = PALETTE[1][1]
-    assert BIG_HEAD.format(color=main1, text="1. 첫 결론입니다") in gpage
-    assert BIG_HEAD.format(color=main1, text="🐷 새싹돼지 Q&amp;A") in gpage
+    assert HR + BIG_HEAD.format(color=main1, text="1. 첫 결론입니다") in gpage                     # 번호 소제목 앞 구분선
+    assert HR + BIG_HEAD.format(color=main1, text="🐷 새싹돼지 Q&amp;A") in gpage
     gbody = gpage.split('id="body">')[1].split("</section>")[0]
     assert "[소제목]" not in gbody and "[큰제목]" not in gbody and "[띠제목]" not in gbody
     tint1 = PALETTE[1][2]
     assert BAND_HEAD.format(main=main1, tint=tint1, text="오늘의 살림 정리") in gbody              # 살림 소제목은 띠로
     assert f"font-size:{TEMPLATE_PX}px" in gbody and "font-size:15px" not in gbody                  # 본문·표·빈 줄 전부 19
+    body_spans = re.findall(rf'<span style="font-size:{TEMPLATE_PX}px[^"]*">', gbody)
+    assert body_spans and all("font-weight:normal" in s for s in body_spans), "본문 글자에 굵기가 없으면 에디터의 볼드를 이어받는다"
     assert "font-size:16px" in to_html(gmd, 1, template=True, px=16)                                  # 15편은 16으로 발행
     smd = gmd.replace("## 🐷 새싹돼지 Q&A", "## 🐷 새싹돼지 Q&A\n\n## 근거 자료\n\n- 국민건강보험법 제91조\n- 공단 안내")
     sbody = to_html(smd, 1, template=True).split('id="body">')[1].split("</section>")[0]
@@ -342,6 +349,17 @@ def selftest():
     print("selftest ok")
 
 
+def page_for(src: Path, tone: int = None) -> str:
+    """원고 파일 → 붙여넣기 HTML. 편 번호로 템플릿 여부·글자 크기를 정한다.
+
+    naver_prep.py가 to_html(md, tone)만 불러 18편 파일이 15px·템플릿 서식 없이 나왔다(2026-10-17).
+    붙여넣기 파일을 만드는 곳은 전부 이 함수를 거친다."""
+    num = re.match(r"\d+", src.name)
+    template = bool(num) and int(num.group()) >= TEMPLATE_FROM
+    px = PX_BY_POST.get(int(num.group()), TEMPLATE_PX) if num else TEMPLATE_PX
+    return to_html(src.read_text(encoding="utf-8"), tone_of(src) if tone is None else tone, template, px)
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "--selftest":
         selftest()
@@ -349,8 +367,5 @@ if __name__ == "__main__":
         src = Path(sys.argv[1])
         out = src.with_name(src.stem + "_붙여넣기용.html")
         tone = int(sys.argv[2]) if len(sys.argv) > 2 else tone_of(src)      # 둘째 인자로 색 순번을 직접 줄 수 있다
-        num = re.match(r"\d+", src.name)
-        template = bool(num) and int(num.group()) >= TEMPLATE_FROM
-        px = PX_BY_POST.get(int(num.group()), TEMPLATE_PX) if num else TEMPLATE_PX
-        out.write_text(to_html(src.read_text(encoding="utf-8"), tone, template, px), encoding="utf-8")
+        out.write_text(page_for(src, tone), encoding="utf-8")
         print(out, "· 색:", PALETTE[tone % len(PALETTE)][0])

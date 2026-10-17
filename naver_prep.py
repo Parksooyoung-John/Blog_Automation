@@ -80,7 +80,7 @@ def prep(num: str) -> int:
         return 1
 
     page = src.with_name(src.stem + "_붙여넣기용.html")
-    page.write_text(naver_paste.to_html(md, naver_paste.tone_of(src)), encoding="utf-8")
+    page.write_text(naver_paste.page_for(src), encoding="utf-8")
 
     out = WS / f"publish_{num}"
     shutil.rmtree(out, ignore_errors=True)
@@ -101,6 +101,13 @@ def selftest():
           "## 작성 메모 (발행 시 삭제)\n\n- 카드 `assets/naver_img/99_메모에만.png`\n")
     assert image_paths(md) == ["assets/naver_img/13_썸네일.png", "assets/naver_img/32_연말정산_월세_공제액.png",
                                "assets/naver_img/33_연말정산_월세_조건.png"], image_paths(md)
+    # 붙여넣기 파일이 원고 편 번호의 서식으로 나오는지 — 18편이 15px·템플릿 없이 나왔다(2026-10-17)
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        for name, px in (("18_t.md", "19"), ("15_t.md", "16"), ("14_t.md", "15")):
+            (Path(d) / name).write_text(md.replace("## 작성 메모", "#가 #나 #다 #라 #마\n\n---\n\n## 작성 메모"), encoding="utf-8")
+            html = naver_paste.page_for(Path(d) / name)
+            assert f"font-size:{px}px" in html, (name, px)
     print("selftest ok")
 
 

@@ -274,9 +274,11 @@ class HarnessOrchestrator:
             if due and self.thumbnail_resolver and due[0].thumbnail_status != "미사용":
                 try:
                     resolution = self._resolve_thumbnail(due[0], persist=False)
+                    filename = getattr(resolution, "filename", resolution.thumbnail_file)
+                    public_url = getattr(resolution, "public_url", resolution.thumbnail_url)
                     result.update({
-                        "thumbnail_file": resolution.filename,
-                        "thumbnail_url": resolution.public_url,
+                        "thumbnail_file": filename,
+                        "thumbnail_url": public_url,
                     })
                 except ThumbnailError as exc:
                     result.update({"blocked": 1, "thumbnail_error": str(exc)})
@@ -305,7 +307,12 @@ class HarnessOrchestrator:
             message = "상품 정보가 승인 후 변경되었습니다. 판매 초안을 다시 생성해야 합니다."
             self.queue.fail(item, message)
             raise RuntimeError(message)
-        issues = validate_draft_against_source(item.draft, current_source, product)
+        issues = validate_draft_against_source(
+            item.draft,
+            current_source,
+            product,
+            allow_two_post_thread=item.thumbnail_status != "미사용",
+        )
         if issues:
             message = "게시 직전 검증 실패: " + "; ".join(issues)
             self.queue.fail(item, message)
@@ -362,6 +369,11 @@ class HarnessOrchestrator:
     def _resolve_thumbnail(self, item, *, persist: bool):
         if item.thumbnail_status == "미사용":
             return item
+        if item.thumbnail_file and item.thumbnail_url:
+            if self.thumbnail_resolver is None:
+                raise ThumbnailError("썸네일 공개 URL을 검증할 resolver가 설정되지 않았습니다.")
+            self.thumbnail_resolver.verify(item.thumbnail_url)
+            return item.model_copy(update={"thumbnail_status": "준비"})
         if self.thumbnail_resolver is None:
             raise ThumbnailError("썸네일 resolver가 설정되지 않았습니다.")
         resolution = self.thumbnail_resolver.resolve(item.thumbnail_number)

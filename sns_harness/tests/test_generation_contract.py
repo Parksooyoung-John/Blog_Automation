@@ -49,6 +49,17 @@ def test_two_post_thread_requires_product_context() -> None:
     )
 
 
+def test_two_post_thumbnail_thread_is_allowed() -> None:
+    draft = ThreadsDraft(
+        format=PostFormat.THREAD,
+        posts=["요약", f"원문 {source().url}"],
+    )
+
+    assert validate_draft_against_source(
+        draft, source(), allow_two_post_thread=True
+    ) == []
+
+
 def test_thread_link_only_in_last_reply() -> None:
     draft = ThreadsDraft(
         format="thread",

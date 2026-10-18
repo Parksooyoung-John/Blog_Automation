@@ -511,6 +511,8 @@ def validate_draft_against_source(
     draft: ThreadsDraft,
     source: SourcePost | None,
     product: ProductOffer | None = None,
+    *,
+    allow_two_post_thread: bool = False,
 ) -> list[str]:
     issues: list[str] = []
     combined = "\n".join(draft.posts)
@@ -554,7 +556,7 @@ def validate_draft_against_source(
         if source.url not in draft.posts[0] or links.count(source.url) != 1:
             issues.append("single post must include the canonical source URL once")
     else:
-        if len(draft.posts) == 2:
+        if len(draft.posts) == 2 and not allow_two_post_thread:
             issues.append("non-product thread requires 3-5 posts")
         link_post = 1 if source.source is SourceKind.NAVER else len(draft.posts) - 1
         if any(source.url in text for index, text in enumerate(draft.posts) if index != link_post):

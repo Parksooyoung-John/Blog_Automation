@@ -28,6 +28,8 @@ class FakeSession:
             return FakeResponse({"data": []})
         if method == "POST" and url.endswith("/threads"):
             self.created.append(kwargs["data"])
+            return FakeResponse({"id": f"container-{len(self.created)}"})
+        if method == "POST" and url.endswith("/threads_publish"):
             return FakeResponse({"id": f"media-{len(self.created)}"})
         raise AssertionError((method, url, kwargs))
 
@@ -129,7 +131,7 @@ def test_publishes_root_then_reply_chain_and_saves_each_id() -> None:
     assert session.created[1]["reply_to_id"] == "media-1"
     assert session.created[2]["reply_to_id"] == "media-2"
     assert session.created[0]["topic_tag"] == "취득세"
-    assert all(row["auto_publish_text"] == "true" for row in session.created)
+    assert all("auto_publish_text" not in row for row in session.created)
 
 
 def test_publishes_thumbnail_only_on_root_post() -> None:

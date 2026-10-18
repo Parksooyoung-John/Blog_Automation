@@ -171,7 +171,6 @@ class ThreadsPublisher:
         payload: dict[str, Any] = {
             "media_type": "IMAGE" if image_url else "TEXT",
             "text": text,
-            "auto_publish_text": "true",
             "access_token": self.access_token,
         }
         if image_url:
@@ -180,10 +179,18 @@ class ThreadsPublisher:
             payload["reply_to_id"] = parent_id
         if topic_tag:
             payload["topic_tag"] = topic_tag
-        published = self._request("POST", f"/{self.user_id}/threads", data=payload)
+        created = self._request("POST", f"/{self.user_id}/threads", data=payload)
+        creation_id = str(created.get("id") or "")
+        if not creation_id:
+            raise ThreadsAPIError("Threads media container response did not include an id")
+        published = self._request(
+            "POST",
+            f"/{self.user_id}/threads_publish",
+            data={"creation_id": creation_id, "access_token": self.access_token},
+        )
         media_id = str(published.get("id") or "")
         if not media_id:
-            raise ThreadsAPIError("Threads auto-publish response did not include an id")
+            raise ThreadsAPIError("Threads publish response did not include a media id")
         return media_id
 
     def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:

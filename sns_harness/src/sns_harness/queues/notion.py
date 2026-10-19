@@ -512,6 +512,22 @@ class NotionQueue:
             "이미지검수사유": self._rich(reason),
         })
 
+    def set_cards(self, page_id: str, *, number: int, filenames: list[str], urls: list[str],
+                  status: str = "준비") -> None:
+        # No new Notion property: the preview `files` column already holds every slide URL,
+        # and `_to_item` reads them back as card_urls.
+        self._patch(page_id, {
+            "게시번호": {"number": number}, "썸네일파일": self._rich("\n".join(filenames)),
+            "썸네일URL": {"url": urls[0]}, "썸네일상태": self._select(status),
+            "썸네일미리보기": {
+                "files": [
+                    {"name": name, "type": "external", "external": {"url": url}}
+                    for name, url in zip(filenames, urls, strict=True)
+                ]
+            },
+            "이미지검수사유": self._rich(""),
+        })
+
     def hold_thumbnail(self, page_id: str, message: str, *, status: str = "검수필요") -> None:
         self._patch(page_id, {
             "상태": self._select(QueueStatus.HOLD.value), "예약시각": {"date": None},
@@ -700,6 +716,7 @@ class NotionQueue:
             thumbnail_number=props.get("게시번호", {}).get("number"),
             thumbnail_file=self._plain(props.get("썸네일파일", {})),
             thumbnail_url=str(props.get("썸네일URL", {}).get("url") or ""),
+            card_urls=self._card_urls(props.get("썸네일미리보기", {})),
             thumbnail_status=self._select_name(props.get("썸네일상태", {})) or (
                 "번호필요"
                 if self._plain(props.get("TistoryID", {})).startswith("naver:")
@@ -707,6 +724,16 @@ class NotionQueue:
             ),
             image_review_reason=self._plain(props.get("이미지검수사유", {})),
         )
+
+    @staticmethod
+    def _card_urls(prop: dict[str, Any]) -> list[str]:
+        urls = [
+            str((file.get("external") or {}).get("url") or "")
+            for file in prop.get("files", [])
+            if file.get("type") == "external"
+        ]
+        # a lone preview image is the legacy single thumbnail, not a carousel
+        return [url for url in urls if url] if len(urls) >= 2 else []
 
     @classmethod
     def _metrics_from_properties(cls, props: dict[str, Any]) -> dict[str, PostMetrics]:

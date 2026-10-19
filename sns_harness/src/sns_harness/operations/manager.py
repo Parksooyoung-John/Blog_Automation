@@ -117,7 +117,7 @@ class DailyOperationsManager:
 
     @staticmethod
     def _views(item: QueueItem) -> int | None:
-        for window in ("72h", "24h"):
+        for window in ("24h", "72h"):
             metric = item.metrics.get(window)
             if metric and metric.views is not None:
                 return metric.views
@@ -125,7 +125,7 @@ class DailyOperationsManager:
 
     @staticmethod
     def _actions(item: QueueItem) -> int:
-        metric = item.metrics.get("72h") or item.metrics.get("24h")
+        metric = item.metrics.get("24h") or item.metrics.get("72h")
         if not metric:
             return 0
         return sum(

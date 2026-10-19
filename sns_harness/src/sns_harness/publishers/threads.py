@@ -81,6 +81,13 @@ class ThreadsPublisher:
                 image_url=(
                     item.thumbnail_url
                     if index == 0 and item.thumbnail_status in {"준비", "완료"}
+                    and len(item.card_urls) < 2
+                    else None
+                ),
+                carousel_urls=(
+                    item.card_urls
+                    if index == 0 and item.thumbnail_status in {"준비", "완료"}
+                    and len(item.card_urls) >= 2
                     else None
                 ),
             )
@@ -167,6 +174,7 @@ class ThreadsPublisher:
         parent_id: str | None,
         topic_tag: str | None,
         image_url: str | None = None,
+        carousel_urls: list[str] | None = None,
     ) -> str:
         payload: dict[str, Any] = {
             "media_type": "IMAGE" if image_url else "TEXT",
@@ -175,6 +183,10 @@ class ThreadsPublisher:
         }
         if image_url:
             payload["image_url"] = image_url
+        if carousel_urls:
+            children = [self._create_carousel_item(url) for url in carousel_urls]
+            payload["media_type"] = "CAROUSEL"
+            payload["children"] = ",".join(children)
         if parent_id:
             payload["reply_to_id"] = parent_id
         if topic_tag:
@@ -183,6 +195,8 @@ class ThreadsPublisher:
         creation_id = str(created.get("id") or "")
         if not creation_id:
             raise ThreadsAPIError("Threads media container response did not include an id")
+        if carousel_urls:
+            self._wait_until_ready(creation_id)
         published = self._request(
             "POST",
             f"/{self.user_id}/threads_publish",
@@ -192,6 +206,41 @@ class ThreadsPublisher:
         if not media_id:
             raise ThreadsAPIError("Threads publish response did not include a media id")
         return media_id
+
+    def _create_carousel_item(self, image_url: str) -> str:
+        created = self._request(
+            "POST",
+            f"/{self.user_id}/threads",
+            data={
+                "media_type": "IMAGE",
+                "image_url": image_url,
+                "is_carousel_item": "true",
+                "access_token": self.access_token,
+            },
+        )
+        container_id = str(created.get("id") or "")
+        if not container_id:
+            raise ThreadsAPIError("Threads carousel item response did not include an id")
+        self._wait_until_ready(container_id)
+        return container_id
+
+    def _wait_until_ready(self, container_id: str) -> None:
+        # Threads documents ~30s of processing before a carousel can be published.
+        for _ in range(12):
+            payload = self._request(
+                "GET",
+                f"/{container_id}",
+                params={"fields": "status,error_message", "access_token": self.access_token},
+            )
+            state = str(payload.get("status") or "")
+            if state in {"FINISHED", "PUBLISHED"}:
+                return
+            if state in {"ERROR", "EXPIRED"}:
+                raise ThreadsAPIError(
+                    f"Threads container {state}: {payload.get('error_message') or ''}"
+                )
+            self.sleep(5)
+        raise ThreadsAPIError("Threads container was not ready in time", retryable=True)
 
     def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         last_error = ""

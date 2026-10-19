@@ -377,6 +377,7 @@ class QueueItem(BaseModel):
     thumbnail_number: int | None = None
     thumbnail_file: str = ""
     thumbnail_url: str = ""
+    card_urls: list[str] = Field(default_factory=list)   # card-news slides, cover first
     thumbnail_status: str = "미사용"
     image_review_reason: str = ""
     operator_note: str = ""

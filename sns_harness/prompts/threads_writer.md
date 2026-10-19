@@ -13,6 +13,14 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
   most two sentences. Do not repeat the source title. Name a concrete topic from the
   title, such as 국민연금, 건강보험료, 자동차, ISA, or 근로장려금; never use a vague
   hook that could fit any article.
+- Performance rules from 24h views (see `docs/THREADS_PERFORMANCE.md`; n is small, so treat
+  them as tendencies): aim for `hook_text` of about 40 characters in one sentence, with the
+  concrete topic noun first. Do not open with a paragraph of declarative explanation; the
+  first post stays at the hook plus one short line and the explanation moves to later posts.
+  For seasonal topics such as 연말정산, lead with the concrete amount or condition rather than
+  a general framing.
+- When a card-news carousel is attached to the first post, do not repeat what the cards show;
+  write the hook and one line that promises what the cards answer.
 - Use short conversational Korean sentences and natural line breaks. Do not add a title.
 - Trustworthy hooks may use curiosity, a source-backed number, a common mistake,
   comparison, or one question. Never fabricate personal experience.

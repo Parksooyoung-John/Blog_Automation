@@ -56,7 +56,7 @@ PROPERTY_TYPES = {
     "게시번호": "number",
     "썸네일파일": "rich_text",
     "썸네일URL": "url",
-    "썸네일미리보기": "files",
+    "카드미리보기": "files",
     "썸네일상태": "select",
     "이미지검수사유": "rich_text",
 }
@@ -122,7 +122,7 @@ DAILY_PROPERTY_DEFINITIONS = {
     "게시번호": {"number": {"format": "number"}},
     "썸네일파일": {"rich_text": {}},
     "썸네일URL": {"url": {}},
-    "썸네일미리보기": {"files": {}},
+    "카드미리보기": {"files": {}},
     "썸네일상태": {
         "select": {
             "options": [
@@ -502,7 +502,7 @@ class NotionQueue:
         self._patch(page_id, {
             "게시번호": {"number": number}, "썸네일파일": self._rich(filename),
             "썸네일URL": {"url": url}, "썸네일상태": self._select(status),
-            "썸네일미리보기": {
+            "카드미리보기": {
                 "files": [{
                     "name": filename,
                     "type": "external",
@@ -519,7 +519,7 @@ class NotionQueue:
         self._patch(page_id, {
             "게시번호": {"number": number}, "썸네일파일": self._rich("\n".join(filenames)),
             "썸네일URL": {"url": urls[0]}, "썸네일상태": self._select(status),
-            "썸네일미리보기": {
+            "카드미리보기": {
                 "files": [
                     {"name": name, "type": "external", "external": {"url": url}}
                     for name, url in zip(filenames, urls, strict=True)
@@ -716,7 +716,7 @@ class NotionQueue:
             thumbnail_number=props.get("게시번호", {}).get("number"),
             thumbnail_file=self._plain(props.get("썸네일파일", {})),
             thumbnail_url=str(props.get("썸네일URL", {}).get("url") or ""),
-            card_urls=self._card_urls(props.get("썸네일미리보기", {})),
+            card_urls=self._card_urls(props.get("카드미리보기", {})),
             thumbnail_status=self._select_name(props.get("썸네일상태", {})) or (
                 "번호필요"
                 if self._plain(props.get("TistoryID", {})).startswith("naver:")

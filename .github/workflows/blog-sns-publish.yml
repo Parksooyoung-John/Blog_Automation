@@ -53,6 +53,9 @@ jobs:
           version=$(python -c 'import sns_harness; print(sns_harness.__version__)')
           echo "Harness version: $version"
           [[ "$version" == "0.2.0" ]] || { echo "Unexpected harness version"; exit 2; }
+      - name: Validate Notion schema
+        # A renamed or deleted column used to surface only as an HTTP 400 inside the publish step.
+        run: python -m sns_harness validate-config --for-command publish
       - name: Publish one due item
         shell: bash
         run: |

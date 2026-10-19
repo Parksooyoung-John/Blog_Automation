@@ -65,13 +65,11 @@ class ComplianceReviewer:
                 continue
 
             current_draft = result.reviewed_draft
-            remaining_issues = list(
-                dict.fromkeys(
-                    result.issues
-                    + validate_draft_against_source(current_draft, source, product)
-                )
-            )
-            if not remaining_issues and result.approved:
+            deterministic = validate_draft_against_source(current_draft, source, product)
+            remaining_issues = list(dict.fromkeys(result.issues + deterministic))
+            # The model often lists fixes it already made in `issues`; counting them as unresolved
+            # held every draft. The deterministic validation is the gate, `approved` the verdict.
+            if result.approved and not deterministic:
                 return result
             if not remaining_issues:
                 remaining_issues = ["수정안이 검수 승인을 받지 못했습니다."]

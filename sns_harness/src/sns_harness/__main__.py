@@ -15,6 +15,7 @@ from sns_harness.config import Settings, get_settings
 from sns_harness.operations.github_status import GitHubActionsStatus
 from sns_harness.operations.manager import DailyOperationsManager
 from sns_harness.operations.models import OperationsSnapshot
+from sns_harness.operations.performance import performance_rows, summarize
 from sns_harness.orchestrator import HarnessOrchestrator
 from sns_harness.publishers.threads import ThreadsAPIError, ThreadsPublisher
 from sns_harness.queues.notion import NotionQueue
@@ -90,6 +91,8 @@ def parser() -> argparse.ArgumentParser:
     metric_collect.add_argument("--window", choices=("24h", "72h", "7d"), required=True)
     metric_collect.add_argument("--days", type=int, default=14)
     metric_collect.add_argument("--dry-run", action="store_true")
+    metric_report = metric_commands.add_parser("report")
+    metric_report.add_argument("--days", type=int, default=60)
     operations = commands.add_parser("operations")
     operation_commands = operations.add_subparsers(dest="operation", required=True)
     collect = operation_commands.add_parser("collect")
@@ -326,6 +329,17 @@ def main(argv: list[str] | None = None) -> int:
                 for item in snapshots
             ],
         }, ensure_ascii=False))
+        return 0
+
+    if args.command == "metrics" and args.metric_operation == "report":
+        missing = settings.missing_for("operations-read")
+        if missing:
+            print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
+            return 2
+        rows = performance_rows(
+            notion_queue(settings).operations_items(datetime.now(UTC) - timedelta(days=args.days))
+        )
+        print(json.dumps({"summary": summarize(rows), "rows": rows}, ensure_ascii=False))
         return 0
 
     if args.command == "metrics":

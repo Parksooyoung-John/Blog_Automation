@@ -31,12 +31,13 @@ body{font-family:var(--body);word-break:keep-all;overflow-wrap:anywhere;line-hei
 .d{font-family:var(--display);letter-spacing:-.02em}
 .k{font-size:28px;color:var(--muted);margin-bottom:24px}
 h2{font-size:56px;line-height:1.25;margin-bottom:40px;font-weight:700}
-.t{display:grid;align-items:baseline;border-bottom:1px solid var(--rule)}
+.t{display:grid;align-items:baseline;column-gap:24px;border-bottom:1px solid var(--rule)}
 .t.h{font-size:28px;color:var(--muted);padding:16px 0;border-bottom:2px solid var(--ink)}
 .t.h.big{border-bottom:0;padding:0}
 .t span:not(:first-child){text-align:right}
 .t3{padding:30px 0;font-size:38px}.t3 .n{font-family:var(--display);font-size:52px}
 .t2{padding:30px 0}.t2 .a{font-size:40px;font-weight:600}.t2 .n{font-family:var(--display);font-size:60px;letter-spacing:-.03em}
+.t3.sm{font-size:34px;padding:26px 0}.t3.sm .n{font-family:var(--body);font-size:34px;font-weight:600}
 .t2.first{border-top:2px solid var(--ink)}
 .t2.tight{padding:20px 0}
 .t.hl .n.hot{color:var(--accent)}
@@ -62,10 +63,14 @@ def _head(slide: dict) -> str:
     return f"<p class='k'>{_e(slide['kicker'])}</p><h2 class='d'>{_e(slide['title'])}</h2>"
 
 
-def render_slide(slide: dict, index: int, total: int, base: Path) -> str:
+def render_slide(slide: dict, index: int, total: int, base: Path, check: bool = False) -> str:
     kind = slide["kind"]
     if kind == "image":
         src = (base / slide["src"]).resolve()
+        if not src.is_file():
+            if check:   # --check: 표지 그림 없이 나머지 슬라이드 넘침만 본다
+                return "<section class='s'><p class='k'>표지 자리</p></section>"
+            raise FileNotFoundError(f"표지 그림이 없습니다: {src}")
         badge = "<span class='ai'>AI 활용</span>" if slide.get("ai_badge") else ""
         return f"<section class='s img' style=\"background-image:url('{src.as_uri()}')\">{badge}</section>"
     if kind == "table":
@@ -81,7 +86,8 @@ def render_slide(slide: dict, index: int, total: int, base: Path) -> str:
         )
         rows = []
         for i, row in enumerate(slide["rows"]):
-            cls = "t t3" if compact else "t t2" + (" tight" if len(slide["rows"]) > 3 else "")
+            cls = ("t t3" + (" sm" if slide.get("small") else "")) if compact else (
+                "t t2" + (" tight" if len(slide["rows"]) > 3 else ""))
             first = " first" if not compact and i == 0 else ""
             lit = " hl" if i == hl else ""
             cells = "".join(
@@ -100,10 +106,10 @@ def render_slide(slide: dict, index: int, total: int, base: Path) -> str:
     raise ValueError(f"알 수 없는 슬라이드 종류: {kind}")
 
 
-def render(spec: dict, out_dir: Path, base: Path) -> list[Path]:
+def render(spec: dict, out_dir: Path, base: Path, check: bool = False) -> list[Path]:
     slides = spec["slides"]
     assert 2 <= len(slides) <= 10, "카드뉴스는 2~10장"
-    body = "".join(render_slide(s, i, len(slides), base) for i, s in enumerate(slides, 1))
+    body = "".join(render_slide(s, i, len(slides), base, check) for i, s in enumerate(slides, 1))
     outputs: list[Path] = []
     # about:blank 페이지는 file:// 그림을 못 읽어서 표지가 빈 7KB 파일로 나왔다. 실제 파일로 열어야 한다.
     page_file = Path(tempfile.mkdtemp()) / "cards.html"
@@ -139,6 +145,13 @@ def selftest() -> None:
         [image] = render({"number": 998, "slides": [
             {"kind": "image", "src": "c.png", "ai_badge": True}, spec["slides"][0]]}, Path(tmp), Path(tmp))[:1]
         assert image.stat().st_size > 100_000, "그림 표지가 비어 있다(file:// 그림 로드 실패)"
+        try:
+            render({"number": 997, "slides": [{"kind": "image", "src": "nope.png"}, spec["slides"][1]]},
+                   Path(tmp), Path(tmp))
+        except FileNotFoundError:
+            pass
+        else:
+            raise AssertionError("없는 표지 그림이 빈 슬라이드로 저장됐다")
         spec["slides"][0]["title"] = "아주 긴 제목 " * 40
         try:
             render(spec, Path(tmp), ROOT)
@@ -152,12 +165,14 @@ def selftest() -> None:
 if __name__ == "__main__":
     if sys.argv[1:] == ["--selftest"]:
         selftest()
-    elif len(sys.argv) == 2 and sys.argv[1].isdigit():
+    elif len(sys.argv) in (2, 3) and sys.argv[1].isdigit() and sys.argv[2:] in ([], ["--check"]):
         number = int(sys.argv[1])
-        spec_path = SPEC_DIR / f"{number}.json"
+        check = sys.argv[2:] == ["--check"]
+        spec_path = SPEC_DIR / f"{number:02d}.json"   # 글 파일명(08_…)과 같은 두 자리
         spec = json.loads(spec_path.read_text(encoding="utf-8"))
         assert spec["number"] == number, f"{spec_path.name}의 number가 {number}와 다르다"
-        for path in render(spec, OUT_DIR, ROOT):
-            print(path.relative_to(ROOT), path.stat().st_size // 1024, "KB")
+        target = Path(tempfile.mkdtemp()) if check else OUT_DIR
+        for path in render(spec, target, ROOT, check):
+            print(path if check else path.relative_to(ROOT), path.stat().st_size // 1024, "KB")
     else:
-        sys.exit("사용법: make_card_news.py NN | --selftest")
+        sys.exit("사용법: make_card_news.py NN [--check] | --selftest")

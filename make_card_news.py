@@ -124,7 +124,8 @@ def render(spec: dict, out_dir: Path, base: Path, check: bool = False) -> list[P
             if overflow > 0:
                 browser.close()
                 raise SystemExit(f"{i}번 슬라이드가 {overflow}px 넘칩니다. 글을 줄이세요.")
-            out = out_dir / f"{spec['number']}_카드뉴스_{i}.png"
+            # 두 자리: .gitignore가 두 자리 번호의 png만 추적한다(resolve_card_news도 같은 규칙)
+            out = out_dir / f"{spec['number']:02d}_카드뉴스_{i}.png"
             element.screenshot(path=str(out))
             outputs.append(out)
         browser.close()

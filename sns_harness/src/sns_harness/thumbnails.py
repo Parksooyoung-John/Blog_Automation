@@ -98,7 +98,9 @@ def resolve_card_news(number: int, directory: Path) -> CardNewsResolution:
         raise ThumbnailError("게시번호는 1 이상의 숫자여야 합니다.")
     if not directory.is_dir():
         raise ThumbnailError(f"카드뉴스 폴더가 없습니다: {directory}")
-    pattern = re.compile(rf"^{number}_카드뉴스_(\d+)\.(png|jpe?g)$", re.IGNORECASE)
+    # 두 자리로 맞춘다(08_…). .gitignore가 assets/naver_img/*.png를 막고 두 자리 번호만
+    # 예외로 풀어서, 8_카드뉴스_1.png는 커밋되지 않아 GitHub 공개 URL이 열리지 않는다.
+    pattern = re.compile(rf"^{number:02d}_카드뉴스_(\d+)\.(png|jpe?g)$", re.IGNORECASE)
     found: dict[int, Path] = {}
     for path in sorted(directory.iterdir()):
         match = pattern.match(path.name) if path.is_file() else None

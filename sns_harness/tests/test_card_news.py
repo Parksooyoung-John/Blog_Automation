@@ -22,6 +22,14 @@ def test_cards_resolve_in_slide_order_and_ignore_other_posts(tmp_path: Path) -> 
     assert result.filenames == ("18_카드뉴스_1.png", "18_카드뉴스_2.png", "18_카드뉴스_3.jpg")
 
 
+def test_single_digit_post_numbers_use_two_digit_files(tmp_path: Path) -> None:
+    # `8_카드뉴스_1.png`는 .gitignore에 걸려 커밋되지 않으므로 해석하지 않는다
+    touch(tmp_path, "08_카드뉴스_1.png", "08_카드뉴스_2.png",
+          "8_카드뉴스_1.png", "8_카드뉴스_2.png")
+    result = resolve_card_news(8, tmp_path)
+    assert result.filenames == ("08_카드뉴스_1.png", "08_카드뉴스_2.png")
+
+
 def test_missing_cards_say_missing(tmp_path: Path) -> None:
     touch(tmp_path, "18_썸네일.png")
     with pytest.raises(ThumbnailError, match="없습니다"):

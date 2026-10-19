@@ -8,19 +8,29 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
 
 - Return exactly three candidates using the three distinct `required_hook_types`.
 - Each candidate uses one different angle and one core claim.
-- The first post is `hook_text → core claim → short explanation`.
-- `hook_text` is the exact prefix of the first post, 15-80 Korean characters, and at
-  most two sentences. Do not repeat the source title. Name a concrete topic from the
-  title, such as 국민연금, 건강보험료, 자동차, ISA, or 근로장려금; never use a vague
-  hook that could fit any article.
-- Performance rules from 24h views (see `docs/THREADS_PERFORMANCE.md`; n is small, so treat
-  them as tendencies): aim for `hook_text` of about 40 characters in one sentence, with the
-  concrete topic noun first. Do not open with a paragraph of declarative explanation; the
-  first post stays at the hook plus one short line and the explanation moves to later posts.
-  For seasonal topics such as 연말정산, lead with the concrete amount or condition rather than
-  a general framing.
-- When a card-news carousel is attached to the first post, do not repeat what the cards show;
-  write the hook and one line that promises what the cards answer.
+- The first post is the `hook_text` and at most one short line after it. The core claim and
+  the explanation go in the later posts, never in the first post.
+- `hook_text` is the exact prefix of the first post. It is exactly ONE sentence of 25-45
+  Korean characters (hard ceiling 50) with no line break inside it. Count the characters
+  before answering; a hook over 50 characters is wrong even if it is within the schema limit.
+- Pick one core keyword for the post: a single word from the source title that readers
+  search for (연말정산, 국민연금, 건강보험료, 근로장려금, 실업급여 ...). The `hook_text` must
+  contain this exact keyword, and `topic_tag` must be this same word alone (see Format).
+- Build every hook from two parts in that one sentence: (1) the core keyword plus the specific
+  subject (e.g. 연말정산 카드공제) and (2) one source-backed number or condition from the body
+  (a percentage, amount, date, or threshold). The reviewer rejects a hook as vague when it
+  lacks either part, so a hook with no number or condition fails. Do not repeat the source
+  title. Keep the whole sentence within 45 characters even with the keyword added.
+- This is based on 24h views (see `docs/THREADS_PERFORMANCE.md`; n is small, so these are
+  tendencies): the best first posts were 24-33 characters and the weakest opened with a
+  paragraph of declarative explanation. Never open with an explanation or a definition.
+- Use exactly the supplied `required_hook_types`, one per candidate; never swap one for
+  another type to make a marker easier. Each type must carry its marker, or the draft is
+  held at review: 질문 ends with `?`; 숫자 contains a source-backed number; 비교 contains
+  `차이`, `보다`, `vs`, or `둘`; 실수 contains `실수`, `착각`, `놓치`, `헷갈`, or `잘못`;
+  궁금증 has no marker but opens a gap the later posts close (it may end with `?`).
+- The first post is shown above a card-news carousel (image slides). Do not repeat what the
+  cards show; the optional second line only promises what the cards answer.
 - Use short conversational Korean sentences and natural line breaks. Do not add a title.
 - Trustworthy hooks may use curiosity, a source-backed number, a common mistake,
   comparison, or one question. Never fabricate personal experience.
@@ -34,8 +44,11 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
   useful posts. Every post must stay within 480 grapheme clusters.
 - Set `blog_link_used` exactly to the supplied `include_blog_link` value.
 - When `include_blog_link=true`, use a thread and put the canonical URL exactly once in
-  the first reply (`posts[1]`) with one natural CTA.
+  the first reply (`posts[1]`) with one natural CTA. `posts[0]` and every other post must
+  contain no URL; a draft without the URL in `posts[1]` is held.
 - When `include_blog_link=false`, include no URL and no blog CTA; the content must be
   complete inside Threads.
-- Use at most one topic tag, without `#`, `.` or `&`.
+- Use at most one topic tag, without `#`, `.` or `&`. The tag is the single core keyword
+  from the hook (e.g. `연말정산`), never a compound such as `연말정산카드` or a phrase, so
+  every post on the same topic lands under the same searchable tag.
 - Return only the requested JSON Schema output.

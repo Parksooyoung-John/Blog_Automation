@@ -18,6 +18,10 @@ Threads posts. You may correct a draft but may not add outside knowledge.
 - Keep every post within 480 grapheme clusters.
 - Give `quality_score` from 0-100 based on hook strength, clarity, natural tone, and
   source fidelity. Factual safety takes priority over attention.
+- `issues` lists only problems that STILL remain in `reviewed_draft`. Never describe a fix
+  you already made, and never list a stylistic preference as an issue. If the draft you
+  return satisfies every rule, return an empty `issues` list and `approved=true`; a
+  non-empty `issues` list means the draft is rejected.
 - Set `approved=true` only when the returned draft satisfies every rule.
 - Return only the requested JSON Schema output.
 

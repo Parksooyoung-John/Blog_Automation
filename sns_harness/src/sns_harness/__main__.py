@@ -28,7 +28,7 @@ from sns_harness.thumbnails import (
     ThumbnailError,
     ThumbnailResolver,
     build_public_url,
-    resolve_thumbnail,
+    resolve_card_news,
 )
 
 
@@ -256,16 +256,19 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "thumbnail":
         try:
-            resolution = resolve_thumbnail(args.post_number, settings.thumbnail_dir)
-            url = build_public_url(
-                settings.github_repository, settings.github_assets_ref,
-                settings.github_assets_path, resolution.filename,
-            )
+            resolution = resolve_card_news(args.post_number, settings.thumbnail_dir)
+            urls = [
+                build_public_url(
+                    settings.github_repository, settings.github_assets_ref,
+                    settings.github_assets_path, name,
+                )
+                for name in resolution.filenames
+            ]
         except ThumbnailError as exc:
             print(str(exc), file=sys.stderr)
             return 2
-        print(json.dumps({"post_number": args.post_number, "filename": resolution.filename,
-                          "path": str(resolution.path), "url": url}, ensure_ascii=False))
+        print(json.dumps({"post_number": args.post_number, "filenames": resolution.filenames,
+                          "urls": urls}, ensure_ascii=False))
         return 0
 
     if args.command == "validate-config":

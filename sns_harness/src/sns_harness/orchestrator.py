@@ -273,12 +273,10 @@ class HarnessOrchestrator:
             result: dict[str, int | str] = {"scheduled": 0, "published": 0, "due": len(due)}
             if due and self.thumbnail_resolver and due[0].thumbnail_status != "미사용":
                 try:
-                    resolution = self._resolve_thumbnail(due[0], persist=False)
-                    filename = getattr(resolution, "filename", resolution.thumbnail_file)
-                    public_url = getattr(resolution, "public_url", resolution.thumbnail_url)
+                    resolved = self._resolve_cards(due[0], persist=False)
                     result.update({
-                        "thumbnail_file": filename,
-                        "thumbnail_url": public_url,
+                        "card_count": len(resolved.card_urls),
+                        "card_urls": resolved.card_urls,
                     })
                 except ThumbnailError as exc:
                     result.update({"blocked": 1, "thumbnail_error": str(exc)})
@@ -318,7 +316,7 @@ class HarnessOrchestrator:
             self.queue.fail(item, message)
             raise RuntimeError(message)
         try:
-            item = self._resolve_thumbnail(item, persist=True)
+            item = self._resolve_cards(item, persist=True)
         except ThumbnailError as exc:
             if hasattr(self.queue, "hold_thumbnail"):
                 self.queue.hold_thumbnail(
@@ -366,32 +364,31 @@ class HarnessOrchestrator:
             "permalink": verification["permalink"],
         }
 
-    def _resolve_thumbnail(self, item, *, persist: bool):
+    def _resolve_cards(self, item, *, persist: bool):
+        """Card news is required for items that use media; a missing set holds publishing."""
         if item.thumbnail_status == "미사용":
             return item
-        if item.thumbnail_file and item.thumbnail_url:
-            if self.thumbnail_resolver is None:
-                raise ThumbnailError("썸네일 공개 URL을 검증할 resolver가 설정되지 않았습니다.")
-            self.thumbnail_resolver.verify(item.thumbnail_url)
-            return item.model_copy(update={"thumbnail_status": "준비"})
         if self.thumbnail_resolver is None:
-            raise ThumbnailError("썸네일 resolver가 설정되지 않았습니다.")
-        resolution = self.thumbnail_resolver.resolve(item.thumbnail_number)
+            raise ThumbnailError("카드뉴스 resolver가 설정되지 않았습니다.")
+        if item.card_urls:
+            for url in item.card_urls:
+                self.thumbnail_resolver.verify(url)
+            return item.model_copy(update={"thumbnail_status": "준비"})
+        resolution = self.thumbnail_resolver.resolve_cards(item.thumbnail_number)
+        resolved = item.model_copy(update={
+            "thumbnail_file": "\n".join(resolution.filenames),
+            "thumbnail_url": resolution.public_urls[0],
+            "card_urls": list(resolution.public_urls),
+        })
         if not persist:
-            return item.model_copy(update={
-                "thumbnail_file": resolution.filename,
-                "thumbnail_url": resolution.public_url,
-            })
-        self.thumbnail_resolver.verify(resolution.public_url)
-        if hasattr(self.queue, "set_thumbnail"):
-            self.queue.set_thumbnail(
+            return resolved
+        for url in resolution.public_urls:
+            self.thumbnail_resolver.verify(url)
+        if hasattr(self.queue, "set_cards"):
+            self.queue.set_cards(
                 item.page_id,
                 number=resolution.number,
-                filename=resolution.filename,
-                url=resolution.public_url,
+                filenames=list(resolution.filenames),
+                urls=list(resolution.public_urls),
             )
-        return item.model_copy(update={
-            "thumbnail_file": resolution.filename,
-            "thumbnail_url": resolution.public_url,
-            "thumbnail_status": "준비",
-        })
+        return resolved.model_copy(update={"thumbnail_status": "준비"})

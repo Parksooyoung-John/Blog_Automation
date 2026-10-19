@@ -6,6 +6,7 @@
 > 티스토리용 작성 규칙·발행 파이프라인·기술 노트는 [`TISTORY_LEGACY.md`](../TISTORY_LEGACY.md)로 옮겼다. 티스토리 스크립트(`03_`·`04_`·`verify_post.py` 등)나 `blog-writer` 계열 에이전트를 손댈 때만 읽는다.
 > 애드센스 재도전은 별도 저장소(자체 도메인 사이트)에서 진행한다. 경과는 [`ADSENSE_PROGRESS.md`](../ADSENSE_PROGRESS.md) 최상단.
 > 네이버 블로그 수익화(애드포스트 등)를 언제 켜는지는 [`MONETIZATION.md`](../MONETIZATION.md). 광고·제휴 이야기가 나오면 먼저 읽는다.
+> 디자인 스킬(hallmark·web-design-guidelines)과 카드·썸네일 비교 결과는 [`DESIGN_SKILLS.md`](../DESIGN_SKILLS.md). 웹 UI 작업 때만 읽는다.
 > 15편부터는 벤치마크 템플릿 시험 중이다(명세 [`donsalimpyo-post-harness.md`](../donsalimpyo-post-harness.md), 적용 방식·판정 기준은 `NAVER_GUIDE.md` 「벤치마크 템플릿 시험」). 원고를 쓰기 전에 그 절을 읽는다.
 
 ## 저장소 운영 — 한 저장소에 프로젝트가 둘이다

@@ -995,6 +995,9 @@ def gen_cmd(num: str) -> int:
     if not os.environ.get("OPENAI_API_KEY"):
         print(".env에 OPENAI_API_KEY가 없습니다")
         return 1
+    # 폴더가 없으면 결제된 그림 4장을 받아 놓고 저장에서 터져 날렸다(2026-10-20, 새 작업폴더). 요청 전에 만든다.
+    ws = Path(__file__).parent / "_workspace" / "naver"
+    ws.mkdir(parents=True, exist_ok=True)
     print(f"{GEN_MODEL} {GEN_QUALITY} {GEN_N}장 생성 — 예상 비용 약 ${GEN_N * GEN_COST:.2f}")
     r = requests.post("https://api.openai.com/v1/images/generations",
                       headers={"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"},
@@ -1005,7 +1008,6 @@ def gen_cmd(num: str) -> int:
     data = r.json().get("data") or []
     if not data:
         raise RuntimeError(f"OpenAI 응답에 이미지가 없다: {r.text[:300]}")
-    ws = Path(__file__).parent / "_workspace" / "naver"
     for i, d in enumerate(data, 1):
         (ws / f"cover_{num}_{i}.png").write_bytes(base64.b64decode(d["b64_json"]))
         print(ws / f"cover_{num}_{i}.png")

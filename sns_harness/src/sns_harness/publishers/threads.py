@@ -195,8 +195,9 @@ class ThreadsPublisher:
         creation_id = str(created.get("id") or "")
         if not creation_id:
             raise ThreadsAPIError("Threads media container response did not include an id")
-        if carousel_urls:
-            self._wait_until_ready(creation_id)
+        # Every container needs processing, not only carousels. A text reply was published straight
+        # after creation and got "400 The requested resource does not exist" (2026-10-20).
+        self._wait_until_ready(creation_id)
         published = self._request(
             "POST",
             f"/{self.user_id}/threads_publish",
@@ -225,13 +226,19 @@ class ThreadsPublisher:
         return container_id
 
     def _wait_until_ready(self, container_id: str) -> None:
-        # Threads documents ~30s of processing before a carousel can be published.
-        for _ in range(12):
-            payload = self._request(
-                "GET",
-                f"/{container_id}",
-                params={"fields": "status,error_message", "access_token": self.access_token},
-            )
+        # A text container finishes in a few seconds; a carousel can take ~30s (Threads docs).
+        for _ in range(20):
+            try:
+                payload = self._request(
+                    "GET",
+                    f"/{container_id}",
+                    params={"fields": "status,error_message", "access_token": self.access_token},
+                )
+            except ThreadsAPIError as exc:
+                if "does not exist" not in str(exc):   # a fresh container can briefly be unreadable
+                    raise
+                self.sleep(3)
+                continue
             state = str(payload.get("status") or "")
             if state in {"FINISHED", "PUBLISHED"}:
                 return
@@ -239,7 +246,7 @@ class ThreadsPublisher:
                 raise ThreadsAPIError(
                     f"Threads container {state}: {payload.get('error_message') or ''}"
                 )
-            self.sleep(5)
+            self.sleep(3)
         raise ThreadsAPIError("Threads container was not ready in time", retryable=True)
 
     def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:

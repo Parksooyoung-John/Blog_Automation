@@ -31,7 +31,52 @@ class FakeSession:
             return FakeResponse({"id": f"container-{len(self.created)}"})
         if method == "POST" and url.endswith("/threads_publish"):
             return FakeResponse({"id": f"media-{len(self.created)}"})
+        if method == "GET" and "/container-" in url:
+            return FakeResponse({"status": "FINISHED"})
         raise AssertionError((method, url, kwargs))
+
+
+class SlowContainerSession(FakeSession):
+    """Containers stay IN_PROGRESS for a while; publishing early is the 2026-10-20 400."""
+
+    def __init__(self, in_progress_polls=2, missing_polls=0) -> None:
+        super().__init__()
+        self.log, self.polls, self.finished = [], {}, set()
+        self.in_progress_polls, self.missing_polls = in_progress_polls, missing_polls
+
+    def request(self, method, url, **kwargs):
+        if method == "GET" and "/container-" in url:
+            container = url.rsplit("/", 1)[1]
+            n = self.polls[container] = self.polls.get(container, 0) + 1
+            self.log.append("poll")
+            if n <= self.missing_polls:
+                missing = {"error": {"message": "The requested resource does not exist"}}
+                return FakeResponse(missing, 400)
+            done = n > self.missing_polls + self.in_progress_polls
+            if done:
+                self.finished.add(container)
+            return FakeResponse({"status": "FINISHED" if done else "IN_PROGRESS"})
+        if method == "POST" and url.endswith("/threads_publish"):
+            container = kwargs["data"]["creation_id"]
+            assert container in self.finished, f"{container} published before FINISHED"
+            self.log.append("publish")
+        return super().request(method, url, **kwargs)
+
+
+def test_every_container_is_ready_before_it_is_published() -> None:
+    session = SlowContainerSession(in_progress_polls=2)
+    publisher = ThreadsPublisher("user", "token", session=session, sleep=lambda _: None)
+    publisher.publish(item(), lambda _: None)
+    assert session.log.count("publish") == 3
+    assert session.log[:4] == ["poll", "poll", "poll", "publish"]   # 2 IN_PROGRESS, then FINISHED
+
+
+def test_a_container_that_is_briefly_unreadable_is_waited_for() -> None:
+    session = SlowContainerSession(in_progress_polls=0, missing_polls=2)
+    ThreadsPublisher("user", "token", session=session, sleep=lambda _: None).publish(
+        item(), lambda _: None
+    )
+    assert session.log.count("publish") == 3
 
 
 def test_verifies_permalink_and_expected_username() -> None:

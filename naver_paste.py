@@ -69,7 +69,7 @@ HOOK = ('<p style="text-align:center"><span style="font-size:24px;font-family:\'
 BIG_HEAD_RE = re.compile(r"(\d+\. |🐷 )")
 BIG_HEAD = ('<p><span style="font-size:24px;font-family:\'나눔명조\',NanumMyeongjo;color:{color}">'
             '<b>{text}</b></span></p>')
-# 번호 소제목·Q&A 앞 가로 구분선(본문 폭 전체). 15~18편은 에디터에서 손으로 넣었다 — 2026-10-17 사용자 요청으로 붙여넣기에 싣는다.
+# 번호 소제목(섹션 1~5) 앞에만 가로 구분선(본문 폭 전체). Q&A 앞에는 넣지 않는다(2026-10-19 사용자 확정). 15~18편은 에디터에서 손으로 넣었다 — 2026-10-17 사용자 요청으로 붙여넣기에 싣는다.
 # 에디터가 <hr>을 구분선 컴포넌트로 받는지는 18편 붙여넣기로 확인한다. 안 들어가면 체크리스트대로 손으로 넣는다.
 HR = '<hr style="border:none;border-top:1px solid #cccccc;width:100%">'
 # 본문·표·박스 크기: 14편까지 15(BODY_PX), 15편 16(사용자가 16으로 발행), 16편부터 19(2026-10-15 사용자 결정 — 벤치마크 본문도 19)
@@ -92,17 +92,20 @@ def _p(inner: str, color="") -> str:
 # 해시태그 줄: '#실업급여 #실업급여조건 ...'. '## 소제목'과 헷갈리면 안 된다.
 TAG_RE = re.compile(r"^#\S+(?: +#\S+)+$", re.M)
 
-CHECKLIST = """· 태그 10개 입력 — 1편에서 빠뜨렸던 항목이다. 발행 설정 창에서 확인
+CHECKLIST = """■ PC에서 끝낸 뒤 임시저장 (서식은 PC 에디터에서만 붙는다 — 폰 붙여넣기는 글자만 들어간다, 2026-10-19)
 · [소제목] 줄은 '인용구'(선) 스타일 적용 후 표시는 지우기 (앞뒤 빈 줄은 넣지 말 것)
-· (15편~) 번호 소제목과 🐷 Q&A 앞 가로 구분선이 들어갔는지 확인(18편~ 붙여넣기로 들어간다). 없으면 손으로. 살림 띠·근거 박스도 붙여넣기로 들어간다(16편~)
+· (15편~) 번호 소제목(섹션 1~5) 앞 가로 구분선이 들어갔는지 확인(18편~ 붙여넣기로 들어간다). 없으면 손으로. Q&A 앞에는 넣지 않는다. 살림 띠·근거 박스도 붙여넣기로 들어간다(16편~)
 · (15편~) 표·박스가 본문보다 좁게 들어가면 본문 폭에 꽉 차게 늘린다 (15편은 전부 73%였다)
-· (15편~) 내부 링크 소개 문장은 인용구(말풍선)로
 · [이미지] 자리에 PNG 넣기. 첫 이미지가 썸네일이 된다
+· 붙여넣은 뒤 볼드와 줄바꿈이 그대로인지 한 번 훑어보기
+
+■ 폰에서 해도 되는 것 (임시저장 글을 앱에서 열어서)
 · [경험 한 줄] 두 곳 — 후보 중 하나만 남기고 [ ] 줄·▶ 줄·나머지 후보 지우기 (가장 중요)
+· (15편~) 내부 링크 소개 문장은 인용구(말풍선)로
 · [내부 링크] 소개 문장 하나만 남기고, 줄을 바꾼 뒤 주소 붙여넣기 → 카드 생성
              ⚠ 문장 중간에 붙여넣으면 문장이 카드 앞뒤로 쪼개진다
              ⚠ 앞 문장은 글마다 다르게 — 같은 문장을 반복하면 그게 패턴이 된다
-· 붙여넣은 뒤 볼드와 줄바꿈이 그대로인지 한 번 훑어보기
+· 태그 10개 입력 — 1편에서 빠뜨렸던 항목이다. 발행 설정 창에서 확인
 · 발행 설정: 카테고리 / 주제 비즈니스·경제 / 전체공개 / 검색허용 체크"""
 
 PAGE = """<!doctype html>
@@ -210,7 +213,8 @@ def to_html(md: str, tone: int = 0, template: bool = False, px: int = TEMPLATE_P
         if k == 0 and HOOK_RE.fullmatch(blk):       # 15편~ 맨 위 질문
             paras.append(HOOK.format(html.escape(blk)))
         elif blk.startswith("[큰제목] "):
-            paras.append(HR + BIG_HEAD.format(color=MAIN, text=_rich(blk[len("[큰제목] "):])))
+            text = blk[len("[큰제목] "):]
+            paras.append((HR if text[0].isdigit() else "") + BIG_HEAD.format(color=MAIN, text=_rich(text)))
         elif blk.startswith("[띠제목] "):
             paras.append(TABLE + BAND_HEAD.format(main=MAIN, tint=tint, text=_rich(blk[len("[띠제목] "):])) + "</table>")
         elif is_table(blk):       # 에디터가 자기 표로 바꾸도록 테두리만 준다
@@ -327,7 +331,8 @@ def selftest():
     gpage, gtext = to_html(gmd, 1, template=True), convert(gmd)
     main1 = PALETTE[1][1]
     assert HR + BIG_HEAD.format(color=main1, text="1. 첫 결론입니다") in gpage                     # 번호 소제목 앞 구분선
-    assert HR + BIG_HEAD.format(color=main1, text="🐷 새싹돼지 Q&amp;A") in gpage
+    assert HR + BIG_HEAD.format(color=main1, text="🐷 새싹돼지 Q&amp;A") not in gpage                # Q&A 앞에는 구분선 없음
+    assert BIG_HEAD.format(color=main1, text="🐷 새싹돼지 Q&amp;A") in gpage
     gbody = gpage.split('id="body">')[1].split("</section>")[0]
     assert "[소제목]" not in gbody and "[큰제목]" not in gbody and "[띠제목]" not in gbody
     tint1 = PALETTE[1][2]
@@ -346,6 +351,8 @@ def selftest():
     assert '<p style="text-align:center">' in data_tbl                                            # 표 칸은 가운데
     assert "font-size:15px" in to_html(gmd, 1) and 'text-align:center">' not in to_html(gmd, 1).split("<table")[1]  # 14편까지는 그대로
     assert "[큰제목] 1. 첫 결론입니다" in gtext
+    pc, phone = CHECKLIST.split("■ 폰에서")                                                       # 체크리스트가 PC/폰으로 나뉘어 있어야 한다
+    assert "[이미지]" in pc and "[경험 한 줄]" in phone and "태그 10개" in phone
     print("selftest ok")
 
 

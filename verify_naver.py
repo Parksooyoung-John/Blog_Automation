@@ -231,10 +231,16 @@ def selftest():
     assert expected_category("연말정산 중도퇴사자 환급받는 두 가지 경로와 필요한 서류") == "연말정산·세금"
     assert title_shape("가, 나 하는 이유") == title_shape("다, 라 되는 이유")
     assert title_shape("가, 나 하는 이유") != title_shape("다, 라 되는 순서")
+    assert main(["20"]) == 2            # 글 번호는 거절한다(네트워크를 타기 전에)
     print("selftest ok")
 
 
 def main(argv):
+    # 글 번호(20)를 넣으면 없는 글을 조회하다 트레이스백으로 죽었다(2026-10-20). 인자는 logNo(주소 끝의 긴 숫자)다.
+    bad = [a for a in argv if not re.fullmatch(r"\d{9,}", a)]
+    if bad:
+        print(f"글 번호(NN)가 아니라 logNo(블로그 주소 끝의 긴 숫자)를 넣으세요: {', '.join(bad)}", file=sys.stderr)
+        return 2
     posts = recent()
     if argv:
         posts = [p for p in posts if p["logNo"] in argv] or [

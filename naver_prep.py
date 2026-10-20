@@ -29,6 +29,17 @@ def image_paths(md: str) -> list:
     return list(dict.fromkeys(re.findall(r"assets/naver_img/[^`\s\]]+\.png", body)))
 
 
+def cover_hint(md: str, num: str):
+    """대표 그림이 없을 때의 안내. scene(AI 그림)은 사진 갤러리가 아니라 --gen 후보에서 고른다.
+
+    2026-10-20 새 작업폴더에서 cover_20.png가 없었는데 '대표사진 검색어 줄을 추가하라'는 엉뚱한 안내가 나왔다."""
+    if check_naver.memo_value(md, "썸네일 유형") == "scene":
+        return (f"scene 썸네일이라 사진 갤러리는 열지 않습니다 — _workspace/naver/cover_{num}.png가 없습니다. "
+                f"새로 만들려면 `python -X utf8 make_naver_images.py --gen {num}`(후보 4장, 약 $0.05), "
+                f"이미 만들었다면 다른 작업 폴더의 cover_{num}*.png를 이 폴더 _workspace/naver로 복사하세요")
+    return None
+
+
 def branch() -> str:
     return subprocess.run(["git", "branch", "--show-current"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
 
@@ -66,6 +77,10 @@ def prep(num: str) -> int:
     print(f"2. 카드 {len(todo)}장 새로 생성")
 
     if not cards.find_cover(num):
+        hint = cover_hint(md, num)
+        if hint:
+            print(f"3. {hint}")
+            return 1
         suggest_cover.run(str(src))
         webbrowser.open((WS / f"cover_{num}.html").as_uri())
         print(f"3. 대표 사진을 골라 _workspace/naver/cover_{num}.jpg 로 저장한 뒤 다시 실행하세요")
@@ -101,6 +116,8 @@ def selftest():
           "## 작성 메모 (발행 시 삭제)\n\n- 카드 `assets/naver_img/99_메모에만.png`\n")
     assert image_paths(md) == ["assets/naver_img/13_썸네일.png", "assets/naver_img/32_연말정산_월세_공제액.png",
                                "assets/naver_img/33_연말정산_월세_조건.png"], image_paths(md)
+    assert "--gen 20" in cover_hint("- 썸네일 유형: scene\n- 글 유형: 계산·실수령형\n", "20")
+    assert cover_hint("- 썸네일 유형: card\n", "20") is None      # card는 사진 갤러리 경로를 그대로 쓴다
     # 붙여넣기 파일이 원고 편 번호의 서식으로 나오는지 — 18편이 15px·템플릿 없이 나왔다(2026-10-17)
     import tempfile
     with tempfile.TemporaryDirectory() as d:

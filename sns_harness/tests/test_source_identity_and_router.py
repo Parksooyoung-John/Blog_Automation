@@ -75,6 +75,17 @@ def test_notion_legacy_tistory_id_property_stores_namespaced_naver_key() -> None
     assert properties["TistoryID"]["rich_text"][0]["text"]["content"] == "naver:165"
 
 
+def test_naver_text_draft_needs_no_cards_but_card_draft_does() -> None:
+    post = make_post(SourceKind.NAVER, "165", "https://blog.naver.com/education_blog/165")
+    status = {}
+    for visual in ("text", "card"):
+        draft = ThreadsDraft(format="single", posts=["본문"], blog_link_used=False, visual=visual)
+        props = NotionQueue("key", "db")._draft_properties(post, draft, QueueStatus.DRAFT)
+        status[visual] = props["썸네일상태"]["select"]["name"]
+
+    assert status == {"text": "미사용", "card": "번호필요"}
+
+
 class FakeSource:
     def __init__(self, base_url: str, post: SourcePost) -> None:
         self.base_url = base_url

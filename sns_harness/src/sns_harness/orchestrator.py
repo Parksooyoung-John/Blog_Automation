@@ -67,8 +67,6 @@ class HarnessOrchestrator:
             context = policy(now)
             hook_types = tuple(context["hook_types"])
             include_link = bool(context["include_link"])
-        if source.source_key.startswith("naver:"):
-            include_link = True
         candidate_generator = getattr(self.writer, "generate_candidates", None)
         if candidate_generator is None:
             candidates = [self.writer.generate(source)]  # type: ignore[union-attr]

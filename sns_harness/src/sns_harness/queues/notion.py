@@ -300,7 +300,7 @@ class NotionQueue:
             bool(page.get("properties", {}).get("블로그링크사용", {}).get("checkbox"))
             for page in pages
         )
-        include_link = recent_link_count < 4
+        include_link = recent_link_count < 2   # guide: link-driven posts ~10-30%, rest complete in Threads
         return {"hook_types": tuple(ordered[:3]), "include_link": include_link}
 
     def create(self, source: SourcePost, review: ReviewResult) -> QueueItem:
@@ -615,7 +615,9 @@ class NotionQueue:
             "썸네일파일": self._rich(""),
             "썸네일URL": {"url": None},
             "썸네일상태": self._select(
-                "번호필요" if source.source_key.startswith("naver:") else "미사용"
+                "번호필요"
+                if source.source_key.startswith("naver:") and draft.visual == "card"
+                else "미사용"
             ),
             "이미지검수사유": self._rich(""),
         }

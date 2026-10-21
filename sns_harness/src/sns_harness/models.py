@@ -7,7 +7,7 @@ from copy import deepcopy
 from datetime import datetime
 from difflib import SequenceMatcher
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import urlparse
 
 import regex
@@ -223,6 +223,8 @@ class ThreadsDraft(BaseModel):
     hook_type: HookType | None = None
     hook_text: str = Field(default="", max_length=80)
     blog_link_used: bool = True
+    # "card" only when a table, number comparison or procedure reads better as an image.
+    visual: Literal["text", "card"] = "text"
 
     @field_validator("posts")
     @classmethod

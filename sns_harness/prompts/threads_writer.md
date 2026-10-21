@@ -29,8 +29,19 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
   held at review: 질문 ends with `?`; 숫자 contains a source-backed number; 비교 contains
   `차이`, `보다`, `vs`, or `둘`; 실수 contains `실수`, `착각`, `놓치`, `헷갈`, or `잘못`;
   궁금증 has no marker but opens a gap the later posts close (it may end with `?`).
-- The first post is shown above a card-news carousel (image slides). Do not repeat what the
-  cards show; the optional second line only promises what the cards answer.
+- Set `visual` to `text` by default (text posts reach more people than cards on this account).
+  Use `card` only when the source has a table, a number comparison or a step-by-step procedure
+  that reads clearer as images. For `card`, the first post is shown above the slides: do not
+  repeat what the cards show; the optional second line only promises what the cards answer.
+  For `text`, the post itself must carry the whole point.
+- Hook priority: (1) a number change or amount (e.g. 상한액이 오른다), (2) a mistake to avoid,
+  (3) a confusing comparison or notation, (4) how it hits the reader's own money. Open with the
+  most money-relevant number, condition or mistake in the source, phrased like a person telling
+  a friend, never like a post title.
+- Only for the single best candidate of a post without a blog link (`include_blog_link=false`;
+  the guide wants it on about one in three info posts, so leave it off the other candidates), end
+  with one short line saying why to follow the account (e.g. 직장인들이 놓치기 쉬운 돈 정보 위주로 올리는 중.). Never
+  ask directly to follow. Skip this line when the post has a blog link.
 - Use short conversational Korean sentences and natural line breaks. Do not add a title.
 - Trustworthy hooks may use curiosity, a source-backed number, a common mistake,
   comparison, or one question. Never fabricate personal experience.

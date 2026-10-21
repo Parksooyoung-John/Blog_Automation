@@ -339,10 +339,26 @@ def main(argv: list[str] | None = None) -> int:
         if missing:
             print("Missing environment variables: " + ", ".join(missing), file=sys.stderr)
             return 2
-        rows = performance_rows(
-            notion_queue(settings).operations_items(datetime.now(UTC) - timedelta(days=args.days))
-        )
-        print(json.dumps({"summary": summarize(rows), "rows": rows}, ensure_ascii=False))
+        now = datetime.now(UTC)
+        items = notion_queue(settings).operations_items(now - timedelta(days=args.days))
+        account = None
+        if settings.threads_user_id and settings.threads_access_token:
+            account = ThreadsPublisher(
+                settings.threads_user_id,
+                settings.threads_access_token,
+                timeout=settings.request_timeout_seconds,
+            ).account_insights(now - timedelta(days=min(args.days, 30)), now)
+        rows = performance_rows(items, account["link_clicks"] if account else None)
+        summary = summarize(rows)
+        if account:
+            total_views = sum(int(row["views"]) for row in rows)  # type: ignore[call-overload]
+            summary["account"] = {
+                **account,
+                # profile views / post views over the same days; per-post attribution is not exposed
+                "profile_view_rate": round(account["profile_views"] / total_views, 4)
+                if total_views else None,
+            }
+        print(json.dumps({"summary": summary, "rows": rows}, ensure_ascii=False))
         return 0
 
     if args.command == "metrics":

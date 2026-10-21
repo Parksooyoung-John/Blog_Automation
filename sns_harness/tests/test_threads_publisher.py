@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -139,6 +139,31 @@ def test_collects_official_post_insights() -> None:
     assert metrics.likes == 8
     assert metrics.quotes_shares == 5
     assert metrics.source == "Threads Insights API"
+
+
+def test_account_insights_parse_profile_views_link_clicks_and_followers() -> None:
+    class AccountSession(FakeSession):
+        def request(self, method, url, **kwargs):
+            if url.endswith("/threads_insights"):
+                metric = kwargs["params"]["metric"]
+                if metric == "views":
+                    return FakeResponse({"data": [{"name": "views", "values": [{"value": 30}, {"value": 12}]}]})
+                if metric == "clicks":
+                    assert kwargs["params"]["metric_type"] == "total_value"
+                    return FakeResponse({"data": [{"name": "clicks", "link_total_values": [
+                        {"link_url": "https://blog.naver.com/e/1", "value": 7}]}]})
+                return FakeResponse({"data": [{"name": "followers_count", "total_value": {"value": 140}}]})
+            return super().request(method, url, **kwargs)
+
+    now = datetime.now(UTC)
+    result = ThreadsPublisher("user", "token", session=AccountSession()).account_insights(
+        now - timedelta(days=7), now
+    )
+    assert result == {
+        "profile_views": 42,
+        "link_clicks": {"https://blog.naver.com/e/1": 7},
+        "followers_count": 140,
+    }
 
 
 def item(existing_ids=None) -> QueueItem:

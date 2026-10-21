@@ -167,6 +167,44 @@ class ThreadsPublisher:
             measured_at=datetime.now(UTC),
         )
 
+    def account_insights(self, since: datetime, until: datetime) -> dict[str, Any]:
+        """Account-level numbers. Threads has no per-post profile visits, follows or link clicks;
+        these are the closest official signals (profile views, clicks per shared URL, followers)."""
+        base = {
+            "since": int(since.timestamp()),
+            "until": int(until.timestamp()),
+            "access_token": self.access_token,
+        }
+        path = f"/{self.user_id}/threads_insights"
+        views = self._request("GET", path, params={**base, "metric": "views"})
+        clicks = self._request(
+            "GET", path, params={**base, "metric": "clicks", "metric_type": "total_value"}
+        )
+        followers = self._request(
+            "GET", path, params={"metric": "followers_count", "access_token": self.access_token}
+        )
+        profile_views = sum(
+            int(v.get("value") or 0)
+            for row in views.get("data", [])
+            for v in row.get("values", [])
+        )
+        link_clicks = {
+            str(link.get("link_url")): int(link.get("value") or 0)
+            for row in clicks.get("data", [])
+            for link in row.get("link_total_values", [])
+        }
+        follower_rows = followers.get("data", [])
+        followers_count = (
+            int((follower_rows[0].get("total_value") or {}).get("value") or 0)
+            if follower_rows
+            else None
+        )
+        return {
+            "profile_views": profile_views,
+            "link_clicks": link_clicks,
+            "followers_count": followers_count,
+        }
+
     def _create_and_publish(
         self,
         *,

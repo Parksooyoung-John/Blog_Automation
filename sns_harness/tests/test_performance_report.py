@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sns_harness.models import PostFormat, PostMetrics, QueueItem, QueueStatus, ThreadsDraft
+from sns_harness.models import HookType, PostFormat, PostMetrics, QueueItem, QueueStatus, ThreadsDraft
 from sns_harness.operations.performance import performance_rows, summarize, views
 
 
@@ -16,6 +16,18 @@ def item(index, first, **metrics):
 
 def test_24h_is_preferred_over_later_windows():
     assert views(item(1, "가", **{"24h": 4703, "7d": 4713})) == 4703
+
+
+def test_engagement_and_hook_breakdown_and_link_clicks():
+    a = item(1, "가" * 30)
+    a.metrics["24h"] = PostMetrics(window="24h", views=1000, likes=20, replies=5, reposts=3, quotes_shares=2)
+    a.hook_type = HookType.NUMBER
+    a.blog_link_used = True
+    a.source_url = "https://blog.naver.com/e/1"
+    rows = performance_rows([a], {"https://blog.naver.com/e/1": 12})
+    assert rows[0]["engagement"] == 0.03 and rows[0]["link_clicks"] == 12
+    assert summarize(rows)["by_hook"]["숫자"] == {"n": 1, "median_views": 1000, "median_engagement": 0.03}
+    assert performance_rows([a])[0]["link_clicks"] is None   # no Threads lookup -> unknown, not 0
 
 
 def test_report_splits_short_and_long_first_posts_and_skips_unmeasured():

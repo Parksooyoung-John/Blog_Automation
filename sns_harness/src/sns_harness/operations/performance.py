@@ -17,7 +17,21 @@ def views(item: QueueItem) -> int | None:
     return None
 
 
-def performance_rows(items: list[QueueItem]) -> list[dict[str, object]]:
+def engagement(item: QueueItem) -> float | None:
+    """(likes + replies + reposts + quotes/shares) / views, from the same window as `views`."""
+    for window in WINDOWS:
+        metric = item.metrics.get(window)
+        if metric and metric.views:
+            total = sum(
+                v or 0 for v in (metric.likes, metric.replies, metric.reposts, metric.quotes_shares)
+            )
+            return round(total / metric.views, 4)
+    return None
+
+
+def performance_rows(
+    items: list[QueueItem], link_clicks: dict[str, int] | None = None
+) -> list[dict[str, object]]:
     rows = []
     for item in items:
         value = views(item)
@@ -26,6 +40,9 @@ def performance_rows(items: list[QueueItem]) -> list[dict[str, object]]:
         rows.append({
             "published": item.published_at.date().isoformat() if item.published_at else "",
             "views": value,
+            "engagement": engagement(item),
+            # clicks on the shared URL since publish; None = not looked up (no Threads credentials)
+            "link_clicks": (link_clicks or {}).get(item.source_url) if item.blog_link_used and link_clicks is not None else None,
             "first_chars": len(item.draft.posts[0]),
             "hook": item.hook_type.value if item.hook_type else "",
             "link": item.blog_link_used,
@@ -43,7 +60,16 @@ def summarize(rows: list[dict[str, object]]) -> dict[str, object]:
     short = [row for row in rows if int(row["first_chars"]) <= SHORT_HOOK_CHARS]  # type: ignore[call-overload]
     long_ = [row for row in rows if int(row["first_chars"]) > SHORT_HOOK_CHARS]  # type: ignore[call-overload]
     imaged = [row for row in rows if row["image"]]
+    by_hook = {}
+    for hook in sorted({str(row["hook"]) for row in rows}):
+        group = [row for row in rows if row["hook"] == hook]
+        rates = [row["engagement"] for row in group if row["engagement"] is not None]
+        by_hook[hook or "(없음)"] = {
+            "n": len(group), "median_views": med(group),
+            "median_engagement": median(rates) if rates else None,
+        }
     return {
+        "by_hook": by_hook,
         "measured": len(rows),
         "median_views": med(rows),
         "short_first_post": {"n": len(short), "median_views": med(short)},

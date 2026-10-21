@@ -20,3 +20,15 @@
 - 검증기의 `hook_text` 15~80자는 그대로 둔다(데이터가 하드 제한을 정당화하지 못함).
 - 판정 창을 24h 우선으로 바꿨다(`operations/manager.py`).
 - 재검토: 측정 30건 이상.
+
+## 노션 가이드 KPI와 Threads API로 얻을 수 있는 범위 (2026-10-21)
+
+공식 문서(Threads Insights API) 기준이다. 게시물 단위는 `views, likes, replies, reposts, quotes, shares`뿐이고,
+**프로필 방문·팔로우·링크 클릭은 계정 단위**다(`views`=프로필 조회 일별, `clicks`=공유한 URL별, `followers_count`=현재 총합, 이력 없음).
+
+| 가이드 KPI | `metrics report`에서 | 비고 |
+|---|---|---|
+| 참여율 | 행별 `engagement`, 훅별 `by_hook.median_engagement` | (좋아요+답글+리포스트+인용·공유) ÷ 조회 |
+| 링크 클릭 | 행별 `link_clicks` (링크 쓴 글만) | 최근 30일 안에 공유한 URL별 클릭. 클릭률의 분모(프로필 방문)는 게시물별로 없다 |
+| 프로필 방문율 | `summary.account.profile_view_rate` | 계정 프로필 조회 ÷ 게시물 조회 합. 게시물별 귀속은 불가 |
+| 1,000조회당 팔로우 | 미구현 | `followers_count`가 현재값뿐이라 일별 스냅샷을 쌓아야 증가분이 나온다 |

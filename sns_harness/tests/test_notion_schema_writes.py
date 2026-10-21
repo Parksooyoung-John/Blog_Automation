@@ -30,6 +30,21 @@ def test_card_writes_only_use_properties_the_schema_declares() -> None:
     assert "카드미리보기" in written(session)
 
 
+def test_draft_properties_only_use_declared_columns_and_record_the_score() -> None:
+    from datetime import UTC, datetime
+
+    from sns_harness.models import QueueStatus, SourcePost, ThreadsDraft
+
+    post = SourcePost(source="naver", source_id="1", url="https://blog.naver.com/e/1",
+                      title="t", content="c", published_at=datetime.now(UTC))
+    draft = ThreadsDraft(format="single", posts=["x"], blog_link_used=False, visual="card", score=8)
+    props = NotionQueue("key", "db")._draft_properties(post, draft, QueueStatus.DRAFT)
+    assert set(props) <= KNOWN, set(props) - KNOWN
+    assert props["AI점수"] == {"number": 8}
+    assert props["CTA유형"]["select"]["name"] == "없음"
+    assert props["이미지필요"]["select"]["name"] == "카드뉴스"
+
+
 def test_card_urls_come_back_from_the_preview_column() -> None:
     prop = {"files": [
         {"type": "external", "external": {"url": "https://x/1.png"}},

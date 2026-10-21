@@ -34,6 +34,10 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
   that reads clearer as images. For `card`, the first post is shown above the slides: do not
   repeat what the cards show; the optional second line only promises what the cards answer.
   For `text`, the post itself must carry the whole point.
+- Score each candidate with an integer `score` 0-10 for how well it would perform: money directly
+  affected 0-3, concrete number 0-2, a mistake to avoid 0-2, a confusing comparison 0-2, a natural
+  question or relatable point 0-1. Be honest: a generic term explanation is 4-6; a post with a
+  changed amount or a common calculation mistake is 8-10. Drafts scoring below 7 are not published.
 - Hook priority: (1) a number change or amount (e.g. 상한액이 오른다), (2) a mistake to avoid,
   (3) a confusing comparison or notation, (4) how it hits the reader's own money. Open with the
   most money-relevant number, condition or mistake in the source, phrased like a person telling

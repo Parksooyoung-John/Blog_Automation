@@ -38,6 +38,15 @@ class Reviewer(Protocol):
     ) -> ReviewResult: ...
 
 
+MIN_PUBLISH_SCORE = 7
+
+
+def _score(review: ReviewResult) -> int:
+    # Unscored drafts (older writers, tests) pass: only an explicit low score blocks.
+    score = review.reviewed_draft.score
+    return MIN_PUBLISH_SCORE if score is None else score
+
+
 class HarnessOrchestrator:
     def __init__(
         self,
@@ -76,9 +85,27 @@ class HarnessOrchestrator:
                 hook_types=hook_types,
                 include_link=include_link,
             )
-        reviews = [self.reviewer.review(source, draft) for draft in candidates]  # type: ignore[union-attr]
+        reviews = []
+        for draft in candidates:
+            review = self.reviewer.review(source, draft)  # type: ignore[union-attr]
+            # The reviewer round-trips the draft through the model; keep the writer's own judgement.
+            kept = review.reviewed_draft.model_copy(
+                update={"score": draft.score, "visual": draft.visual}
+            )
+            reviews.append(review.model_copy(update={"reviewed_draft": kept}))
         approved = [review for review in reviews if review.approved]
-        return max(approved or reviews, key=lambda review: review.quality_score)
+        worthy = [r for r in approved if _score(r) >= MIN_PUBLISH_SCORE]
+        if worthy:
+            return max(worthy, key=lambda r: (_score(r), r.quality_score))
+        if approved:
+            best = max(approved, key=_score)
+            return best.model_copy(update={
+                "approved": False,
+                "issues": [
+                    f"Threads 발행 부적합: 최고 점수 {_score(best)}/10 (기준 {MIN_PUBLISH_SCORE}점)"
+                ],
+            })
+        return max(reviews, key=lambda review: review.quality_score)
 
     def sync(
         self,

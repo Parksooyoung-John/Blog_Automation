@@ -132,6 +132,9 @@ DAILY_PROPERTY_DEFINITIONS = {
         }
     },
     "이미지검수사유": {"rich_text": {}},
+    "AI점수": {"number": {"format": "number"}},
+    "CTA유형": {"select": {"options": [{"name": n} for n in ("없음", "계정가치", "블로그")]}},
+    "이미지필요": {"select": {"options": [{"name": n} for n in ("텍스트", "카드뉴스")]}},
 }
 
 NAVER_SOURCE_FILTER = {
@@ -620,6 +623,9 @@ class NotionQueue:
                 else "미사용"
             ),
             "이미지검수사유": self._rich(""),
+            "AI점수": {"number": draft.score},
+            "CTA유형": self._select("블로그" if draft.blog_link_used else "없음"),
+            "이미지필요": self._select("카드뉴스" if draft.visual == "card" else "텍스트"),
         }
 
     def _query(

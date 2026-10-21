@@ -225,6 +225,8 @@ class ThreadsDraft(BaseModel):
     blog_link_used: bool = True
     # "card" only when a table, number comparison or procedure reads better as an image.
     visual: Literal["text", "card"] = "text"
+    # Guide rubric 0-10 (money impact 3, number 2, mistake 2, comparison 2, question 1); None = unscored.
+    score: int | None = Field(default=None, ge=0, le=10)
 
     @field_validator("posts")
     @classmethod

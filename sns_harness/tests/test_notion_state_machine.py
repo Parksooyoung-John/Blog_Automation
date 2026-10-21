@@ -211,6 +211,50 @@ def test_sync_selects_highest_scoring_approved_hook_candidate() -> None:
     assert queue.selected.hook_type is HookType.MISTAKE
 
 
+def _scored_sync(scores: list[int]) -> ReviewResult:
+    post = make_source()
+    hooks = (HookType.CURIOSITY, HookType.MISTAKE, HookType.QUESTION)
+    candidates = [
+        ThreadsDraft(
+            format="single", posts=[f"후보 {i} {post.url}"], hook_type=hook,
+            hook_text=f"충분히 긴 Hook 후보 문장 {i}입니다.", score=score,
+        )
+        for i, (hook, score) in enumerate(zip(hooks, scores, strict=True), start=1)
+    ]
+
+    class Writer:
+        def generate_candidates(self, source, *, hook_types, include_link):
+            return candidates
+
+    class Reviewer:
+        def review(self, source, draft):   # a real reviewer may drop the score on its way back
+            return ReviewResult(
+                approved=True, reviewed_draft=draft.model_copy(update={"score": None}),
+                quality_score=50,
+            )
+
+    class Queue(FakeQueue):
+        selected = None
+
+        def create(self, source, review):
+            self.selected = review
+
+    queue = Queue()
+    HarnessOrchestrator(FakeSource(post), Writer(), Reviewer(), queue).sync(now=datetime.now(UTC))
+    return queue.selected
+
+
+def test_highest_guide_score_wins_even_if_reviewer_drops_it() -> None:
+    review = _scored_sync([6, 9, 7])
+    assert review.approved and review.reviewed_draft.score == 9
+
+
+def test_all_candidates_under_seven_are_not_publishable() -> None:
+    review = _scored_sync([4, 6, 5])
+    assert not review.approved
+    assert "Threads 발행 부적합" in review.issues[0] and "6/10" in review.issues[0]
+
+
 def test_dry_run_has_no_openai_or_queue_writes() -> None:
     post = make_source()
     writer = FakeWriter(ThreadsDraft(format="single", posts=[f"조건 확인 {post.url}"]))

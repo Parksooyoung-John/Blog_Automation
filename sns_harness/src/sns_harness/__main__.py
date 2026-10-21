@@ -503,7 +503,10 @@ def main(argv: list[str] | None = None) -> int:
 
     queue = notion_queue(settings)
     if args.command == "sync":
+        if not args.dry_run:
+            queue.ensure_daily_schema()   # new columns (AI점수 ...) must exist before drafts are written
         if args.source == "naver":
+
             source = NaverSource(
                 settings.naver_blog_id,
                 timeout=settings.request_timeout_seconds,

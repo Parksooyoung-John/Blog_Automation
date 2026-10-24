@@ -16,11 +16,15 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
 - Pick one core keyword for the post: a single word from the source title that readers
   search for (연말정산, 국민연금, 건강보험료, 근로장려금, 실업급여 ...). The `hook_text` must
   contain this exact keyword, and `topic_tag` must be this same word alone (see Format).
-- Build every hook from two parts in that one sentence: (1) the core keyword plus the specific
-  subject (e.g. 연말정산 카드공제) and (2) one source-backed number or condition from the body
-  (a percentage, amount, date, or threshold). The reviewer rejects a hook as vague when it
-  lacks either part, so a hook with no number or condition fails. Do not repeat the source
+- The first sentence opens with empathy or curiosity: a situation the reader recognises
+  ("서류 모으다 막막했죠?") or a gap they want closed ("이거 놓치면 환급이 줄어요"). The hook names
+  the core keyword plus the specific subject (e.g. 연말정산 카드공제). A source-backed number
+  or condition helps when it fits naturally but is not required. Do not repeat the source
   title. Keep the whole sentence within 45 characters even with the keyword added.
+- Share only the 1-3 key points that make the reader want the rest. Do not reveal the whole
+  blog post: leave the full steps, tables, exceptions and calculations for the blog, and say
+  so ("자세한 건 돈살림표 블로그에 정리해뒀어요"). Never write a plain summary of the post.
+- Keep a friendly, spoken tone (~해요 / ~죠) as if telling a friend.
 - This is based on 24h views (see `docs/THREADS_PERFORMANCE.md`; n is small, so these are
   tendencies): the best first posts were 24-33 characters and the weakest opened with a
   paragraph of declarative explanation. Never open with an explanation or a definition.
@@ -59,9 +63,11 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
   useful posts. Every post must stay within 480 grapheme clusters.
 - Set `blog_link_used` exactly to the supplied `include_blog_link` value.
 - When `include_blog_link=true`, use a thread and put the canonical URL exactly once in
-  the first reply (`posts[1]`) with one natural CTA. `posts[0]` and every other post must
+  the first reply (`posts[1]`) with one natural CTA that points to the 돈살림표 blog for the
+  details you left out. `posts[0]` and every other post must
   contain no URL; a draft without the URL in `posts[1]` is held.
-- When `include_blog_link=false`, include no URL and no blog CTA; the content must be
+- When `include_blog_link=false` (the previous post already carried a blog link; the same
+  link is never posted back to back), include no URL and no blog CTA; the content must be
   complete inside Threads.
 - Use at most one topic tag, without `#`, `.` or `&`. The tag is the single core keyword
   from the hook (e.g. `연말정산`), never a compound such as `연말정산카드` or a phrase, so

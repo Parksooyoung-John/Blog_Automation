@@ -59,7 +59,7 @@ def test_sales_draft_query_selects_only_requested_naver_items() -> None:
     } in conditions
 
 
-def test_blog_policy_avoids_last_hook_and_caps_links_at_two_of_nine_posts(
+def test_blog_policy_avoids_last_hook_and_never_links_twice_in_a_row(
     monkeypatch,
 ) -> None:
     queue = NotionQueue("key", "database", session=RecordingSession())  # type: ignore[arg-type]
@@ -82,7 +82,4 @@ def test_blog_policy_avoids_last_hook_and_caps_links_at_two_of_nine_posts(
     assert policy["hook_types"][0] is not HookType.CURIOSITY
 
     pages[0]["properties"]["블로그링크사용"]["checkbox"] = True
-    assert queue.blog_generation_policy(datetime(2026, 10, 2, tzinfo=UTC))["include_link"] is True
-
-    pages[1]["properties"]["블로그링크사용"]["checkbox"] = True
     assert queue.blog_generation_policy(datetime(2026, 10, 2, tzinfo=UTC))["include_link"] is False

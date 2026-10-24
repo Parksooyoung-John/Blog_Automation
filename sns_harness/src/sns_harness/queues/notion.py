@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any
 
 import requests
 
 from sns_harness.models import (
+    HOOK_TYPE_LABELS,
+    ApprovalStatus,
+    CandidateType,
     ContentGoal,
     ContentType,
-    HookType,
     PostFormat,
     PostMetrics,
     QueueItem,
@@ -20,6 +22,7 @@ from sns_harness.models import (
     ThreadsDraft,
     Timeliness,
     TrendDirection,
+    candidate_key,
     draft_content_hash,
     manual_source_key,
     threads_ids_from_text,
@@ -132,9 +135,31 @@ DAILY_PROPERTY_DEFINITIONS = {
         }
     },
     "이미지검수사유": {"rich_text": {}},
+    "Hook타입": {
+        "select": {"options": [{"name": n} for n in sorted(set(HOOK_TYPE_LABELS.values()))]}
+    },
+    "후보유형": {"select": {"options": [{"name": value.value} for value in CandidateType]}},
+    "승인상태": {"select": {"options": [{"name": value.value} for value in ApprovalStatus]}},
+    "추천발행시점": {"rich_text": {}},
     "AI점수": {"number": {"format": "number"}},
     "CTA유형": {"select": {"options": [{"name": n} for n in ("없음", "계정가치", "블로그")]}},
     "이미지필요": {"select": {"options": [{"name": n} for n in ("텍스트", "카드뉴스")]}},
+}
+
+# Review gate: a candidate still waiting for review (or sent back / excluded) is never scheduled
+# or published. Items without the field are legacy/manual and stay publishable.
+APPROVAL_GATE_FILTER = {
+    "or": [
+        {"property": "승인상태", "select": {"is_empty": True}},
+        {"property": "승인상태", "select": {"equals": ApprovalStatus.APPROVED.value}},
+    ]
+}
+
+SLOT_BY_CANDIDATE = {
+    CandidateType.INFO: "12:30",
+    CandidateType.INFO_EMPATHY: "21:30",
+    CandidateType.QUESTION: "16:30",
+    CandidateType.BLOG_CONVERSION: "16:30",
 }
 
 NAVER_SOURCE_FILTER = {
@@ -277,37 +302,26 @@ class NotionQueue:
         return [self._to_item(page) for page in pages]
 
     def blog_generation_policy(self, now: datetime) -> dict[str, object]:
-        eligible = tuple(hook for hook in HookType if hook is not HookType.EMPATHY)
+        """Secondary limit only: a 블로그전환형 draft is not offered right after a linked post."""
         pages = self._query(
             {"property": "콘텐츠유형", "select": {"equals": ContentType.BLOG_INFO.value}},
             sorts=[{"timestamp": "created_time", "direction": "descending"}],
             page_size=9,
         )
-        cutoff = now - timedelta(days=7)
-        counts = {hook: 0 for hook in eligible}
-        last_hook: HookType | None = None
-        for index, page in enumerate(pages):
-            props = page.get("properties", {})
-            name = self._select_name(props.get("Hook유형", {}))
-            try:
-                hook = HookType(name)
-            except ValueError:
-                continue
-            if index == 0:
-                last_hook = hook
-            created = datetime.fromisoformat(page["created_time"].replace("Z", "+00:00"))
-            if hook in counts and created >= cutoff.astimezone(UTC):
-                counts[hook] += 1
-        ordered = sorted(eligible, key=lambda hook: (hook is last_hook, counts[hook], hook.value))
-        # Never link twice in a row; otherwise lead readers to the blog.
-        include_link = not (
+        recent_links = sum(
+            bool(page.get("properties", {}).get("블로그링크사용", {}).get("checkbox"))
+            for page in pages
+        )
+        last_linked = bool(
             pages and pages[0].get("properties", {}).get("블로그링크사용", {}).get("checkbox")
         )
-        return {"hook_types": tuple(ordered[:3]), "include_link": include_link}
+        return {"allow_link": not last_linked and recent_links < 3}
 
-    def create(self, source: SourcePost, review: ReviewResult) -> QueueItem:
+    def create(self, source: SourcePost, review: ReviewResult, variant: int = 0) -> QueueItem:
         status = QueueStatus.DRAFT if review.approved else QueueStatus.HOLD
-        properties = self._draft_properties(source, review.reviewed_draft, status)
+        properties = self._draft_properties(
+            source, review.reviewed_draft, status, variant=variant
+        )
         if review.issues:
             properties["오류"] = self._rich("; ".join(review.issues))
         response = self.session.post(
@@ -365,9 +379,13 @@ class NotionQueue:
         })
         return [self._to_item(page) for page in pages]
 
-    def replace_draft(self, page_id: str, source: SourcePost, review: ReviewResult) -> None:
+    def replace_draft(
+        self, page_id: str, source: SourcePost, review: ReviewResult, variant: int = 0
+    ) -> None:
         status = QueueStatus.DRAFT if review.approved else QueueStatus.HOLD
-        properties = self._draft_properties(source, review.reviewed_draft, status)
+        properties = self._draft_properties(
+            source, review.reviewed_draft, status, variant=variant
+        )
         properties["오류"] = self._rich("; ".join(review.issues))
         properties["예약시각"] = {"date": None}
         self._patch(page_id, properties)
@@ -434,6 +452,7 @@ class NotionQueue:
                 "and": [
                     {"property": "상태", "select": {"equals": QueueStatus.APPROVED.value}},
                     {"property": "예약시각", "date": {"is_empty": True}},
+                    APPROVAL_GATE_FILTER,
                 ]
             },
             sorts=[{"timestamp": "created_time", "direction": "ascending"}],
@@ -475,6 +494,7 @@ class NotionQueue:
                         ]
                     },
                     {"property": "예약시각", "date": {"on_or_before": now.isoformat()}},
+                    APPROVAL_GATE_FILTER,
                 ]
             },
             sorts=[{"property": "예약시각", "direction": "ascending"}],
@@ -491,7 +511,7 @@ class NotionQueue:
             return False
         if current.status is QueueStatus.PUBLISHING:
             return True
-        if current.status is not QueueStatus.APPROVED:
+        if current.status is not QueueStatus.APPROVED or not current.is_publishable:
             return False
         self._patch(item.page_id, {"상태": self._select(QueueStatus.PUBLISHING.value)})
         return True
@@ -582,14 +602,21 @@ class NotionQueue:
         )
 
     def _draft_properties(
-        self, source: SourcePost, draft: ThreadsDraft, status: QueueStatus
+        self,
+        source: SourcePost,
+        draft: ThreadsDraft,
+        status: QueueStatus,
+        *,
+        variant: int = 0,
     ) -> dict[str, Any]:
         post_values = draft.posts + [""] * (5 - len(draft.posts))
+        key = candidate_key(source.source_key, variant)
+        slot = SLOT_BY_CANDIDATE.get(draft.candidate_type, "12:30")
         return {
             "이름": self._title(source.title),
             "상태": self._select(status.value),
             "원문URL": {"url": source.url},
-            "TistoryID": self._rich(source.source_key),
+            "TistoryID": self._rich(key),
             "원문발행일": {"date": {"start": source.published_at.isoformat()}},
             "원문해시": self._rich(source.source_hash),
             "형식": self._select(draft.format.value),
@@ -603,7 +630,15 @@ class NotionQueue:
             "오류": self._rich(""),
             "재시도횟수": {"number": 0},
             "콘텐츠유형": self._select("블로그정보"),
-            "게시슬롯": self._rich("12:30"),
+            "게시슬롯": self._rich(slot),
+            "추천발행시점": self._rich(slot),
+            "승인상태": self._select(ApprovalStatus.PENDING.value),
+            "후보유형": self._select(
+                draft.candidate_type.value if draft.candidate_type else CandidateType.INFO.value
+            ),
+            "Hook타입": self._select(
+                HOOK_TYPE_LABELS[draft.hook_type] if draft.hook_type else "질문형"
+            ),
             "원문키": self._rich(source.source_key),
             "주제": self._rich(draft.topic_tag or ""),
             "Hook유형": self._select(draft.hook_type.value if draft.hook_type else "궁금증"),
@@ -611,7 +646,7 @@ class NotionQueue:
             "블로그링크사용": {"checkbox": draft.blog_link_used},
             "자동생성여부": {"checkbox": True},
             "사람수정필요": {"checkbox": False},
-            "중복검사키": self._rich(f"블로그정보:{source.source_key}"),
+            "중복검사키": self._rich(f"블로그정보:{key}"),
             "성과판정": self._select("미측정"),
             "게시번호": {"number": None},
             "썸네일파일": self._rich(""),
@@ -702,6 +737,8 @@ class NotionQueue:
             topic=self._plain(props.get("주제", {})),
             hook_type=self._select_name(props.get("Hook유형", {})) or None,
             blog_link_used=bool(props.get("블로그링크사용", {}).get("checkbox", False)),
+            candidate_type=self._select_name(props.get("후보유형", {})),
+            approval_status=self._select_name(props.get("승인상태", {})) or None,
             operator_note=self._plain(props.get("운영메모", {})),
             auto_generated=bool(props.get("자동생성여부", {}).get("checkbox", False)),
             human_edit_required=bool(props.get("사람수정필요", {}).get("checkbox", False)),

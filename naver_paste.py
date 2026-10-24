@@ -189,8 +189,10 @@ def parts(md: str) -> tuple:
     return title, "\n\n".join(blocks), tags
 
 
-def _rich(text: str) -> str:
-    return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", html.escape(text))
+def _rich(text: str, color: str = "") -> str:
+    """**볼드** → <b>. color를 주면 볼드 글자를 그 글의 테마색으로 낸다(2026-10-24 사용자 규칙: 본문 볼드는 글 색)."""
+    sub = rf'<b><span style="color:{color}">\1</span></b>' if color else r"<b>\1</b>"
+    return re.sub(r"\*\*(.+?)\*\*", sub, html.escape(text))
 
 
 def convert(md: str) -> str:
@@ -222,7 +224,8 @@ def to_html(md: str, tone: int = 0, template: bool = False, px: int = TEMPLATE_P
             rows = ["<tr>" + "".join(f"<th {HEAD}>{_p('<b>' + _rich(c) + '</b>', '#ffffff')}</th>" for c in head) + "</tr>"]
             # 칸 전체가 볼드인 값은 강조색으로(답이 되는 숫자)
             rows += ["<tr>" + "".join(f"<td {CELL if i else FIRST}>"
-                                      + _p(_rich(c), MAIN if re.fullmatch(r"\*\*[^*]+\*\*", c) else "") + "</td>"
+                                      + _p(_rich(c, "" if re.fullmatch(r"\*\*[^*]+\*\*", c) else MAIN),
+                                           MAIN if re.fullmatch(r"\*\*[^*]+\*\*", c) else "") + "</td>"
                                       for i, c in enumerate(r)) + "</tr>" for r in rest]
             tbl = TABLE + "".join(rows) + "</table>"
             paras.append(tbl.replace("<p>", '<p style="text-align:center">') if template else tbl)
@@ -230,16 +233,17 @@ def to_html(md: str, tone: int = 0, template: bool = False, px: int = TEMPLATE_P
             kind, (head, *rest) = BOX_RE.match(blk).group(1), box_lines(blk)
             if kind == "질문":
                 rows = (f"<tr><td {Q_CELL}>{_p('<b>Q. ' + _rich(head) + '</b>', MAIN)}</td></tr><tr><td {A_CELL}>"
-                        + "".join(_p(("" if i else "A. ") + _rich(x)) for i, x in enumerate(rest)) + "</td></tr>")
+                        + "".join(_p(("" if i else "A. ") + _rich(x, MAIN)) for i, x in enumerate(rest)) + "</td></tr>")
             else:
                 cell, color = BOX[kind]
                 rest = [x.replace("· ", "✓ ", 1) if kind == "요약" else x for x in rest]
-                rows = f"<tr><td {cell}>{_p('<b>' + _rich(head) + '</b>', color)}{''.join(_p(_rich(x)) for x in rest)}</td></tr>"
+                rows = f"<tr><td {cell}>{_p('<b>' + _rich(head) + '</b>', color)}{''.join(_p(_rich(x, MAIN)) for x in rest)}</td></tr>"
             paras.append(TABLE + rows + "</table>")
         else:
             # 글자 크기와 폰트를 실어 보낸다 — 에디터 기본값이 바뀌어도 같은 모양으로 들어가게.
             # `※`로 시작하는 줄은 표·문단에 딸린 주석이다(기준 연도·예외).
-            paras += [_p(_rich(line), WARN if line.startswith("※") else "") for line in blk.split("\n")]
+            paras += [_p(_rich(line, "" if line.startswith("※") else MAIN), WARN if line.startswith("※") else "")
+                      for line in blk.split("\n")]
         paras.append(BLANK)          # 덩어리 사이 빈 줄
     assert "**" not in "".join(paras), "닫히지 않은 볼드 표시가 남았다"
     out = "\n".join(paras[:-1])
@@ -266,14 +270,17 @@ def selftest():
     page = to_html(md)
     MAIN, HEAD, FIRST, BOX, Q_CELL = _tone(0)
     P, E = f"<p>{SPAN}", "</span></p>"      # 본문 줄은 글자 크기와 폰트를 달고 나간다
+    B = lambda t: f'<b><span style="color:{MAIN}">{t}</span></b>'      # 본문 볼드는 글 색(2026-10-24)
     assert "font-size:15px" in SPAN and "나눔바른고딕" in SPAN
-    assert f"{P}보험료율은 <b>7.19%</b>입니다.{E}" in page
-    assert f"{P}· 항목 <b>강조</b>{E}" in page
-    assert "A &lt; B인" in page                                 # 본문의 < 가 태그로 읽히면 안 된다
+    assert f"{P}보험료율은 {B('7.19%')}입니다.{E}" in page
+    assert f"{P}· 항목 {B('강조')}{E}" in page
+    assert "A &lt; B인" in page
+    assert B("7.19%") in to_html(md, 0) and B("7.19%") not in to_html(md, 1)       # 볼드 색은 글마다 따라 바뀐다
+    assert "<b>7.19%</b>" not in page                                              # 색 없는 볼드가 남으면 안 된다                                 # 본문의 < 가 태그로 읽히면 안 된다
     assert '<div id="tags">#태그하나 #태그둘 #태그셋 #태그넷 #태그다섯</div>' in page
     assert "작성 메모" not in page and "- 메모" not in page
     assert f"{P}도입부입니다.{E}\n{BLANK}\n{P}보험료율은" in page          # 문장 사이 빈 줄
-    assert f"{P}· 항목 <b>강조</b>{E}\n{P}· 둘째 항목{E}" in page             # 목록은 붙어 있다
+    assert f"{P}· 항목 {B('강조')}{E}\n{P}· 둘째 항목{E}" in page             # 목록은 붙어 있다
 
     tmd = md.replace("- 항목 **강조**\n- 둘째 항목", "| 가입기간 | 일수 |\n|---|---|\n| 1년 미만 | **120일** |")
     tpage, ttext = to_html(tmd), convert(tmd)
@@ -298,14 +305,14 @@ def selftest():
     assert ("[경험 한 줄 ① — 문장 하나만 남기고 ▶ 줄과 나머지는 지우세요]\n▶ A안(사실)\n직접 확인했어요.\n"
             "▶ B안(해당될 때만)\n저도 그랬어요.") in otext, otext
     assert "▶ B안\n먼저 이 글을 보세요.\n▶ 아래 주소를 잘라내" in otext and otext.count("https://blog.naver.com/x/1") == 1, otext
-    assert f"{P}직접 <b>확인</b>했어요.{E}\n{P}▶ B안(해당될 때만){E}" in opage
+    assert f"{P}직접 {B('확인')}했어요.{E}\n{P}▶ B안(해당될 때만){E}" in opage
     assert "[경험 한 줄 ②]" in convert(md.replace("## 첫 소제목", "[경험 한 줄 ②]\n\n## 첫 소제목"))   # 후보 없는 옛 표기는 그대로
 
     # 박스: 문장으로 쪼개지 않고 배경색 1칸 표 하나로 나간다. 일반 텍스트에는 `>`와 종류 표지가 남지 않는다
     bmd = md.replace("## 첫 소제목", "> [요약] 한눈에 보기\n> - 한도는 **1,000만원**입니다. 예외도 있습니다.\n> - 둘째 줄\n\n## 첫 소제목")
     btext, bpage = convert(bmd), to_html(bmd)
     assert "한눈에 보기\n· 한도는 1,000만원입니다. 예외도 있습니다.\n· 둘째 줄" in btext and "[요약]" not in btext and ">" not in btext, btext
-    assert (f'<td {BOX["요약"][0]}>{_p("<b>한눈에 보기</b>", MAIN)}{P}✓ 한도는 <b>1,000만원</b>입니다. 예외도 있습니다.{E}'
+    assert (f'<td {BOX["요약"][0]}>{_p("<b>한눈에 보기</b>", MAIN)}{P}✓ 한도는 {B('1,000만원')}입니다. 예외도 있습니다.{E}'
             f'{P}✓ 둘째 줄{E}</td>') in bpage
     assert f"<title>붙여넣기용 — 테스트 제목</title>" in bpage              # 박스 제목이 글 제목을 덮어쓰면 안 된다
     qmd = md.replace("## 첫 소제목", "> [질문] 언제부터 되나요?\n> 2027년부터입니다.\n\n※ 기준은 2026년입니다. 예외가 있습니다.\n\n## 첫 소제목")

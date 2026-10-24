@@ -369,6 +369,9 @@ def page_for(src: Path, tone: int = None) -> str:
     naver_prep.py가 to_html(md, tone)만 불러 18편 파일이 15px·템플릿 서식 없이 나왔다(2026-10-17).
     붙여넣기 파일을 만드는 곳은 전부 이 함수를 거친다."""
     num = re.match(r"\d+", src.name)
+    if num:
+        from pipeline import paste_gate      # 승인 흐름에 올라오지 않은 글은 붙여넣기 파일을 만들지 않는다(25편~)
+        paste_gate(int(num.group()))
     template = bool(num) and int(num.group()) >= TEMPLATE_FROM
     px = PX_BY_POST.get(int(num.group()), TEMPLATE_PX) if num else TEMPLATE_PX
     return to_html(src.read_text(encoding="utf-8"), tone_of(src) if tone is None else tone, template, px)

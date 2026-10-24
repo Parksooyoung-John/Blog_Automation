@@ -72,6 +72,16 @@ SNS 쪽 옛 작업물 34개 파일이 미커밋으로 남아 `git pull`도 막�
 
 ---
 
+## 클러스터와 승인 흐름 (2026-10-24)
+
+검색 유입 개선을 위해 글을 **주제 클러스터**(`content/naver/_clusters.md`)로 묶고 `pipeline.py`로 후보 점수·발행 상태·성과를 기록한다. 규칙 전문은 `NAVER_GUIDE.md` 「클러스터·승인 흐름·출처 기록」.
+
+- 새 글은 `pipeline.py score` → `start 후보ID`로 시작한다. 25편부터 `check_naver.py`가 포트폴리오·클러스터·차별화 요소 2개·적용 기준일·출처 줄(기관|제목|URL|확인일)·글 간 유사도를 본다.
+- **`APPROVED`는 Claude가 설정하지 않는다.** 사용자가 터미널에서 `pipeline.py status NN APPROVED`를 직접 입력한다(TTY가 아니면 거부). `naver_paste.py`는 `HUMAN_REVIEW` 미만이면 붙여넣기 파일을 만들지 않는다.
+- 기존 글의 링크 추가·수정·재발행은 `pipeline.py links`·`linkcheck`가 낸 **후보**를 사용자에게 보여 주고 승인받은 뒤에 한다.
+- 글 단위 성과등급(A~E, `_perf.csv`)은 `manager.py` 판정 기준을 바꾸지 않는다. 수치는 사용자가 준 것만 기록하고 추정하지 않는다.
+- 셀프테스트: `python -X utf8 pipeline.py --selftest` (다른 검수 스크립트와 함께 돌린다).
+
 ## 기획 단계 — 무엇을 쓸지 먼저 정한다
 
 글을 쓰기 전에 `topic-planner` 스킬로 주제를 고른다. 순서: `keyword_research.py gap`(안 쓴 주제) →

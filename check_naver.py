@@ -720,6 +720,7 @@ def fetch_benchmark(n=50) -> int:
 
 
 def main():
+    from pipeline import post_issues      # pipeline이 이 모듈을 가져오므로 함수 안에서 불러온다
     tistory = sents("".join(open(f, encoding='utf-8').read()
                             for f in glob.glob('_workspace/02_blog_post_*.md')))
     volumes = load_volumes()
@@ -738,7 +739,8 @@ def main():
         comps[os.path.basename(p)] = r["composition"]
         if r["template"] and not bench:
             print(f'⚠ {BENCH_DIR} 비어 있음 — 벤치마크 문장 중복을 못 봤다. `check_naver.py --fetch-benchmark` 후 다시 실행')
-        ok = passes(r)
+        fails, warns = post_issues(p)       # 25편부터: 클러스터·출처 기록·글 간 유사도 (pipeline.py)
+        ok = passes(r) and not fails
         allok &= ok
         print(('OK   ' if ok else 'CHECK'), os.path.basename(p))
         print(f"       {r['chars']}자 / 소제목 {r['heads']} / 이미지 {r['images']} / 표 {r['tables']}"
@@ -764,6 +766,10 @@ def main():
                 print('         구조:', t)
         elif r["structure"]:
             print(f'         (발행됨 — 판정 제외) 구조 {len(r["structure"])}건')
+        for t in fails:
+            print('         파이프라인:', t)
+        for t in warns:
+            print('         경고:', t)
         for d in list(r["dup"])[:3]:
             print('         중복:', d[:55])
         for d in list(r["bench_dup"])[:3]:

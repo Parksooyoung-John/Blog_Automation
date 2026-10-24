@@ -6,8 +6,15 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
 
 # Candidate contract
 
-- Return exactly three candidates using the three distinct `required_hook_types`.
-- Each candidate uses one different angle and one core claim.
+- Return exactly five candidates, one per entry of `candidate_plan`, in that order. Each entry
+  fixes the `hook_type`, the `candidate_type` and whether the candidate carries the blog link;
+  copy `candidate_type` into the output and never swap them.
+- Each candidate uses a different angle and one core claim, written in one sentence in
+  `core_claim`. Two candidates must never share a first sentence or a core claim.
+- Candidate types: 정보형 gives the key facts plainly (no link). 정보+공감형 opens with the
+  reader's situation, then gives the key facts (no link). 질문형 is built around one real
+  question the reader has (no link). 블로그전환형 teases the 1-3 key points and sends readers
+  to the blog (the only type with a link).
 - The first post is the `hook_text` and at most one short line after it. The core claim and
   the explanation go in the later posts, never in the first post.
 - `hook_text` is the exact prefix of the first post. It is exactly ONE sentence of 25-45
@@ -16,19 +23,23 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
 - Pick one core keyword for the post: a single word from the source title that readers
   search for (연말정산, 국민연금, 건강보험료, 근로장려금, 실업급여 ...). The `hook_text` must
   contain this exact keyword, and `topic_tag` must be this same word alone (see Format).
-- Build every hook from two parts in that one sentence: (1) the core keyword plus the specific
-  subject (e.g. 연말정산 카드공제) and (2) one source-backed number or condition from the body
-  (a percentage, amount, date, or threshold). The reviewer rejects a hook as vague when it
-  lacks either part, so a hook with no number or condition fails. Do not repeat the source
+- The first sentence opens with empathy or curiosity: a situation the reader recognises
+  ("서류 모으다 막막했죠?") or a gap they want closed ("이거 놓치면 환급이 줄어요"). The hook names
+  the core keyword plus the specific subject (e.g. 연말정산 카드공제). A source-backed number
+  or condition helps when it fits naturally but is not required. Do not repeat the source
   title. Keep the whole sentence within 45 characters even with the keyword added.
+- Share only the 1-3 key points that make the reader want the rest. Do not reveal the whole
+  blog post: leave the full steps, tables, exceptions and calculations for the blog, and say
+  so ("자세한 건 돈살림표 블로그에 정리해뒀어요"). Never write a plain summary of the post.
+- Keep a friendly, spoken tone (~해요 / ~죠) as if telling a friend.
 - This is based on 24h views (see `docs/THREADS_PERFORMANCE.md`; n is small, so these are
   tendencies): the best first posts were 24-33 characters and the weakest opened with a
   paragraph of declarative explanation. Never open with an explanation or a definition.
-- Use exactly the supplied `required_hook_types`, one per candidate; never swap one for
-  another type to make a marker easier. Each type must carry its marker, or the draft is
-  held at review: 질문 ends with `?`; 숫자 contains a source-backed number; 비교 contains
-  `차이`, `보다`, `vs`, or `둘`; 실수 contains `실수`, `착각`, `놓치`, `헷갈`, or `잘못`;
-  궁금증 has no marker but opens a gap the later posts close (it may end with `?`).
+- Use exactly the `hook_type` of each plan entry; never swap one for another type to make a
+  marker easier. Each type must carry its marker, or the draft is held at review: 질문 ends
+  with `?`; 숫자 contains a source-backed number; 비교 contains `차이`, `보다`, `vs`, or `둘`;
+  실수 contains `실수`, `착각`, `놓치`, `헷갈`, or `잘못`; 경험/공감 names a situation the
+  reader recognises and never claims your own experience (no 저는/제가/내가).
 - Set `visual` to `text` by default (text posts reach more people than cards on this account).
   Use `card` only when the source has a table, a number comparison or a step-by-step procedure
   that reads clearer as images. For `card`, the first post is shown above the slides: do not
@@ -42,9 +53,8 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
   (3) a confusing comparison or notation, (4) how it hits the reader's own money. Open with the
   most money-relevant number, condition or mistake in the source, phrased like a person telling
   a friend, never like a post title.
-- Only for the single best candidate of a post without a blog link (`include_blog_link=false`;
-  the guide wants it on about one in three info posts, so leave it off the other candidates), end
-  with one short line saying why to follow the account (e.g. 직장인들이 놓치기 쉬운 돈 정보 위주로 올리는 중.). Never
+- Only for the single best candidate without a blog link, end with one short line saying why
+  to follow the account (e.g. 직장인들이 놓치기 쉬운 돈 정보 위주로 올리는 중.). Never
   ask directly to follow. Skip this line when the post has a blog link.
 - Use short conversational Korean sentences and natural line breaks. Do not add a title.
 - Trustworthy hooks may use curiosity, a source-backed number, a common mistake,
@@ -57,9 +67,11 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
 
 - Choose `single` for one focused takeaway and `thread` only for 3-5 independently
   useful posts. Every post must stay within 480 grapheme clusters.
-- Set `blog_link_used` exactly to the supplied `include_blog_link` value.
+- Set `blog_link_used` exactly to the plan entry's `include_blog_link`: true only for
+  블로그전환형.
 - When `include_blog_link=true`, use a thread and put the canonical URL exactly once in
-  the first reply (`posts[1]`) with one natural CTA. `posts[0]` and every other post must
+  the first reply (`posts[1]`) with one natural CTA that points to the 돈살림표 blog for the
+  details you left out. `posts[0]` and every other post must
   contain no URL; a draft without the URL in `posts[1]` is held.
 - When `include_blog_link=false`, include no URL and no blog CTA; the content must be
   complete inside Threads.

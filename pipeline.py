@@ -447,7 +447,7 @@ def cmd_links(args):
     c = link_candidates(nn, ledger, titles)
     md = post_file(nn).read_text(encoding="utf-8")
     heads = re.findall(r"^## (\d+\. .+)$", md.split("## 작성 메모")[0], re.M)
-    sections = re.split(r"^## ", md.split("## 작성 메모")[0], flags=re.M)[1:]
+    sections = [x for x in re.split(r"^## ", md.split("## 작성 메모")[0], flags=re.M)[1:] if re.match(r"\d+\. ", x)]
     print(f"{nn:02d}편 내부링크 후보 (같은 클러스터, 발행된 글):")
     for r in c["link"]:
         best = max(range(len(sections)), key=lambda i: contain(r["primary_kw"], sections[i]), default=None)
@@ -458,7 +458,10 @@ def cmd_links(args):
     print("발행 후 링크 추가를 검토할 기존 글 (수정·재발행은 사용자 승인 필요):")
     for r in c["update"]:
         print(f"  {r['post']}편 {r['primary_kw']}")
-    print("같은 클러스터의 후속 글:", ", ".join(f"{r['post']}편 {r['primary_kw']}" for r in c["next"]) or "없음")
+    me = next(r for r in ledger if num_of(r["post"]) == nn)
+    todo = sorted((x for x in read_csv(CANDS, CAND_COLS) if x["cluster"] == me["cluster"] and x["status"] == "IDEA"),
+                  key=lambda x: to_int(x["order"]))
+    print("같은 클러스터의 후속 글:", ", ".join(f"{x['id']} {x['keyword']}" for x in todo[:3]) or "없음")
 
 
 def live_inlinks(html: str) -> set:

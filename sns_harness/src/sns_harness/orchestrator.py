@@ -61,11 +61,12 @@ def _differing_dimensions(a: ThreadsDraft, b: ThreadsDraft) -> int:
     )
 
 
-def pick_pair(reviews: list[ReviewResult]) -> list[ReviewResult]:
+def pick_pair(reviews: list[ReviewResult], *, prefer_link: bool = False) -> list[ReviewResult]:
     """Top two approved candidates scoring at least MIN_PUBLISH_SCORE.
 
     The first is the best 정보형; the second prefers 정보+공감형 / 블로그전환형, shares at most
-    one link with the first and differs from it in at least two dimensions.
+    one link with the first and differs from it in at least two dimensions. With `prefer_link`
+    a qualifying 블로그전환형 takes the second slot regardless of score.
     """
     worthy = sorted(
         (r for r in reviews if r.approved and _score(r) >= MIN_PUBLISH_SCORE),
@@ -85,6 +86,8 @@ def pick_pair(reviews: list[ReviewResult]) -> list[ReviewResult]:
         and _differing_dimensions(first.reviewed_draft, r.reviewed_draft) >= 2
     ]
     wanted = {CandidateType.INFO_EMPATHY, CandidateType.BLOG_CONVERSION}
+    if prefer_link:
+        wanted = {CandidateType.BLOG_CONVERSION}
     second = next((r for r in rest if r.reviewed_draft.candidate_type in wanted), None)
     second = second or next(iter(rest), None)
     return [first] + ([second] if second else [])
@@ -116,7 +119,9 @@ class HarnessOrchestrator:
     ) -> list[ReviewResult]:
         """Review every candidate and keep the best two; empty when none reaches the score bar."""
         policy = getattr(self.queue, "blog_generation_policy", None)
-        allow_link = bool(policy(now)["allow_link"]) if policy is not None else True
+        context = policy(now) if policy is not None else {"allow_link": True}
+        allow_link = bool(context["allow_link"])
+        prefer_link = bool(context.get("prefer_link"))
         candidate_generator = getattr(self.writer, "generate_candidates", None)
         if candidate_generator is None:
             candidates = [self.writer.generate(source)]  # type: ignore[union-attr]
@@ -136,7 +141,7 @@ class HarnessOrchestrator:
             )
             reviews.append(review.model_copy(update={"reviewed_draft": kept}))
         if any(review.approved for review in reviews):
-            return pick_pair(reviews)
+            return pick_pair(reviews, prefer_link=prefer_link)
         return [max(reviews, key=lambda review: review.quality_score)]   # held for the operator
 
     def sync(

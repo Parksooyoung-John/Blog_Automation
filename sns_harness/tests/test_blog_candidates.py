@@ -218,3 +218,13 @@ def test_notion_queries_exclude_unapproved_review_states() -> None:
             {"property": "승인상태", "select": {"equals": "승인"}}]
     for payload in session.payloads:
         assert {"or": gate} in payload["filter"]["and"]
+
+
+def test_prefer_link_puts_blog_conversion_in_second_slot() -> None:
+    reviews = [
+        ReviewResult(approved=True, reviewed_draft=d, quality_score=80)
+        for d in drafts([9, 8, 8, 9, 7])   # 공감(9)이 링크 후보(7)보다 높다
+    ]
+    assert pick_pair(reviews)[1].reviewed_draft.candidate_type is CandidateType.INFO_EMPATHY
+    second = pick_pair(reviews, prefer_link=True)[1].reviewed_draft
+    assert second.candidate_type is CandidateType.BLOG_CONVERSION and second.blog_link_used

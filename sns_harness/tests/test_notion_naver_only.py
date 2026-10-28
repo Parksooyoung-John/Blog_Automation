@@ -77,6 +77,7 @@ def test_blog_policy_limits_blog_link_offers(
     policy = queue.blog_generation_policy(datetime(2026, 10, 2, tzinfo=UTC))
 
     assert policy["allow_link"] is True
+    assert policy["prefer_link"] is True
 
     pages[0]["properties"]["블로그링크사용"]["checkbox"] = True
     assert queue.blog_generation_policy(datetime(2026, 10, 2, tzinfo=UTC))["allow_link"] is False

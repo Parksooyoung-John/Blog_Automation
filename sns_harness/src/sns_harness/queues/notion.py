@@ -315,7 +315,9 @@ class NotionQueue:
         last_linked = bool(
             pages and pages[0].get("properties", {}).get("블로그링크사용", {}).get("checkbox")
         )
-        return {"allow_link": not last_linked and recent_links < 3}
+        allow_link = not last_linked and recent_links < 3
+        # No link in the last 9 blog drafts: let the 블로그전환형 draft take the second slot.
+        return {"allow_link": allow_link, "prefer_link": allow_link and recent_links == 0}
 
     def create(self, source: SourcePost, review: ReviewResult, variant: int = 0) -> QueueItem:
         status = QueueStatus.DRAFT if review.approved else QueueStatus.HOLD

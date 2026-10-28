@@ -65,6 +65,9 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
 
 # Format and links
 
+- `format` must match `posts`: `single` means `posts` has exactly ONE item; any candidate
+  whose content is split over several posts is `thread` with 3-5 items. Count `posts` before
+  answering; a `single` with two or more items is rejected.
 - Choose `single` for one focused takeaway and `thread` only for 3-5 independently
   useful posts. Every post must stay within 480 grapheme clusters.
 - Set `blog_link_used` exactly to the plan entry's `include_blog_link`: true only for

@@ -232,8 +232,11 @@ def thumb_lines(md: str):
     return a, b
 
 
-def template_issues(md: str, body: str, text: str, keyword) -> list:
-    """15편부터의 벤치마크 템플릿. body: 플레이스홀더가 남은 본문, text: 플레이스홀더를 뺀 본문. → 문제 설명 목록"""
+def template_issues(md: str, body: str, text: str, keyword, quality: bool = False) -> list:
+    """15편부터의 벤치마크 템플릿. body: 플레이스홀더가 남은 본문, text: 플레이스홀더를 뺀 본문. → 문제 설명 목록
+
+    quality(27편~): 섹션 고정 순서·번호 1~5 대신 quality_issues()가 구조를 본다.
+    """
     issues = []
     blocks = [x.strip() for x in re.split(r'\n\s*\n', body) if x.strip() and not re.fullmatch(r'-{3,}', x.strip())]
     title = re.search(r'^제목: (.+)$', md, re.M).group(1).strip()
@@ -244,8 +247,9 @@ def template_issues(md: str, body: str, text: str, keyword) -> list:
     if len(blocks) < 2 or not blocks[1].startswith('[이미지 ①'):
         issues.append('질문 바로 다음이 [이미지 ①] 썸네일이 아니다')
     order = [("요약 박스", lambda x: is_box(x) and BOX_RE.match(x).group(1) == '요약')]
-    order += [(f"## {i}.", lambda x, i=i: x.startswith(f'## {i}. ')) for i in range(1, 6)]
-    order += [(f"## {h}", lambda x, h=h: x == f'## {h}') for h in FIXED_HEADS]
+    if not quality:
+        order += [(f"## {i}.", lambda x, i=i: x.startswith(f'## {i}. ')) for i in range(1, 6)]
+        order += [(f"## {h}", lambda x, h=h: x == f'## {h}') for h in FIXED_HEADS]
     pos = 0
     for name, ok in order:
         i = next((k for k in range(pos, len(blocks)) if ok(blocks[k])), None)
@@ -253,9 +257,15 @@ def template_issues(md: str, body: str, text: str, keyword) -> list:
             issues.append(f'템플릿 순서: `{name}`이(가) 없거나 앞 블록보다 먼저 나온다')
         else:
             pos = i + 1
-    # G4 번호 소제목은 정확히 1~6
+    # G4 번호 소제목은 정확히 1~5 (27편부터는 1부터 이어지는 3~6개)
     nums = re.findall(r'^## (\d+)\. ', body, flags=re.M)
-    if nums != [str(i) for i in range(1, 6)]:
+    if quality:
+        if not (QUALITY_SECTIONS[0] <= len(nums) <= QUALITY_SECTIONS[1] and nums == [str(i) for i in range(1, len(nums) + 1)]):
+            issues.append(f'번호 소제목이 {", ".join(nums) or "없음"} — 1부터 이어지는 {QUALITY_SECTIONS[0]}~{QUALITY_SECTIONS[1]}개')
+        heads = re.findall(r'^## (.+?)\s*$', body, flags=re.M)
+        if heads and heads[-1] != '근거 자료':
+            issues.append('`## 근거 자료`가 맨 끝 소제목이 아니다')
+    elif nums != [str(i) for i in range(1, 6)]:
         issues.append(f'번호 소제목이 {", ".join(nums) or "없음"} — 1~5여야 한다')
 
     # G2 제목
@@ -333,6 +343,155 @@ def template_issues(md: str, body: str, text: str, keyword) -> list:
         if not big or not _nums(big) or not _nums(big) <= _nums(text):
             issues.append('card인데 `- 썸네일 강조 숫자:`가 없거나 그 숫자가 본문에 없다')
     return issues
+
+
+# 품질 강화(2026-10-28, 27편부터). 근거: Donsallimpyo_Harness_Content_Quality_Upgrade.md + 사용자 YAML 규칙.
+# 15~26편이 같은 제목 꼬리("확인할 5가지")·표 5개·태그 10개로 찍혀 나왔고, [경험 한 줄] A안이 AI가 쓴 1인칭이었다.
+QUALITY_FROM = 27
+QUALITY_SECTIONS = (3, 6)
+MAX_TABLES = 3
+MAX_INFO_BOXES = 2                  # 요약·안내·주의 합계. [질문]은 FAQ_RANGE가 따로 센다
+FAQ_RANGE = (2, 3)
+TAG_RANGE = (3, 5)
+BANNED_SUFFIX = ("확인할 5가지", "총정리")
+TITLE_REPEAT = (2, 5)               # 같은 제목 뼈대는 새 글 포함 최근 5편 중 2편까지
+# ponytail: 조건어 목록 휴리스틱 — 구체 상황이 있는데 걸리지 않는 제목이 나오면 목록을 늘린다
+SITUATION_RE = re.compile(r'받는|사는|있는|없는|넘는|넘으면|했을 때|하면|못 받|안 받|맞벌이|퇴사|이직|중인|후에|전에|때')
+ORIGINALITY = ("primary_source_comparison", "verified_calculation", "verified_screen_path", "real_experience")
+FIRST_PERSON_RE = re.compile(r'(?<![가-힣])(저는|제가|저도|저희|나는|내가)(?![가-힣])|직접 (신청|사용|받아|해) ?보|해 ?보니|더라고요|더라구요'
+                             r'|실제로 환급받았|담당자에게 (확인|물어) ?보니|세무서에 문의해 ?보니')
+PRIMARY_DOMAINS = ("nts.go.kr", "hometax.go.kr", "law.go.kr", "korea.kr", "gov.kr", "bokjiro.go.kr", "nps.or.kr",
+                   "nhis.or.kr", "ei.go.kr", "work24.go.kr", "moel.go.kr", "mohw.go.kr", "moef.go.kr", "comwel.or.kr")
+GUARANTEE_RE = re.compile(r'무조건 (받|환급|돌려)|100% (환급|받|돌려)|반드시 (받|환급)을? 수|확실히 (받|환급)')
+CLICK_RE = re.compile(r'광고.{0,8}(클릭|눌러)|클릭해 주세요')
+HYPOTHETICAL_RE = re.compile(r'가상|예시|계산 예|가정')
+
+
+def title_skeleton(title: str) -> str:
+    """제목 뼈대 — 키워드가 놓이는 `|` 앞을 지우고 숫자를 N으로. `확인할 5가지`류 꼬리가 반복되는지 본다."""
+    tail = title.split('|', 1)[-1]
+    tail = re.sub(r'\d+(?:[.,]\d+)*', 'N', tail)
+    return re.sub(r'.*[?？]\s*', '?', tail).strip()      # 질문 뒤 꼬리가 반복의 정체다
+
+
+def section_skeleton(body: str) -> list:
+    """소제목 구성 — 번호는 #, 고정 소제목은 그대로, 나머지는 *."""
+    out = []
+    for h in re.findall(r'^## (.+?)\s*$', body, flags=re.M):
+        out.append('#' if re.match(r'\d+\. ', h) else h if h in FIXED_HEADS else '*')
+    return out
+
+
+def card_numbers(body: str) -> dict:
+    """원고가 참조한 카드 → 카드 글자의 숫자. 카드 출처 줄(sub)은 뺀다."""
+    names = re.findall(r'assets/naver_img/(\d+_[^`\s\]]+?)\.png', body)
+    names = [n for n in names if not n.split('_', 1)[1].startswith('썸네일')]
+    if not names:
+        return {}
+    from make_naver_images import CARDS
+    out = {}
+    for n in names:
+        c = CARDS.get(n)
+        if c is None:
+            continue
+        strs = [c.args[0]] + [x for a in c.args[2:] for x in (a if isinstance(a, (list, tuple)) else [a])]
+        flat = [y for x in strs for y in (x if isinstance(x, tuple) else [x]) if isinstance(y, str)]
+        out[n] = _nums(' '.join(flat))
+    return out
+
+
+def quality_issues(md: str, body: str, text: str, tags: list) -> list:
+    """27편부터의 품질 규칙. body: 플레이스홀더가 남은 본문, text: 플레이스홀더를 뺀 본문. → 문제 설명 목록"""
+    issues = []
+    title = re.search(r'^제목: (.+)$', md, re.M).group(1).strip()
+    blocks = [x.strip() for x in re.split(r'\n\s*\n', body) if x.strip()]
+
+    issues += [f'제목 꼬리 금지: {s}' for s in BANNED_SUFFIX if s in title]
+    if not SITUATION_RE.search(title):
+        issues.append('제목에 구체 상황(받는·사는·넘으면·했을 때 등)이 없다')
+
+    tables = sum(is_table(b) for b in blocks)
+    if tables > MAX_TABLES:
+        issues.append(f'표 {tables}개 ({MAX_TABLES}개 이하)')
+    kinds = [BOX_RE.match(b).group(1) for b in blocks if is_box(b)]
+    info = sum(k in ('요약', '안내', '주의') for k in kinds)
+    if info > MAX_INFO_BOXES:
+        issues.append(f'요약·안내·주의 박스 {info}개 ({MAX_INFO_BOXES}개 이하)')
+    faq = kinds.count('질문')
+    if not FAQ_RANGE[0] <= faq <= FAQ_RANGE[1]:
+        issues.append(f'FAQ(`> [질문]`) {faq}개 ({FAQ_RANGE[0]}~{FAQ_RANGE[1]}개)')
+    if not TAG_RANGE[0] <= len(tags) <= TAG_RANGE[1]:
+        issues.append(f'태그 {len(tags)}개 ({TAG_RANGE[0]}~{TAG_RANGE[1]}개)')
+
+    # 고유 근거 — 하나 이상, 값마다 뒷받침이 있어야 한다
+    rows = facts(md)
+    sources = re.findall(r'^- 출처:.*$', md, flags=re.M)
+    primary = [s for s in sources if any(d in s for d in PRIMARY_DOMAINS)]
+    modes = [m.strip() for m in (memo_value(md, '고유 근거') or '').split('|') if m.strip()]
+    real = bool((memo_value(md, '실제 경험') or '').strip())
+    if not any(m in ORIGINALITY for m in modes):
+        issues.append(f'EVIDENCE_REQUIRED — 작성 메모 `- 고유 근거:`가 {" · ".join(ORIGINALITY)} 중 하나 이상이 아니다')
+    for m in modes:
+        if m not in ORIGINALITY:
+            issues.append(f'고유 근거 값이 목록에 없다: {m}')
+        elif m == 'verified_calculation' and not any(r[4] == '계산' and _nums(r[1]) & _nums(text) for r in rows):
+            issues.append('verified_calculation인데 본문에 쓰인 `계산` 행이 없다')
+        elif m == 'primary_source_comparison' and not (len(primary) >= 2 and tables >= 1):
+            issues.append('primary_source_comparison인데 1차 출처 2개 + 비교표가 없다')
+        elif m == 'verified_screen_path' and not (re.search(r'\d{4}-\d\d-\d\d', memo_value(md, '화면 확인') or '')
+                                                  and re.search(r'\[이미지[^\]]*캡처', body)):
+            issues.append('verified_screen_path인데 `- 화면 확인: YYYY-MM-DD`나 캡처 이미지 자리가 없다')
+        elif m == 'real_experience' and not real:
+            issues.append('real_experience인데 `- 실제 경험:`(사용자가 쓴 경험)이 비어 있다')
+
+    # 허위 1인칭 — 본문은 실제 경험 메모가 있을 때만, [경험 한 줄] A안은 항상 3인칭
+    if not real and (m := FIRST_PERSON_RE.search(text)):
+        issues.append(f'경험 입력 없이 1인칭 체험 표현: "{m.group(0)}" — 공식자료·가상 사례 표현으로 바꾼다')
+    for a in re.findall(r'\[경험 한 줄[^\]]*?A안[^:]*:\s*([^|\]]+)', body):
+        if FIRST_PERSON_RE.search(a):
+            issues.append(f'[경험 한 줄] A안이 1인칭이다: {a.strip()[:24]}… — A안은 3인칭만')
+
+    if len(primary) < 2:
+        issues.append(f'1차 기관 출처(`- 출처:` 중 {PRIMARY_DOMAINS[0]} 등) {len(primary)}개 (2개 이상)')
+
+    # 가상 사례 표시 — 항목에 `가상`·`사례`·`예`를 적은 계산 행의 값이 나오는 섹션에는 가상·예시라고 쓴다.
+    # 출생연도처럼 공식 값에서 계산만 한 행은 가상 사례가 아니라서 뺀다.
+    verified = set().union(*(_nums(r[1]) for r in rows if r[4] == 'VERIFIED'))
+    calc = set().union(*(_nums(r[1]) for r in rows if r[4] == '계산' and re.search(r'가상|사례|예', r[0]))) - verified
+    for sec in text.split('\n## ')[1:]:
+        used = {x.group(1) for x in UNIT_NUM.finditer(sec)}
+        if used & calc and not HYPOTHETICAL_RE.search(sec):
+            issues.append(f'계산 값이 있는 섹션에 가상 사례·예시 표시가 없다: {sec.splitlines()[0][:20]}')
+
+    # Hard Block
+    if m := GUARANTEE_RE.search(text):
+        issues.append(f'결과 보장 표현: "{m.group(0)}"')
+    if m := CLICK_RE.search(text):
+        issues.append(f'광고·클릭 유도 표현: "{m.group(0)}"')
+    for name, nums in card_numbers(body).items():
+        if nums - _nums(text):
+            issues.append(f'카드에만 있는 숫자({name}): {", ".join(sorted(nums - _nums(text)))} — 본문에도 쓴다')
+    return issues
+
+
+def title_repeat(titles: dict) -> list:
+    """편 번호 순 제목 → 27편부터, 새 글 포함 최근 5편 중 같은 뼈대가 3편 이상인 원고."""
+    seq = sorted((int(k), v) for k, v in titles.items() if v)
+    keep, win = TITLE_REPEAT
+    out = []
+    for i, (n, t) in enumerate(seq):
+        if n < QUALITY_FROM:
+            continue
+        sk = title_skeleton(t)
+        if sum(title_skeleton(x) == sk for _, x in seq[max(0, i - win + 1):i + 1]) > keep:
+            out.append(n)
+    return out
+
+
+def section_repeat(skels: dict) -> list:
+    """편 번호 순 소제목 구성 → 27편부터, 바로 앞 편과 구성이 같은 원고."""
+    seq = sorted((int(k), v) for k, v in skels.items() if v)
+    return [n for (p, a), (n, b) in zip(seq, seq[1:]) if n >= QUALITY_FROM and a == b]
 
 
 # scene 썸네일 구도(2026-10-16). 15~17편이 전부 '식탁에 앉아 턱 괴기'로 나왔다 — 작성 메모 `- 썸네일 구도:`에서
@@ -458,13 +617,19 @@ def measure(path, tistory, volumes=None, bench=frozenset()):
         "geo_required": not num or int(num.group()) >= GEO_FROM,
         "new_format": not num or int(num.group()) >= LENGTH_FROM,
         "template": bool(num) and int(num.group()) >= TEMPLATE_FROM,
+        "quality": bool(num) and int(num.group()) >= QUALITY_FROM,
+        "skeleton": section_skeleton(b),
         "thumb_type": memo_value(n, '썸네일 유형'),
         "composition": memo_value(n, '썸네일 구도'),
     }
     if r["template"]:          # 소제목 9개 중 번호 1~5만 본문 구간이다 — 분량·시각 요소·소제목 문구는 그 다섯으로 본다
-        r["format"] = format_issues(r["chars"], 5, r["images"], tables, r["thumb"], LENGTH_TEMPLATE)
-        r["format"] += heading_issues(re.findall(r'^## [1-5]\. (.+?)\s*$', b, flags=re.M))
-        r["format"] += template_issues(n, b, c, target_keyword(n))
+        numbered = re.findall(r'^## \d+\. (.+?)\s*$' if r["quality"] else r'^## [1-5]\. (.+?)\s*$', b, flags=re.M)
+        r["format"] = format_issues(r["chars"], len(numbered) if r["quality"] else 5, r["images"], tables, r["thumb"],
+                                    LENGTH_TEMPLATE)
+        r["format"] += heading_issues(numbered)
+        r["format"] += template_issues(n, b, c, target_keyword(n), r["quality"])
+        if r["quality"]:
+            r["format"] += quality_issues(n, b, c, tags)
         if int(num.group()) >= COMPOSITION_FROM and r["thumb_type"] == "scene" and r["composition"] not in COMPOSITIONS:
             r["format"].append(f'작성 메모 `- 썸네일 구도:`가 목록에 없다 — {" · ".join(COMPOSITIONS)}')
     elif r["new_format"]:
@@ -490,7 +655,7 @@ def same_cover_kw(results: dict) -> list:
 
 def passes(r):
     return (not r["format"] and (r["template"] or 3 <= r["heads"] <= (6 if r["new_format"] else 5)) and r["images"] >= 2
-            and r["exp"] >= 1 and r["links"] >= 1 and 8 <= len(r["tags"]) <= 12
+            and r["exp"] >= 1 and r["links"] >= 1 and (r["quality"] or 8 <= len(r["tags"]) <= 12)
             and not r["dup"] and not r["bench_dup"] and not r["stale"]
             and not (r["judged"] and r["structure"])
             and not (r["geo_required"] and len(r["geo"]) < MIN_GEO_QUERIES))
@@ -700,6 +865,88 @@ def selftest():
         assert thumb_streak({"15": "scene", "16": "scene", "17": "scene"}) == []
         assert card_paused({"15": "scene", "16": "card", "14": None}) == ["16"]
     assert same_box_title({"15": [SUMMARY_TITLE], "16": [SUMMARY_TITLE]}) == []        # 템플릿 고정 제목은 중복으로 안 본다
+
+    # 27편부터의 품질 규칙 — 표 3·박스 2·FAQ 2·태그 4, 고유 근거·1차 출처·가상 표시
+    qsec = "\n\n".join(
+        f"## {i}. 소제목{'일이삼사'[i - 1]} 결론입니다\n\n[이미지 {'②③④⑤'[i - 1]}: 카드]\n\n본문은 6% 감액입니다.\n\n"
+        + ("| 구분 | 값 |\n|---|---|\n| 조기 | **6%** |\n\n🪙 살림 메모: 1년당 기준입니다.\n\n" if i <= 3 else "")
+        + "결론 한 줄입니다.\n\n---" for i in range(1, 5))
+    qdoc = (
+        "제목: 2026 국민연금 일찍 받는 사람 | 5년 당기면 얼마나 깎일까? 63세 기준으로 계산\n\n---\n\n"
+        "\"국민연금 일찍 받으면 손해 아니에요?\"\n\n[이미지 ①: 썸네일]\n\n"
+        "국민연금 수령나이는 2026년 기준 63세입니다. 1년 당겨 받으면 6% 줄어듭니다.\n\n"
+        f"> [요약] {SUMMARY_TITLE}\n> - 수령나이 63세\n> - 1년당 6% 감액\n> - 최대 30%\n> - 연기 1년당 7.2%\n> - 최대 36%\n\n"
+        f"{qsec}\n\n"
+        "## 가상 사례로 계산하면\n\n가상 사례입니다. 월 100만원이면 70만원을 받습니다.\n\n"
+        "[경험 한 줄 ① | A안(사실 — 그대로 써도 됨): 공식자료에서 가장 헷갈리는 부분은 감액률입니다. | B안(실제로 그랬을 때만): 저는 공단에 문의한 적이 있어요.]\n\n"
+        "## 🐷 새싹돼지 Q&A\n\n> [질문] 다시 늦출 수 있나요?\n> 조건이 있습니다.\n\n> [질문] 감액은 평생인가요?\n> 그렇습니다.\n\n"
+        "## 근거 자료\n\n- 국민연금법 제61조, 국민연금공단\n\n"
+        "#국민연금수령나이 #국민연금 #조기수령 #노령연금\n\n"
+        "---\n\n## 작성 메모 (발행 시 삭제)\n\n"
+        "- 썸네일 유형: scene\n- 글 유형: 선택·비교형\n- 썸네일 구도: 야외 장면\n"
+        "- 썸네일 장면: a woman holding a phone at a kitchen table, warm evening light\n"
+        "- 썸네일 문구: 일찍 받으면 손해? | 2026 국민연금 수령나이\n"
+        "- 고유 근거: verified_calculation | primary_source_comparison\n"
+        "- 출처: 국민연금공단 | 조기노령연금 | https://www.nps.or.kr/a | 2026-10-28\n"
+        "- 출처: 정책브리핑 | 연금 안내 | https://www.korea.kr/b | 2026-10-28\n\n"
+        "### 수치 근거\n\n| 항목 | 값 | 출처·식 | 확인일 | 상태 |\n|---|---|---|---|---|\n"
+        "| 수령나이 | 63세 | 국민연금법 | 2026-10-14 | VERIFIED |\n| 조기 감액 | 1년당 6%, 최대 30% | 공단 | 2026-10-14 | VERIFIED |\n"
+        "| 연기 가산 | 7.2%, 최대 36% | 공단 | 2026-10-14 | VERIFIED |\n"
+        "| 가상 사례 수령액 | 월 100만원 → 70만원 | 100 × (1 − 0.3) = 70 | 2026-10-28 | 계산 |\n"
+    )
+
+    def qissues(src, num="27"):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, f"{num}_t.md")
+            open(path, "w", encoding="utf-8").write(src)
+            n_, b_, c_, tg = parts(path)
+            return quality_issues(n_, b_, c_, tg) + template_issues(n_, b_, c_, target_keyword(n_), True), measure(path, set())
+
+    qi, qm = qissues(qdoc)
+    assert qi == [], qi
+    assert qm["quality"] and not qissues(qdoc, "26")[1]["quality"]                      # 26편까지는 품질 규칙이 없다
+
+    def qfails(old, new, word):
+        assert old in qdoc, old
+        got = qissues(qdoc.replace(old, new, 1))[0]
+        assert any(word in i for i in got), (word, got)
+    qfails("63세 기준으로 계산", "확인할 5가지", "제목 꼬리 금지")
+    qfails("일찍 받는 사람", "조기수령", "구체 상황")
+    qfails("결론 한 줄입니다.\n\n---\n\n## 4.", "| a | b |\n|---|---|\n| 1 | 2 |\n\n🪙 살림 메모: 표.\n\n---\n\n## 4.", "표 4개")
+    qfails("## 근거 자료", "> [안내] 안내\n> - 줄\n\n> [주의] 주의\n> - 줄\n\n## 근거 자료", "박스 3개")
+    qfails("> [질문] 감액은 평생인가요?", "> [질문] 셋?\n> 네.\n\n> [질문] 넷?\n> 네.\n\n> [질문] 감액은 평생인가요?", "FAQ(`> [질문]`) 4개")
+    qfails("#노령연금", "#노령연금 #가 #나", "태그 6개")
+    qfails("- 출처: 정책브리핑 | 연금 안내 | https://www.korea.kr/b", "- 출처: 블로그 | 후기 | https://blog.naver.com/x", "1차 기관 출처")
+    qfails("- 고유 근거: verified_calculation | primary_source_comparison", "- 고유 근거: 없음", "EVIDENCE_REQUIRED")
+    qfails("- 고유 근거: verified_calculation", "- 고유 근거: real_experience", "실제 경험")
+    # T1 경험 입력 없이 1인칭 → 실패, 실제 경험 메모가 있으면 통과
+    qfails("가상 사례입니다. 월", "제가 직접 신청해 보니 월", "1인칭 체험")
+    qfails("가장 헷갈리는 부분은 감액률입니다.", "계산해 보니 감액이 크더라고요.", "A안이 1인칭")
+    assert not any("1인칭" in i for i in qissues(qdoc.replace("가상 사례입니다. 월", "제가 직접 신청해 보니 월").replace(
+        "- 고유 근거:", "- 실제 경험: 2025년에 공단에 직접 신청했다\n- 고유 근거:"))[0])
+    # T2 가상 사례 값이 나오는 섹션에 가상·예시 표시가 없으면 실패
+    qfails("## 가상 사례로 계산하면\n\n가상 사례입니다.", "## 받는 돈 계산\n\n정리하면 이렇습니다.", "가상 사례·예시 표시")
+    assert qissues(qdoc.replace("가상 사례입니다.", "정리하면 이렇습니다."))[0] == []      # 소제목에 가상이 있으면 된다
+    # T7·Hard Block
+    qfails("조건이 있습니다.", "무조건 받을 수 있습니다.", "결과 보장")
+    qfails("조건이 있습니다.", "광고를 클릭해 주세요.", "클릭 유도")
+    qfails("## 근거 자료\n\n- 국민연금법", "## 근거 자료\n\n- 국민연금법 제61조\n\n## 덧붙임\n\n- 국민연금법", "맨 끝")
+    import make_naver_images as mi        # 카드에만 있는 숫자 (T7)
+    try:
+        mi.CARDS["99_시험"] = mi.hero_card("#000", "감액 6%", "출처 2024", "45", "만원", "설명 30%", "끝")
+        qfails("[이미지 ②: 카드]", "[이미지 ②: `assets/naver_img/99_시험.png` — 제작 완료]", "카드에만 있는 숫자(99_시험): 45")
+        mi.CARDS["99_시험"] = mi.hero_card("#000", "감액 6%", "출처 2024", "30", "%", "설명 63세", "끝")
+        assert qissues(qdoc.replace("[이미지 ②: 카드]", "[이미지 ②: `assets/naver_img/99_시험.png`]"))[0] == []
+    finally:
+        del mi.CARDS["99_시험"]
+    # 제목 뼈대는 새 글 포함 최근 5편 중 2편까지, 소제목 구성은 바로 앞 편과 달라야 한다
+    t5 = "2026 A | 무엇? 확인할 5가지"
+    assert title_skeleton(t5) == "?확인할 N가지" == title_skeleton("2026 B | 다른 질문? 확인할 3가지")
+    assert title_repeat({"25": t5, "26": t5, "27": "2026 C | 질문? 확인할 4가지"}) == [27]
+    assert title_repeat({"24": t5, "25": "x | 다른 꼬리", "26": "y | 또 다른", "27": "2026 C | 질문? 확인할 4가지"}) == []
+    assert title_repeat({"20": t5, "21": t5, "22": "a", "23": "b", "24": "c", "25": "d", "26": "e", "27": t5}) == []
+    assert section_repeat({"26": ["#", "#"], "27": ["#", "#"]}) == [27]
+    assert section_repeat({"25": ["#"], "26": ["#"], "27": ["#", "*"]}) == []          # 26편 이전은 판정하지 않는다
     print("selftest ok")
 
 
@@ -728,7 +975,7 @@ def main():
         print(f'⚠ {VOLUME_CSV} 없음 — 태그 검색량 검사를 건너뜁니다\n')
     bench = sents("".join(open(f, encoding='utf-8').read() for f in glob.glob(f'{BENCH_DIR}/*.txt')))
     allok = True
-    cover_kws, box_titles, thumb_kinds, comps = {}, {}, {}, {}
+    cover_kws, box_titles, thumb_kinds, comps, titles, skels = {}, {}, {}, {}, {}, {}
     for p in sorted(glob.glob('content/naver/*.md')):
         r = measure(p, tistory, volumes, bench)
         if r is None:          # 제목 줄이 없으면 원고가 아니다(메모·프롬프트 파일)
@@ -737,6 +984,8 @@ def main():
         box_titles[os.path.basename(p)] = r["boxes"]
         thumb_kinds[os.path.basename(p)] = r["thumb_type"]
         comps[os.path.basename(p)] = r["composition"]
+        if num := re.match(r'\d+', os.path.basename(p)):
+            titles[num.group()], skels[num.group()] = r["title"], r["skeleton"]
         if r["template"] and not bench:
             print(f'⚠ {BENCH_DIR} 비어 있음 — 벤치마크 문장 중복을 못 봤다. `check_naver.py --fetch-benchmark` 후 다시 실행')
         fails, warns = post_issues(p)       # 25편부터: 클러스터·출처 기록·글 간 유사도 (pipeline.py)
@@ -786,6 +1035,12 @@ def main():
     for name in card_paused(thumb_kinds):
         allok = False
         print(f'CHECK {name} — card 썸네일은 보류 중이다(CARD_ENABLED). scene으로 만든다')
+    for n in title_repeat(titles):
+        allok = False
+        print(f'CHECK {n}편 — 제목 뼈대가 최근 5편 중 {TITLE_REPEAT[0]}편을 넘게 같다: {title_skeleton(titles[str(n).zfill(2)])}')
+    for n in section_repeat(skels):
+        allok = False
+        print(f'CHECK {n}편 — 소제목 구성이 바로 앞 편과 같다. 섹션 순서를 바꾼다')
     for a, b, t in same_box_title(box_titles):
         allok = False
         print(f'CHECK 박스 제목이 같다: {a} = {b} — "{t}"')

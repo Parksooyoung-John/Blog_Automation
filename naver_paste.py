@@ -105,7 +105,7 @@ CHECKLIST = """■ PC에서 끝낸 뒤 임시저장 (서식은 PC 에디터에�
 · [내부 링크] 소개 문장 하나만 남기고, 줄을 바꾼 뒤 주소 붙여넣기 → 카드 생성
              ⚠ 문장 중간에 붙여넣으면 문장이 카드 앞뒤로 쪼개진다
              ⚠ 앞 문장은 글마다 다르게 — 같은 문장을 반복하면 그게 패턴이 된다
-· 태그 10개 입력 — 1편에서 빠뜨렸던 항목이다. 발행 설정 창에서 확인
+· 태그 입력(26편까지 10개, 27편부터 3~5개) — 1편에서 빠뜨렸던 항목이다. 발행 설정 창에서 확인
 · 발행 설정: 카테고리 / 주제 비즈니스·경제 / 전체공개 / 검색허용 체크"""
 
 PAGE = """<!doctype html>
@@ -178,7 +178,8 @@ def parts(md: str) -> tuple:
     body = re.sub(r"\n{3,}", "\n\n", body).strip()
 
     assert "##" not in body, "소제목 변환 실패"
-    assert tags.startswith("#") and tags.count("#") >= 5, f"태그 추출 실패: {tags!r}"
+    # 27편부터 태그 3~5개(check_naver.TAG_RANGE). 5개 이상으로 고정해 두었다가 태그 4개인 27편에서 멈췄다(2026-10-28)
+    assert tags.startswith("#") and tags.count("#") >= 3, f"태그 추출 실패: {tags!r}"
 
     # 문장 하나마다 빈 줄을 둔다(2026-10-09 사용자 확정 — 11편에서 손으로 넣던 모양).
     # 문장 중간은 끊지 않는다. 플레이스홀더([이미지 …] 등)·목록·표는 덩어리째 둔다.
@@ -359,7 +360,8 @@ def selftest():
     assert "font-size:15px" in to_html(gmd, 1) and 'text-align:center">' not in to_html(gmd, 1).split("<table")[1]  # 14편까지는 그대로
     assert "[큰제목] 1. 첫 결론입니다" in gtext
     pc, phone = CHECKLIST.split("■ 폰에서")                                                       # 체크리스트가 PC/폰으로 나뉘어 있어야 한다
-    assert "[이미지]" in pc and "[경험 한 줄]" in phone and "태그 10개" in phone
+    assert "[이미지]" in pc and "[경험 한 줄]" in phone and "3~5개" in phone
+    assert parts(md.replace(" #태그넷 #태그다섯", ""))[2] == "#태그하나 #태그둘 #태그셋"        # 27편부터 태그 3개도 읽는다
     print("selftest ok")
 
 

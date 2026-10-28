@@ -33,23 +33,35 @@ PERF_COLS = ["post", "checkpoint", "date", "views", "visitors", "search_in", "se
 # 순서 있는 본선. SCHEDULED는 예약발행을 쓸 때만 거친다.
 FLOW = ["IDEA", "RESEARCHING", "DRAFT", "SEO_REVIEW", "HUMAN_REVIEW", "APPROVED", "SCHEDULED", "PUBLISHED"]
 ALLOWED = {
-    "DRAFT": {"SEO_REVIEW", "FACT_CHECK_REQUIRED", "REJECTED"},
+    "DRAFT": {"SEO_REVIEW", "FACT_CHECK_REQUIRED", "EVIDENCE_REQUIRED", "QA_BLOCKED", "REJECTED"},
     "FACT_CHECK_REQUIRED": {"DRAFT", "RESEARCHING", "REJECTED"},
-    "SEO_REVIEW": {"HUMAN_REVIEW", "DRAFT", "FACT_CHECK_REQUIRED", "REJECTED"},
+    "EVIDENCE_REQUIRED": {"DRAFT", "RESEARCHING", "REJECTED"},     # 고유 근거(경험·계산·1차 출처 분석)가 없다
+    "QA_BLOCKED": {"DRAFT", "SEO_REVIEW", "REJECTED"},             # check_naver 실패
+    "SEO_REVIEW": {"HUMAN_REVIEW", "DRAFT", "FACT_CHECK_REQUIRED", "EVIDENCE_REQUIRED", "QA_BLOCKED", "REJECTED"},
     "HUMAN_REVIEW": {"APPROVED", "DRAFT", "FACT_CHECK_REQUIRED", "REJECTED"},
     "APPROVED": {"SCHEDULED", "PUBLISHED", "HUMAN_REVIEW"},
     "SCHEDULED": {"PUBLISHED", "HUMAN_REVIEW"},
     "PUBLISHED": {"PERFORMANCE_REVIEW"},
-    "PERFORMANCE_REVIEW": {"UPDATE_REQUIRED", "PUBLISHED"},
-    "UPDATE_REQUIRED": {"HUMAN_REVIEW", "PUBLISHED"},
+    "PERFORMANCE_REVIEW": {"UPDATE_REQUIRED", "MERGE_REQUIRED", "RETIRED", "PUBLISHED"},
+    "UPDATE_REQUIRED": {"HUMAN_REVIEW", "MERGE_REQUIRED", "PUBLISHED"},
+    "MERGE_REQUIRED": {"UPDATE_REQUIRED", "RETIRED"},
+    "RETIRED": set(),
     "REJECTED": set(),
 }
 PASTE_OK = {"HUMAN_REVIEW", "APPROVED", "SCHEDULED", "PUBLISHED", "PERFORMANCE_REVIEW", "UPDATE_REQUIRED"}
-LIVE = {"PUBLISHED", "PERFORMANCE_REVIEW", "UPDATE_REQUIRED"}
+LIVE = {"PUBLISHED", "PERFORMANCE_REVIEW", "UPDATE_REQUIRED", "MERGE_REQUIRED"}
+# 품질 강화 문서(2026-10-28)의 상태 이름 — 같은 뜻의 기존 이름으로 받는다(CSV는 기존 이름 그대로)
+ALIASES = {"READY_FOR_APPROVAL": "HUMAN_REVIEW", "MONITORING": "PERFORMANCE_REVIEW",
+           "REFRESH_REQUIRED": "UPDATE_REQUIRED", "RESEARCH": "RESEARCHING"}
+MIN_GAP_HOURS = 36         # 발행 간격 (YAML publishing.min_interval_hours)
+MAX_PER_WEEK = 3           # 최근 7일 발행 수 (YAML publishing.max_posts_per_week)
 PORTFOLIO = {"검색": 0.70, "홈피드": 0.20, "수익": 0.10}
 RULES_FROM = 25            # 클러스터·유사도·출처 기록 규칙을 판정에 넣는 첫 편 (24편까지는 발행됨)
 SCOPE = re.compile(r"연말정산|세액공제|소득공제|세금|연금|노후|장려금|지원금|실업급여|건강보험|고용보험|부양가족|인적공제")
-INTENT = re.compile(r"\d|가능|언제|며칠|차이|조건|기준|기간|방법|되나|될까|vs|비교|없이")
+# Topic Authority(품질 강화 문서 7절, 100점): 직장인 가족 돈 문제 30 · 세금·연금·지원금 25 · 내부 링크 20 · 공식 근거 15 · 고유 사례 10
+FAMILY_MONEY = re.compile(r"부모|자녀|배우자|맞벌이|가족|직장인|월급|급여|연봉|퇴사|이직|생활비|공제|환급|지원|수당|보험료|월세|연말정산")
+OFF_TOPIC = re.compile(r"드라마|예능|연예|아이돌|가수|배우 |스포츠|축구|야구|결말|사건|사고|맛집|여행|게임")
+ACCEPT_AT, HOLD_AT = 75, 60
 CHECKPOINTS = {"24h": 1, "7d": 7, "30d": 30}
 GRACE_DAYS = 3
 BOILER_MIN = 5             # 같은 문단이 이만큼 글에 그대로 있으면 템플릿 고정 문구로 본다(복사한 문단이 면제되지 않게 크게 잡는다)
@@ -290,30 +302,36 @@ def to_int(x, default=0):
         return default
 
 
-def season_ok(season: str, today) -> bool:
-    months = {to_int(m) for m in season.split("|") if m.strip()}
-    return bool(months & {today.month, today.month % 12 + 1, (today.month + 1) % 12 + 1})
-
-
 def score_one(c: dict, ledger_rows: list, titles: dict, today) -> tuple:
-    """후보 한 줄 → (점수, 항목별, 결정). 사람 판단 항목(official·diff)은 CSV 값을 그대로 읽는다."""
+    """후보 한 줄 → (점수 100점, 항목별, 결정). 사람 판단 항목(official·diff)은 CSV 값을 그대로 읽는다.
+
+    결정: REJECTED · HOLD · UPDATE_EXISTING(의도 70% 이상 겹침) · EXPAND_HUB(허브와 60~70%) ·
+    CREATE_SUPPORTING_POST(클러스터 spoke) · CREATE_NEW. 뒤의 둘만 `start`할 수 있다(상태 IDEA).
+    """
     kw = c["keyword"]
-    words = kw.split()
+    if OFF_TOPIC.search(kw):
+        return 0, {"주제 무관": 0}, "REJECTED"
+    live = any(r["cluster"] == c["cluster"] and r["status"] in LIVE for r in ledger_rows) if c["cluster"] else False
     parts = {
-        "관련성": 2 if c["cluster"] else 1 if SCOPE.search(kw) else 0,
-        "의도": min(2, (len(words) >= 3) + bool(INTENT.search(kw))),
-        "공략": min(2, (len(words) >= 4 or bool(re.search(r"\d", kw))) + (to_int(c["geo_cited"]) >= 3
-                                                                        or 0 < to_int(c["serp_fresh"]) <= 7)),
-        "공식": 1 if c["official"] == "1" else 0,
-        "차별": 1 if c["diff"] == "1" else 0,
-        "링크": 1 if c["cluster"] and any(r["cluster"] == c["cluster"] and r["status"] in LIVE for r in ledger_rows) else 0,
-        "적시": 1 if season_ok(c["season"], today) else 0,
+        "가족돈": 30 if c["cluster"] or FAMILY_MONEY.search(kw) else 0,
+        "세금연금": 25 if SCOPE.search(kw) else 0,
+        "링크": 20 if live else 10 if c["cluster"] else 0,
+        "공식": 15 if c["official"] == "1" else 0,
+        "차별": 10 if c["diff"] == "1" else 0,
     }
     total = sum(parts.values())
-    cover = max((contain(kw, t) for t in titles.values()), default=0)
+    if total < ACCEPT_AT:
+        return total, parts, "HOLD" if total >= HOLD_AT else "REJECTED"
+    best, cover = max(((k, contain(kw, t)) for k, t in titles.items()), key=lambda x: x[1], default=("", 0))
     if cover >= 0.70:
         return total, parts, "UPDATE_EXISTING"
-    return total, parts, "IDEA" if total >= 7 else "HOLD" if total >= 5 else "REJECTED"
+    hubs = {r["post"] for r in ledger_rows if r.get("role") == "hub"}
+    if cover >= 0.60 and best in hubs:       # 0.5로는 클러스터 공통어(연말정산 부양가족)만 겹친 bg-09·10이 걸렸다
+        return total, parts, "EXPAND_HUB"
+    return total, parts, "CREATE_SUPPORTING_POST" if c["cluster"] and c["role"] == "spoke" else "CREATE_NEW"
+
+
+STARTABLE = {"CREATE_SUPPORTING_POST", "CREATE_NEW"}
 
 
 def existing_titles() -> dict:
@@ -336,8 +354,8 @@ def cmd_score(args, today=None):
         total, parts, decision = score_one(c, ledger, titles, today)
         c["score"], c["decision"] = str(total), decision
         if "--register" in args or not c["status"]:
-            c["status"] = decision
-        print(f"{c['id']:<8}{total:>2}점 {decision:<16}{c['keyword']}  " + " ".join(f"{k}{v}" for k, v in parts.items()))
+            c["status"] = "IDEA" if decision in STARTABLE else decision
+        print(f"{c['id']:<8}{total:>3}점 {decision:<23}{c['keyword']}  " + " ".join(f"{k}{v}" for k, v in parts.items()))
     write_csv(CANDS, CAND_COLS, rows)
 
 
@@ -346,7 +364,9 @@ def cmd_start(args):
     rows, ledger = read_csv(CANDS, CAND_COLS), read_csv(LEDGER, LEDGER_COLS)
     c = next((r for r in rows if r["id"] == cid), None)
     if not c or c["status"] != "IDEA":
-        raise SystemExit(f"{cid}: IDEA 상태의 후보가 아니다 (7점 이상으로 채점된 것만 시작한다)")
+        raise SystemExit(f"{cid}: IDEA 상태의 후보가 아니다 ({ACCEPT_AT}점 이상, 새 글로 판정된 것만 시작한다)")
+    if c["decision"] not in STARTABLE:      # `score`는 --register 없이 상태를 덮지 않는다 — 결정이 새 글이 아니면 막는다
+        raise SystemExit(f"{cid}: 판정이 {c['decision']}이다 — 새 글이 아니라 기존 글 수정·허브 확장 대상이다")
     nn = max([num_of(r["post"]) for r in ledger] + [num_of(p) for p in DIR.glob("[0-9][0-9]_*.md")]) + 1
     ledger.append({"post": f"{nn:02d}", "status": "DRAFT", "cluster": c["cluster"], "role": c["role"],
                    "portfolio": "검색", "primary_kw": c["keyword"], "score": c["score"], "approved": "",
@@ -370,7 +390,7 @@ def check_move(cur: str, new: str, logno: str = "", tty: bool = False):
 
 
 def cmd_status(args):
-    nn, new = int(args[0]), args[1].upper()
+    nn, new = int(args[0]), ALIASES.get(args[1].upper(), args[1].upper())
     logno = args[2] if len(args) > 2 else ""
     rows = read_csv(LEDGER, LEDGER_COLS)
     r = next((x for x in rows if num_of(x["post"]) == nn), None)
@@ -384,7 +404,10 @@ def cmd_status(args):
         res = check_naver.measure(str(post_file(nn)), set(), None, frozenset())
         fails, _ = post_issues(post_file(nn))
         if not check_naver.passes(res) or fails:
-            raise SystemExit("HUMAN_REVIEW로 올리려면 check_naver가 통과해야 한다:\n  " + "\n  ".join(fails or ["check_naver 확인 필요"]))
+            probs = fails + res["format"] + res["structure"]
+            nxt = "EVIDENCE_REQUIRED" if any("EVIDENCE_REQUIRED" in x for x in probs) else "QA_BLOCKED"
+            raise SystemExit("HUMAN_REVIEW로 올리려면 check_naver가 통과해야 한다:\n  " + "\n  ".join(probs or ["check_naver 확인 필요"])
+                             + f"\n→ `pipeline.py status {nn:02d} {nxt}`로 기록하고 고친 뒤 다시 올린다")
     try:
         check_move(r["status"], new, logno, tty)
     except ValueError as e:
@@ -395,20 +418,49 @@ def cmd_status(args):
     if logno:
         r["logno"] = logno
     if new == "PUBLISHED" and not r["published"]:
-        r["published"] = datetime.date.today().isoformat()
+        now = datetime.datetime.now()
+        slot = next_publish_slot([x for x in rows if x is not r], now)
+        if slot > now:
+            print(f"⚠ 발행 간격 초과 — {slot:%Y-%m-%d %H:%M} 이후가 맞았다 ({MIN_GAP_HOURS}시간 · 7일 {MAX_PER_WEEK}편). 기록은 남긴다")
+        r["published"] = f"{now:%Y-%m-%d %H:%M}"
     write_csv(LEDGER, LEDGER_COLS, rows)
     print(f"{nn:02d}편 → {new}")
 
 
+def published_at(s: str):
+    """`YYYY-MM-DD HH:MM` 또는 날짜만(sync 이전 기록)."""
+    # ponytail: 날짜만 있는 옛 기록은 0시로 잡아 간격을 짧게 본다 — `sync`를 돌리면 시각이 채워진다
+    return datetime.datetime.fromisoformat(s if len(s) > 10 else s + " 00:00")
+
+
+def next_publish_slot(rows: list, now):
+    """가장 빠른 발행 가능 시각 — 마지막 발행 + 36시간, 그리고 최근 7일 3편 한도.
+    상태가 아니라 발행 시각으로 센다 — 25·26편은 HUMAN_REVIEW인 채 발행돼 상태로 세면 빠졌다(2026-10-28)."""
+    times = sorted((published_at(r["published"]) for r in rows if r["published"]), reverse=True)
+    slot = now
+    if times:
+        slot = max(slot, times[0] + datetime.timedelta(hours=MIN_GAP_HOURS))
+    if len(times) >= MAX_PER_WEEK:
+        slot = max(slot, times[MAX_PER_WEEK - 1] + datetime.timedelta(days=7))
+    return slot
+
+
 def paste_gate(nn: int):
-    """naver_paste.page_for가 부른다. 원고가 승인 흐름에 올라와 있지 않으면 붙여넣기 파일을 만들지 않는다."""
+    """naver_paste.page_for가 부른다. 원고가 승인 흐름에 올라와 있지 않으면 붙여넣기 파일을 만들지 않는다.
+    발행 가능 시각은 막지 않고 알린다 — 붙여넣기 파일은 미리 만들어 둘 수 있어야 한다."""
     if nn < RULES_FROM:
         return
-    r = load_ledger().get(nn)
+    ledger = load_ledger()
+    r = ledger.get(nn)
     if not r:
         raise SystemExit(f"{nn:02d}편이 _pipeline.csv에 없다 — `pipeline.py start`로 시작한 글만 붙여넣기 파일을 만든다")
     if r["status"] not in PASTE_OK:
         raise SystemExit(f"{nn:02d}편 상태가 {r['status']}이다 — HUMAN_REVIEW 이상(check_naver 통과)일 때 만든다")
+    if not r["published"]:
+        now = datetime.datetime.now()
+        slot = next_publish_slot(list(ledger.values()), now)
+        print(f"발행 가능 시각: {'지금' if slot <= now else f'{slot:%Y-%m-%d %H:%M} 이후'}"
+              f" ({MIN_GAP_HOURS}시간 간격 · 7일 {MAX_PER_WEEK}편)")
 
 
 def cmd_list(_args=None):
@@ -502,16 +554,20 @@ def cmd_sync(_args=None):
         if len(got) < 30:
             break
     by_title = {p["title"].strip(): p for p in live}
+    by_logno = {p["logNo"]: p for p in live}
     for r in rows:
         md = post_file(r["post"]).read_text(encoding="utf-8")
-        p = by_title.get(title_of(md))
-        if p and not r["logno"]:
-            r["logno"], r["published"] = p["logNo"], f"{p['when']:%Y-%m-%d}"
+        p = by_logno.get(r["logno"]) or by_title.get(title_of(md))
+        if p and (not r["logno"] or len(r["published"]) <= 10):      # 발행 간격을 보려고 시각까지 넣는다
+            r["logno"], r["published"] = p["logNo"], f"{p['when']:%Y-%m-%d %H:%M}"
     write_csv(LEDGER, LEDGER_COLS, rows)
     print(f"logNo {sum(bool(r['logno']) for r in rows)}/{len(rows)}편 확인")
     for r in rows:      # 발행 뒤 제목을 고친 글(6·14편)은 제목 대조로 못 찾는다 — 조용히 넘기지 않고 알린다
         if not r["logno"]:
             print(f"⚠ {r['post']}편: 라이브 목록에서 제목이 일치하는 글이 없다 — logNo를 손으로 채운다")
+        elif r["status"] not in LIVE:     # APPROVED는 사람만 넣으므로 상태를 대신 바꾸지 않는다
+            print(f"⚠ {r['post']}편: 라이브에 있는데 상태가 {r['status']}이다 — 사용자가 `status {r['post']} APPROVED` 후 "
+                  f"`status {r['post']} PUBLISHED {r['logno']}`로 기록한다")
 
 
 # ---- 성과 -------------------------------------------------------------------
@@ -528,7 +584,7 @@ def grade(p: dict, avg_views: float) -> str:
 
 
 def due_checkpoints(published: str, done: set, today) -> list:
-    d = datetime.date.fromisoformat(published)
+    d = datetime.date.fromisoformat(published[:10])
     age = (today - d).days      # 발행 직후 값이 아니면 의미가 없으니 점검 기한이 지난 칸은 묻지 않는다
     return [k for k, days in CHECKPOINTS.items() if days <= age <= days + GRACE_DAYS and k not in done]
 
@@ -588,16 +644,42 @@ def selftest():
 
     # 점수 — 조건이 붙은 질문형 롱테일은 통과, 대표 키워드는 보류 이하
     today = datetime.date(2026, 10, 24)
-    led = [{"post": "12", "cluster": "부양가족", "status": "PUBLISHED"}]
-    good = dict(keyword="국민연금 받는 부모님 연말정산 인적공제 가능할까", cluster="부양가족", geo_cited="3",
+    led = [{"post": "12", "cluster": "부양가족", "status": "PUBLISHED", "role": "hub"}]
+    good = dict(keyword="국민연금 받는 부모님 연말정산 인적공제 가능할까", cluster="부양가족", role="spoke", geo_cited="3",
                 serp_fresh="10", official="1", diff="1", season="11|12|1")
-    short = dict(keyword="연말정산", cluster="", geo_cited="", serp_fresh="10", official="0", diff="0", season="1")
+    short = dict(keyword="연말정산", cluster="", role="", geo_cited="", serp_fresh="10", official="0", diff="0", season="1")
     s1, p1, d1 = score_one(good, led, {}, today)
     s2, _, d2 = score_one(short, led, {}, today)
-    assert s1 >= 7 and d1 == "IDEA", (s1, p1)
-    assert d2 in ("HOLD", "REJECTED") and s2 < s1
+    assert s1 == 100 and d1 == "CREATE_SUPPORTING_POST", (s1, p1, d1)
+    assert d2 in ("HOLD", "REJECTED") and s2 < ACCEPT_AT, (s2, d2)
+    assert score_one({**good, "cluster": "", "role": ""}, led, {}, today)[2] == "CREATE_NEW"
+    # T3 기존 글과 의도가 70% 이상 겹치면 새 글 대신 업데이트, 허브와 60~70%면 허브 확장
     _, _, d3 = score_one(good, led, {"12": "국민연금 받는 부모님 연말정산 인적공제 가능할까 부양가족"}, today)
     assert d3 == "UPDATE_EXISTING"
+    half = {"12": "국민연금 받는 부모님 연말정산 공제"}
+    assert 0.6 <= contain(good["keyword"], half["12"]) < 0.7, contain(good["keyword"], half["12"])
+    assert score_one(good, led, half, today)[2] == "EXPAND_HUB"
+    assert score_one(good, led, {"12": "국민연금 받는 부모님 결과"}, today)[2] == "CREATE_SUPPORTING_POST"   # 공통어만 겹침
+    # T4 인기 있지만 무관한 키워드
+    s4, _, d4 = score_one({**short, "keyword": "인기 드라마 결말"}, led, {}, today)
+    assert s4 < HOLD_AT and d4 == "REJECTED"
+    assert ALIASES["READY_FOR_APPROVAL"] == "HUMAN_REVIEW" and set(ALIASES.values()) <= set(ALLOWED) | {"RESEARCHING"}
+    check_move("DRAFT", "EVIDENCE_REQUIRED")
+    check_move("QA_BLOCKED", "DRAFT")
+    check_move("PERFORMANCE_REVIEW", "RETIRED")
+
+    # 발행 간격 — 마지막 발행 + 36시간, 최근 7일 3편
+    now = datetime.datetime(2026, 10, 28, 12, 0)
+
+    def pub(*ts):
+        return [{"status": "PUBLISHED", "published": t} for t in ts]
+    assert next_publish_slot(pub("2026-10-26 23:00"), now) == now                        # 37시간 지났다
+    assert next_publish_slot(pub("2026-10-27 01:00"), now) == datetime.datetime(2026, 10, 28, 13, 0)   # 35시간 → 1시간 뒤
+    assert next_publish_slot(pub("2026-10-27", "2026-10-24 09:00"), now) == now          # 날짜만 있는 기록은 0시
+    three = pub("2026-10-22 09:00", "2026-10-24 09:00", "2026-10-26 09:00")      # 7일 안에 3편 → 4편째는 첫 글 + 7일
+    assert next_publish_slot(three, now) == datetime.datetime(2026, 10, 29, 9, 0)
+    assert next_publish_slot([{"status": "HUMAN_REVIEW", "published": ""}], now) == now
+    assert next_publish_slot([{"status": "HUMAN_REVIEW", "published": "2026-10-27 20:00"}], now) > now   # 상태와 무관하게 센다
 
     # 유사도 — 제목·본문·도입·질문 재사용을 잡고, 고정 문구는 오탐하지 않는다
     fixed = "공유하고 싶은 분께 이 글을 보내 주세요.\n"

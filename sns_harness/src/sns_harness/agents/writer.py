@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from sns_harness.models import (
     URL_RE,
     BlogDraftCandidates,
+    CandidateType,
     ContentType,
     DailyDraft,
     HookType,
@@ -19,6 +20,26 @@ from sns_harness.models import (
     strict_json_schema,
     validate_daily_draft,
 )
+
+
+def candidate_plan(allow_link: bool) -> list[dict[str, object]]:
+    """The five internal candidates; only the 블로그전환형 one may carry the blog link."""
+    last = CandidateType.BLOG_CONVERSION if allow_link else CandidateType.QUESTION
+    plan = [
+        (HookType.NUMBER, CandidateType.INFO),
+        (HookType.MISTAKE, CandidateType.INFO),
+        (HookType.COMPARISON, CandidateType.INFO),
+        (HookType.EMPATHY, CandidateType.INFO_EMPATHY),
+        (HookType.QUESTION, last),
+    ]
+    return [
+        {
+            "hook_type": hook.value,
+            "candidate_type": kind.value,
+            "include_blog_link": kind is CandidateType.BLOG_CONVERSION,
+        }
+        for hook, kind in plan
+    ]
 
 
 class ThreadsWriter:
@@ -78,19 +99,15 @@ class ThreadsWriter:
         raise last_error
 
     def generate(self, source: SourcePost) -> ThreadsDraft:
-        return self.generate_candidates(
-            source,
-            hook_types=(HookType.CURIOSITY, HookType.MISTAKE, HookType.QUESTION),
-            include_link=True,
-        )[0]
+        return self.generate_candidates(source, allow_link=True)[0]
 
     def generate_candidates(
         self,
         source: SourcePost,
         *,
-        hook_types: tuple[HookType, HookType, HookType],
-        include_link: bool,
+        allow_link: bool,
     ) -> list[ThreadsDraft]:
+        plan = candidate_plan(allow_link)
         payload = {
             "title": source.title,
             "canonical_url": source.url,
@@ -98,8 +115,7 @@ class ThreadsWriter:
             "description": source.description,
             "tags": source.tags,
             "content": source.content[:30_000],
-            "required_hook_types": [hook.value for hook in hook_types],
-            "include_blog_link": include_link,
+            "candidate_plan": plan,
         }
         last_error: Exception | None = None
         for attempt in range(3):
@@ -124,13 +140,16 @@ class ThreadsWriter:
             )
             try:
                 candidates = BlogDraftCandidates.model_validate_json(response.output_text)
-                if {draft.hook_type for draft in candidates.candidates} != set(hook_types):
-                    raise ValueError("writer did not use the required hook types")
-                if any(
-                    draft.blog_link_used is not include_link
-                    for draft in candidates.candidates
-                ):
-                    raise ValueError("writer did not follow the blog link policy")
+                for draft, entry in zip(candidates.candidates, plan, strict=True):
+                    if (
+                        draft.hook_type is None
+                        or draft.hook_type.value != entry["hook_type"]
+                        or draft.candidate_type is None
+                        or draft.candidate_type.value != entry["candidate_type"]
+                    ):
+                        raise ValueError("writer did not follow the candidate plan")
+                    if draft.blog_link_used is not entry["include_blog_link"]:
+                        raise ValueError("writer did not follow the blog link policy")
                 return candidates.candidates
             except (ValidationError, ValueError) as exc:
                 last_error = exc

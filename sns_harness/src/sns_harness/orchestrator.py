@@ -1,17 +1,20 @@
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime, timedelta
+from difflib import SequenceMatcher
 from typing import Protocol
 
 from pydantic import ValidationError
 
 from sns_harness.models import (
-    HookType,
+    CandidateType,
     ProductOffer,
     QueueStatus,
     ReviewResult,
     SourcePost,
     ThreadsDraft,
+    candidate_key,
     validate_draft_against_source,
 )
 from sns_harness.scheduling.slots import next_available_slots
@@ -41,6 +44,55 @@ class Reviewer(Protocol):
 MIN_PUBLISH_SCORE = 7
 
 
+def _differing_dimensions(a: ThreadsDraft, b: ThreadsDraft) -> int:
+    """How many of first sentence, core claim, CTA and hook type differ between two drafts."""
+
+    def differs(x: str, y: str) -> bool:
+        normalize = lambda text: re.sub(r"\W+", "", text).lower()  # noqa: E731
+        return SequenceMatcher(None, normalize(x), normalize(y)).ratio() < 0.8
+
+    return sum(
+        (
+            differs(a.hook_text, b.hook_text),
+            differs(a.core_claim, b.core_claim),
+            a.blog_link_used != b.blog_link_used,
+            a.hook_type != b.hook_type,
+        )
+    )
+
+
+def pick_pair(reviews: list[ReviewResult], *, prefer_link: bool = False) -> list[ReviewResult]:
+    """Top two approved candidates scoring at least MIN_PUBLISH_SCORE.
+
+    The first is the best 정보형; the second prefers 정보+공감형 / 블로그전환형, shares at most
+    one link with the first and differs from it in at least two dimensions. With `prefer_link`
+    a qualifying 블로그전환형 takes the second slot regardless of score.
+    """
+    worthy = sorted(
+        (r for r in reviews if r.approved and _score(r) >= MIN_PUBLISH_SCORE),
+        key=lambda r: (_score(r), r.quality_score),
+        reverse=True,
+    )
+    if not worthy:
+        return []
+    first = next(
+        (r for r in worthy if r.reviewed_draft.candidate_type is CandidateType.INFO), worthy[0]
+    )
+    rest = [
+        r
+        for r in worthy
+        if r is not first
+        and not (r.reviewed_draft.blog_link_used and first.reviewed_draft.blog_link_used)
+        and _differing_dimensions(first.reviewed_draft, r.reviewed_draft) >= 2
+    ]
+    wanted = {CandidateType.INFO_EMPATHY, CandidateType.BLOG_CONVERSION}
+    if prefer_link:
+        wanted = {CandidateType.BLOG_CONVERSION}
+    second = next((r for r in rest if r.reviewed_draft.candidate_type in wanted), None)
+    second = second or next(iter(rest), None)
+    return [first] + ([second] if second else [])
+
+
 def _score(review: ReviewResult) -> int:
     # Unscored drafts (older writers, tests) pass: only an explicit low score blocks.
     score = review.reviewed_draft.score
@@ -62,50 +114,35 @@ class HarnessOrchestrator:
         self.queue = queue
         self.thumbnail_resolver = thumbnail_resolver
 
-    def _generate_blog_review(
+    def _generate_blog_reviews(
         self, source: SourcePost, now: datetime
-    ) -> ReviewResult:
+    ) -> list[ReviewResult]:
+        """Review every candidate and keep the best two; empty when none reaches the score bar."""
         policy = getattr(self.queue, "blog_generation_policy", None)
-        hook_types = (
-            HookType.CURIOSITY,
-            HookType.MISTAKE,
-            HookType.QUESTION,
-        )
-        include_link = True
-        if policy is not None:
-            context = policy(now)
-            hook_types = tuple(context["hook_types"])
-            include_link = bool(context["include_link"])
+        context = policy(now) if policy is not None else {"allow_link": True}
+        allow_link = bool(context["allow_link"])
+        prefer_link = bool(context.get("prefer_link"))
         candidate_generator = getattr(self.writer, "generate_candidates", None)
         if candidate_generator is None:
             candidates = [self.writer.generate(source)]  # type: ignore[union-attr]
         else:
-            candidates = candidate_generator(
-                source,
-                hook_types=hook_types,
-                include_link=include_link,
-            )
+            candidates = candidate_generator(source, allow_link=allow_link)
         reviews = []
         for draft in candidates:
             review = self.reviewer.review(source, draft)  # type: ignore[union-attr]
             # The reviewer round-trips the draft through the model; keep the writer's own judgement.
             kept = review.reviewed_draft.model_copy(
-                update={"score": draft.score, "visual": draft.visual}
+                update={
+                    "score": draft.score,
+                    "visual": draft.visual,
+                    "candidate_type": draft.candidate_type,
+                    "core_claim": draft.core_claim,
+                }
             )
             reviews.append(review.model_copy(update={"reviewed_draft": kept}))
-        approved = [review for review in reviews if review.approved]
-        worthy = [r for r in approved if _score(r) >= MIN_PUBLISH_SCORE]
-        if worthy:
-            return max(worthy, key=lambda r: (_score(r), r.quality_score))
-        if approved:
-            best = max(approved, key=_score)
-            return best.model_copy(update={
-                "approved": False,
-                "issues": [
-                    f"Threads 발행 부적합: 최고 점수 {_score(best)}/10 (기준 {MIN_PUBLISH_SCORE}점)"
-                ],
-            })
-        return max(reviews, key=lambda review: review.quality_score)
+        if any(review.approved for review in reviews):
+            return pick_pair(reviews, prefer_link=prefer_link)
+        return [max(reviews, key=lambda review: review.quality_score)]   # held for the operator
 
     def sync(
         self,
@@ -123,7 +160,10 @@ class HarnessOrchestrator:
         current = now or datetime.now(UTC)
         limit = backfill or 20
         cutoff = None if backfill else current - timedelta(hours=lookback_hours)
-        stats = {"discovered": 0, "created": 0, "updated": 0, "unchanged": 0, "skipped": 0}
+        stats = {
+            "discovered": 0, "created": 0, "updated": 0, "unchanged": 0, "skipped": 0,
+            "below_threshold": 0,
+        }
 
         for url in self.source.discover(limit):
             source_post = self.source.fetch(url)
@@ -190,13 +230,26 @@ class HarnessOrchestrator:
                 stats["updated"] += 1
                 continue
 
-            review = self._generate_blog_review(source_post, current)
-            if existing:
-                self.queue.replace_draft(existing.page_id, source_post, review)
-                stats["updated"] += 1
-            else:
-                self.queue.create(source_post, review)
-                stats["created"] += 1
+            reviews = self._generate_blog_reviews(source_post, current)
+            if not reviews:
+                stats["below_threshold"] += 1
+                continue
+            for variant, review in enumerate(reviews):
+                # Only the second candidate passes `variant`; single-candidate writers keep the
+                # original queue call.
+                extra = {"variant": variant} if variant else {}
+                if variant == 0:
+                    page = existing
+                else:
+                    page = finder(candidate_key(source_post.source_key, variant))
+                if page and page.status is QueueStatus.PUBLISHED:
+                    continue
+                if page:
+                    self.queue.replace_draft(page.page_id, source_post, review, **extra)
+                    stats["updated"] += 1
+                else:
+                    self.queue.create(source_post, review, **extra)
+                    stats["created"] += 1
         return stats
 
     def regenerate_blog_hooks(
@@ -207,9 +260,16 @@ class HarnessOrchestrator:
         current = now or datetime.now(UTC)
         items = self.queue.unpublished_blog_items()
         results: list[dict[str, object]] = []
+        generated: dict[str, list[ReviewResult]] = {}
         for item in items:
             source = self.source.fetch(item.source_url)
-            review = self._generate_blog_review(source, current)
+            if source.url not in generated:
+                generated[source.url] = self._generate_blog_reviews(source, current)
+            reviews = generated[source.url]
+            if not reviews:
+                continue
+            variant = 1 if item.source_key.endswith("#2") else 0
+            review = reviews[min(variant, len(reviews) - 1)]
             draft = review.reviewed_draft
             results.append(
                 {
@@ -222,7 +282,9 @@ class HarnessOrchestrator:
                 }
             )
             if not dry_run:
-                self.queue.replace_draft(item.page_id, source, review)
+                self.queue.replace_draft(
+                    item.page_id, source, review, **({"variant": variant} if variant else {})
+                )
         return {"candidates": len(items), "updated": 0 if dry_run else len(items), "items": results}
 
     def schedule_approved(self, now: datetime, slots: tuple[str, ...], timezone: object) -> int:
@@ -236,6 +298,7 @@ class HarnessOrchestrator:
             "질문형": "16:30",
             "운영글": "21:30",
         }
+        items = [item for item in items if item.is_publishable]
         for item in items:
             preferred = item.publish_slot or slot_by_type.get(item.content_type.value, "12:30")
             allowed = (preferred,) if preferred in slots else ("12:30",)
@@ -313,6 +376,8 @@ class HarnessOrchestrator:
             return {"scheduled": scheduled, "published": 0, "due": 0}
 
         item = due[0]
+        if not item.is_publishable:   # defence in depth; the queue filter already excludes these
+            return {"scheduled": scheduled, "published": 0, "due": 0}
         current_source = (
             self.source.fetch(item.source_url) if item.source_url and self.source else None
         )

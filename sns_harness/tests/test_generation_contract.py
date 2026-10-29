@@ -128,14 +128,23 @@ def test_naver_link_free_draft_requires_a_trustworthy_hook() -> None:
     post = naver_source()
     hook = "국민연금 받는 나이, 65세로만 알고 있으면 헷갈릴 수 있음."
     draft = ThreadsDraft(
-        format="single",
-        posts=[f"{hook}\n출생연도에 따라 수령 나이가 달라짐."],
+        format="thread",
+        posts=[
+            hook,
+            "출생연도에 따라 수령 나이가 달라짐.",
+            "자세한 건 돈살림표 블로그에 정리해뒀어요",
+        ],
         hook_type="실수",
         hook_text=hook,
         blog_link_used=False,
     )
 
     assert validate_draft_against_source(draft, post) == []
+
+    single = draft.model_copy(update={"format": "single", "posts": [f"{hook} 설명"]})
+    assert "link-free blog draft must be a hook post plus key-point replies" in (
+        validate_draft_against_source(single, post)
+    )
 
 
 def test_naver_draft_rejects_title_repetition_and_blocked_hook() -> None:

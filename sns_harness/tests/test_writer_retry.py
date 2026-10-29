@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from sns_harness.agents.writer import ThreadsWriter
+from sns_harness.agents.writer import ThreadsWriter, candidate_plan
 from sns_harness.models import (
     BlogDraftCandidates,
     DailyDraft,
@@ -28,30 +28,31 @@ def test_writer_retries_invalid_thread_count() -> None:
         "topic_tag": "ETF", "rationale": "", "hook_type": "궁금증",
         "hook_text": "ETF 비용에서 놓치기 쉬운 부분이 있음.", "blog_link_used": True,
     }]}
-    valid = ThreadsDraft(
-        format="single",
-        posts=[f"총보수와 추적오차를 확인합니다. {source.url}"],
-        topic_tag="ETF",
-        hook_type=HookType.CURIOSITY,
-        hook_text="ETF 비용에서 놓치기 쉬운 부분이 있음.",
-    )
-    valid_candidates = BlogDraftCandidates(
-        candidates=[
-            valid,
-            valid.model_copy(
-                update={
-                    "hook_type": HookType.MISTAKE,
-                    "hook_text": "ETF 비용에서 흔히 놓치는 부분이 있음.",
-                }
-            ),
-            valid.model_copy(
-                update={
-                    "hook_type": HookType.QUESTION,
-                    "hook_text": "ETF 비용 차이를 정확히 확인하고 있어?",
-                }
-            ),
-        ]
-    )
+    plan = candidate_plan(True)
+    texts = [
+        "ETF 총보수 숫자부터 확인해요",
+        "ETF 비용에서 흔히 놓치는 부분",
+        "ETF 총보수 vs 추적오차 차이",
+        "ETF 고르다 막막했던 적 있죠",
+        "ETF 비용 정확히 확인하고 있어?",
+    ]
+    all_candidates = [
+        ThreadsDraft(
+            format="single",
+            posts=[
+                "총보수와 추적오차를 확인합니다."
+                + (f" {source.url}" if entry["include_blog_link"] else "")
+            ],
+            topic_tag="ETF",
+            hook_type=HookType(entry["hook_type"]),
+            hook_text=text,
+            candidate_type=entry["candidate_type"],
+            blog_link_used=entry["include_blog_link"],
+        )
+        for entry, text in zip(plan, texts, strict=True)
+    ]
+    valid = all_candidates[0]
+    valid_candidates = BlogDraftCandidates(candidates=all_candidates)
     create = Mock(
         side_effect=[
             SimpleNamespace(output_text=json.dumps(invalid, ensure_ascii=False)),

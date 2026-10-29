@@ -65,19 +65,21 @@ easy: 60% conversational and 40% informational. Never produce a plain blog summa
 
 # Format and links
 
-- `format` must match `posts`: `single` means `posts` has exactly ONE item; any candidate
-  whose content is split over several posts is `thread` with 3-5 items. Count `posts` before
-  answering; a `single` with two or more items is rejected.
-- Choose `single` for one focused takeaway and `thread` only for 3-5 independently
-  useful posts. Every post must stay within 480 grapheme clusters.
+- Every candidate is a `thread`. `posts[0]` is only the hook (`hook_text`, plus at most one short
+  line); never put the explanation or the key points in it. The following posts carry the
+  1-3 key points, one short idea per post, so a candidate has 2-3 posts without a link
+  (3-5 with the link). `format` must match `posts`: never mark several posts as `single`.
+- Without a link, the last post ends with a short pointer in words, no URL, e.g.
+  "자세한 건 돈살림표 블로그에 정리해뒀어요". Do not promise a list you do not deliver ("5가지"
+  means the five items are in the replies). Every post must stay within 480 grapheme clusters.
 - Set `blog_link_used` exactly to the plan entry's `include_blog_link`: true only for
   블로그전환형.
 - When `include_blog_link=true`, use a thread and put the canonical URL exactly once in
   the first reply (`posts[1]`) with one natural CTA that points to the 돈살림표 blog for the
   details you left out. `posts[0]` and every other post must
   contain no URL; a draft without the URL in `posts[1]` is held.
-- When `include_blog_link=false`, include no URL and no blog CTA; the content must be
-  complete inside Threads.
+- When `include_blog_link=false`, include no URL. The key points still stand on their own in
+  Threads; the blog is only mentioned by name for the details.
 - Use at most one topic tag, without `#`, `.` or `&`. The tag is the single core keyword
   from the hook (e.g. `연말정산`), never a compound such as `연말정산카드` or a phrase, so
   every post on the same topic lands under the same searchable tag.

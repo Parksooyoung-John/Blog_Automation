@@ -506,7 +506,6 @@ SALES_BLOCKED_PHRASES = (
     "효능",
 )
 HOOK_BLOCKED_PHRASES = ("모르면 손해", "무조건", "반드시", "지금 당장")
-BLOG_CTA_PHRASES = ("프로필 블로그", "블로그에 정리", "자세한 내용은 블로그")
 GENERIC_TITLE_WORDS = {
     "기준", "계산", "방법", "순서", "이유", "조건", "신청", "조회", "정리"
 }
@@ -607,8 +606,8 @@ def validate_draft_against_source(
     elif not draft.blog_link_used:
         if source.url in combined or links:
             issues.append("link-free blog draft must not contain URLs")
-        if any(phrase in combined for phrase in BLOG_CTA_PHRASES):
-            issues.append("link-free blog draft must not contain a blog CTA")
+        if source.source is SourceKind.NAVER and draft.format is not PostFormat.THREAD:
+            issues.append("link-free blog draft must be a hook post plus key-point replies")
     elif draft.format is PostFormat.SINGLE:
         if source.url not in draft.posts[0] or links.count(source.url) != 1:
             issues.append("single post must include the canonical source URL once")

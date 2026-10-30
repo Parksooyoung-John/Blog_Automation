@@ -313,7 +313,8 @@ def score_one(c: dict, ledger_rows: list, titles: dict, today) -> tuple:
         return 0, {"주제 무관": 0}, "REJECTED"
     live = any(r["cluster"] == c["cluster"] and r["status"] in LIVE for r in ledger_rows) if c["cluster"] else False
     parts = {
-        "가족돈": 30 if c["cluster"] or FAMILY_MONEY.search(kw) else 0,
+        # SCOPE도 본다 — FAMILY_MONEY만 봤더니 근로장려금·퇴직금 세금 후보가 50점으로 폐기됐다(2026-10-30)
+        "가족돈": 30 if c["cluster"] or FAMILY_MONEY.search(kw) or SCOPE.search(kw) else 0,
         "세금연금": 25 if SCOPE.search(kw) else 0,
         "링크": 20 if live else 10 if c["cluster"] else 0,
         "공식": 15 if c["official"] == "1" else 0,
@@ -653,6 +654,8 @@ def selftest():
     assert s1 == 100 and d1 == "CREATE_SUPPORTING_POST", (s1, p1, d1)
     assert d2 in ("HOLD", "REJECTED") and s2 < ACCEPT_AT, (s2, d2)
     assert score_one({**good, "cluster": "", "role": ""}, led, {}, today)[2] == "CREATE_NEW"
+    for core in ("근로장려금 기한 후 신청 방법", "퇴직금 세금 계산 방법", "기초연금 수급 기준"):    # 클러스터 밖 핵심 주제가 폐기되면 안 된다
+        assert score_one({**good, "keyword": core, "cluster": "", "role": ""}, led, {}, today)[0] >= ACCEPT_AT, core
     # T3 기존 글과 의도가 70% 이상 겹치면 새 글 대신 업데이트, 허브와 60~70%면 허브 확장
     _, _, d3 = score_one(good, led, {"12": "국민연금 받는 부모님 연말정산 인적공제 가능할까 부양가족"}, today)
     assert d3 == "UPDATE_EXISTING"

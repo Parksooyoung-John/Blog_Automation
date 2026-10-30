@@ -213,13 +213,12 @@ AI 브리핑에 인용된 블로그 글 24편과 우리 11편의 라이브 서�
 | 기록 | 파일 | 누가 쓰나 |
 |---|---|---|
 | 클러스터 정의·글별 계획 | `content/naver/_clusters.md` | 사람이 읽는 설명 |
-| 후보·점수(10점)·결정 | `_candidates.csv` | `pipeline.py score` |
+| 후보·점수(100점)·결정 | `_candidates.csv` | `pipeline.py score` |
 | 글별 상태·클러스터·포트폴리오·logNo | `_pipeline.csv` | `pipeline.py start/status/sync` |
 | 24h·7d·30d 성과·등급 | `_perf.csv` | 사용자가 준 수치를 `pipeline.py perf add`로 |
 | 4주 계획 | `_plan_4w.md` | 사람이 읽는 설명 |
 
-**후보 점수 10점** — 관련성 2 · 검색 의도 명확 2 · 신규 블로그가 노릴 수 있는 세부 키워드 2 · 공식 자료 검증 가능 1 · 표·계산·사례로 차별화 1 · 같은 클러스터 글과 연결 1 · 시의성 1.
-7점 이상 `IDEA`, 5~6 `HOLD`, 4 이하 `REJECTED`. 기존 글의 제목·소제목에 후보 키워드가 70% 이상 들어 있으면 `UPDATE_EXISTING`(새 글 금지).
+**후보 점수** — 2026-10-28부터 100점 체계다. 배점과 기준은 아래 「품질 강화 규칙」의 후보 점수(Topic Authority). 기존 글의 제목·소제목에 후보 키워드가 70% 이상 들어 있으면 `UPDATE_EXISTING`(새 글 금지).
 공식 자료·차별화 두 칸은 사람이 CSV에 쓴 값이고 나머지는 코드가 계산한다. 대표 키워드는 클러스터 글이 쌓인 뒤에 쓴다.
 
 **상태** — `IDEA → RESEARCHING → DRAFT → SEO_REVIEW → HUMAN_REVIEW → APPROVED → (SCHEDULED) → PUBLISHED → PERFORMANCE_REVIEW → UPDATE_REQUIRED`, 옆길로 `FACT_CHECK_REQUIRED`·`REJECTED`.

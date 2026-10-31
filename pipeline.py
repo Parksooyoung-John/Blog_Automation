@@ -55,6 +55,7 @@ ALIASES = {"READY_FOR_APPROVAL": "HUMAN_REVIEW", "MONITORING": "PERFORMANCE_REVI
            "REFRESH_REQUIRED": "UPDATE_REQUIRED", "RESEARCH": "RESEARCHING"}
 MIN_GAP_HOURS = 36         # 발행 간격 (YAML publishing.min_interval_hours)
 MAX_PER_WEEK = 3           # 최근 7일 발행 수 (YAML publishing.max_posts_per_week)
+LIVE_MATCH_MIN = 0.35      # 발행 때 고친 제목을 같은 글로 볼 2글자 조각 겹침 (27편 원고·라이브가 이 근처다)
 PORTFOLIO = {"검색": 0.70, "홈피드": 0.20, "수익": 0.10}
 RULES_FROM = 25            # 클러스터·유사도·출처 기록 규칙을 판정에 넣는 첫 편 (24편까지는 발행됨)
 SCOPE = re.compile(r"연말정산|세액공제|소득공제|세금|연금|노후|장려금|지원금|실업급여|건강보험|고용보험|부양가족|인적공제")
@@ -376,6 +377,7 @@ def cmd_start(args):
     write_csv(LEDGER, LEDGER_COLS, ledger)
     write_csv(CANDS, CAND_COLS, rows)
     print(f"{cid} → {nn:02d}편 DRAFT. 원고는 content/naver/{nn:02d}_*.md 로 쓴다")
+    print(slot_text(ledger))
 
 
 # ---- 상태 --------------------------------------------------------------
@@ -437,13 +439,27 @@ def published_at(s: str):
 def next_publish_slot(rows: list, now):
     """가장 빠른 발행 가능 시각 — 마지막 발행 + 36시간, 그리고 최근 7일 3편 한도.
     상태가 아니라 발행 시각으로 센다 — 25·26편은 HUMAN_REVIEW인 채 발행돼 상태로 세면 빠졌다(2026-10-28)."""
-    times = sorted((published_at(r["published"]) for r in rows if r["published"]), reverse=True)
+    times = sorted({published_at(r["published"]) for r in rows if r["published"]}, reverse=True)
     slot = now
     if times:
         slot = max(slot, times[0] + datetime.timedelta(hours=MIN_GAP_HOURS))
     if len(times) >= MAX_PER_WEEK:
         slot = max(slot, times[MAX_PER_WEEK - 1] + datetime.timedelta(days=7))
     return slot
+
+
+def slot_text(rows: list, now=None) -> str:
+    """발행 가능 시각 안내. 장부만 보면 안 된다 — 27~29편이 발행됐는데 장부에 없어 "10-31 이후"라고 잘못 안내했다."""
+    now = now or datetime.datetime.now()
+    try:
+        from verify_naver import recent
+        live = [{"published": f"{p['when']:%Y-%m-%d %H:%M}"} for p in recent(10)]
+        basis = "라이브 기준"
+    except Exception as e:      # 네트워크·응답 형식 문제여도 원고 작업은 멈추지 않는다. 기준을 밝힌다
+        live, basis = [], f"라이브를 못 읽어 장부 기준: {type(e).__name__}"
+    slot = next_publish_slot(list(rows) + live, now)
+    return (f"발행 가능 시각: {'지금' if slot <= now else f'{slot:%Y-%m-%d %H:%M} 이후'}"
+            f" ({MIN_GAP_HOURS}시간 간격 · 7일 {MAX_PER_WEEK}편, {basis})")
 
 
 def paste_gate(nn: int):
@@ -458,10 +474,7 @@ def paste_gate(nn: int):
     if r["status"] not in PASTE_OK:
         raise SystemExit(f"{nn:02d}편 상태가 {r['status']}이다 — HUMAN_REVIEW 이상(check_naver 통과)일 때 만든다")
     if not r["published"]:
-        now = datetime.datetime.now()
-        slot = next_publish_slot(list(ledger.values()), now)
-        print(f"발행 가능 시각: {'지금' if slot <= now else f'{slot:%Y-%m-%d %H:%M} 이후'}"
-              f" ({MIN_GAP_HOURS}시간 간격 · 7일 {MAX_PER_WEEK}편)")
+        print(slot_text(ledger.values()))
 
 
 def cmd_list(_args=None):
@@ -545,6 +558,32 @@ def cmd_linkcheck(_args=None):
     print("깨진 링크 의심 없음" if not bad else f"\n수정 후보 {len(bad)}건 (수정은 사용자 승인 후)")
 
 
+def norm_title(t: str) -> str:
+    return re.sub(r"[\s|｜:]", "", t)
+
+
+def match_live(rows: list, titles: dict, live: list) -> dict:
+    """글 → 라이브 글. logNo → 제목(구분자·공백 무시) → 비슷한 제목 순서로 찾고, 한 라이브 글은 한 번만 쓴다.
+    사용자가 발행하면서 제목을 고치면 정확 대조로 못 찾아 27~29편이 발행된 줄 몰랐다(2026-10-31)."""
+    by_logno = {p["logNo"]: p for p in live}
+    out = {r["post"]: by_logno[r["logno"]] for r in rows if r["logno"] in by_logno}
+    used = {p["logNo"] for p in out.values()} | {r["logno"] for r in rows if r["logno"]}
+    rest = [r for r in rows if r["post"] not in out and not r["logno"]]
+    for r in rest:
+        p = next((x for x in live if x["logNo"] not in used and norm_title(x["title"]) == norm_title(titles[r["post"]])), None)
+        if p:
+            out[r["post"]] = p
+            used.add(p["logNo"])
+    for r in rest:
+        if r["post"] in out:
+            continue
+        cand = [(jaccard(norm_title(titles[r["post"]]), norm_title(x["title"])), x["logNo"], x) for x in live if x["logNo"] not in used]
+        if cand and max(cand, key=lambda c: c[0])[0] >= LIVE_MATCH_MIN:
+            out[r["post"]] = max(cand, key=lambda c: c[0])[2]
+            used.add(out[r["post"]]["logNo"])
+    return out
+
+
 def cmd_sync(_args=None):
     from verify_naver import recent
     rows = read_csv(LEDGER, LEDGER_COLS)
@@ -554,13 +593,14 @@ def cmd_sync(_args=None):
         live += got
         if len(got) < 30:
             break
-    by_title = {p["title"].strip(): p for p in live}
-    by_logno = {p["logNo"]: p for p in live}
+    titles = {r["post"]: title_of(post_file(r["post"]).read_text(encoding="utf-8")) for r in rows}
+    matched = match_live(rows, titles, live)
     for r in rows:
-        md = post_file(r["post"]).read_text(encoding="utf-8")
-        p = by_logno.get(r["logno"]) or by_title.get(title_of(md))
+        p = matched.get(r["post"])
         if p and (not r["logno"] or len(r["published"]) <= 10):      # 발행 간격을 보려고 시각까지 넣는다
             r["logno"], r["published"] = p["logNo"], f"{p['when']:%Y-%m-%d %H:%M}"
+        if p and norm_title(p["title"]) != norm_title(titles[r["post"]]) and num_of(r["post"]) >= RULES_FROM:
+            print(f"⚠ {r['post']}편: 라이브 제목이 원고와 다르다 — {p['title'].strip()}")
     write_csv(LEDGER, LEDGER_COLS, rows)
     print(f"logNo {sum(bool(r['logno']) for r in rows)}/{len(rows)}편 확인")
     for r in rows:      # 발행 뒤 제목을 고친 글(6·14편)은 제목 대조로 못 찾는다 — 조용히 넘기지 않고 알린다
@@ -683,6 +723,19 @@ def selftest():
     assert next_publish_slot(three, now) == datetime.datetime(2026, 10, 29, 9, 0)
     assert next_publish_slot([{"status": "HUMAN_REVIEW", "published": ""}], now) == now
     assert next_publish_slot([{"status": "HUMAN_REVIEW", "published": "2026-10-27 20:00"}], now) > now   # 상태와 무관하게 센다
+
+    # 라이브 대조 — 발행 때 고친 제목(27편 실제 사례)도 찾고, 다른 글과 섞지 않는다
+    t27 = "2026 맞벌이 부부 연말정산 부양가족 공제 | 카드 합산 안 될 때 누가 올릴까? 25% 계산"
+    t28 = "2026 연말정산 부양가족 잘못 공제했을 때 | 경정청구와 수정신고, 5년·2년 기한은?"
+    live_ = [{"logNo": "1", "title": "2026 맞벌이 연말정산｜부양가족 공제는 누가? 카드 25% 기준까지"},
+             {"logNo": "2", "title": "2026 연말정산 부양가족 잘못 공제했을 때｜경정청구와 수정신고, 5년·2년 기한은?"},
+             {"logNo": "3", "title": "실업급여 이직확인서 받는 법"}]
+    rows_ = [{"post": "27", "logno": ""}, {"post": "28", "logno": ""}, {"post": "30", "logno": ""}]
+    got = match_live(rows_, {"27": t27, "28": t28, "30": "자녀 세액공제 금액 개정 내용"}, live_)
+    assert got["28"]["logNo"] == "2" and got["27"]["logNo"] == "1" and "30" not in got, got
+    assert next_publish_slot(pub("2026-10-27 01:00", "2026-10-27 01:00"), now) == datetime.datetime(2026, 10, 28, 13, 0)  # 장부·라이브 중복은 한 번만
+    three2 = pub("2026-10-26 09:00", "2026-10-26 09:00", "2026-10-24 09:00", "2026-10-22 09:00")
+    assert next_publish_slot(three2, now) == datetime.datetime(2026, 10, 29, 9, 0)
 
     # 유사도 — 제목·본문·도입·질문 재사용을 잡고, 고정 문구는 오탐하지 않는다
     fixed = "공유하고 싶은 분께 이 글을 보내 주세요.\n"

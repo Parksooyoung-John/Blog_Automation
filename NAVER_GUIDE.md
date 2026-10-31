@@ -451,6 +451,42 @@ python -X utf8 check_naver.py --fetch-benchmark     # sky09020 최근 50편 본�
 
 **다음 단계 (아직 안 함)** — Sprint 2(핵심만 먼저 보기·100점 품질 평가표·재검토일·이미지 정보성 QA), Sprint 3(D+1·3·7·14·30 성과 — 지금 `perf`는 24h·7d·30d).
 
+## V2 규칙 — 최신성·제목·대표사진 (30편부터, 2026-10-31)
+
+근거: `NAVER_BLOG_HARNESS_TOPIC_FRESHNESS_TITLE_CA_V2.md`의 P0. 29편이 10-28에 열린 미리보기를 10-30에 "열리기 전"으로 썼고, 장부가 라이브와 어긋나 발행 가능 시각을 잘못 안내했다. `check_naver.V2_FROM = 30`부터 판정하고 01~29편 판정은 그대로다.
+
+**작성 순서** `pipeline.py start` → 공식 출처 확인 → `title_gate.py --serp 검색어` → `_titles/NN.json` 작성 → `title_gate.py NN` → 원고 작성 → `check_naver.py` → `--thumb NN` → 재확인 → `naver_paste.py`.
+
+작성 메모에 추가하는 줄:
+
+```
+- 검색 의도: definition | how_to | calculation | decision | comparison | warning_correction | event_opening | experience_review 중 하나
+- 보조 의도: (선택, 2개까지 `|`로)
+- 최신성 재확인: YYYY-MM-DD HH:MM | 검색어 | 출처
+- 썸네일 유형: number | compare | action (AI 배경은 scene)
+- 썸네일 문구: 메인 | 서브            ← 메인 12자·서브 14자 이내(공백 제외). 메인에 숫자·판정·행동
+- 썸네일 강조 숫자: 25%               ← number·action 필수. action은 O·X 같은 기호
+- 카테고리 색: tax | pension | support | warning | card
+- 돼지 자세: explain | calculator | check | warning | curious | 없음
+- AI 사용 이유: (scene만) 숫자·표·사물로 안 되는 이유
+```
+
+| 항목 | 30편부터 |
+|---|---|
+| 일정 근거 | 개통·기간·마감·시행 행의 출처가 기사·블로그뿐이면 `BLOCKED_NEEDS_REVIEW`. 기사는 변경 사실을 찾는 데만 쓴다 |
+| 최신성 2차 | `- 최신성 재확인:`이 24시간을 넘겼으면 `naver_paste.py`가 파일을 만들지 않는다. 파일을 만든 뒤 늦게 올리는 경우는 막지 못한다 |
+| 제목 형식 | 구분자 `｜` 또는 `:`. 핵심어는 앞 30자. 25~40자를 벗어나면 경고. 45~55자·연도 외 숫자·조건어 강제는 없다 |
+| 제목·본문 | 제목의 숫자·단위가 본문에 그대로 없으면 차단(2년과 2개월). 귀속연도·신고연도 혼동 차단. 원고 제목은 `selected_title`과 같아야 한다 |
+| 제목 게이트 | 후보 8~12개와 입력 계약을 `_titles/NN.json`에 쓴다. 코드가 지난 상태 표현·금지어·근거 없는 혜택·근거 표에 없는 숫자·기존 글 70% 겹침을 차단하고 약속 불일치·과장·상위 제목 유사를 감점한다. 85점 이상 최대 3개. intent·clarity·specificity·differentiation은 Claude 자기 채점이다 |
+| 대표사진 | 정보 카드가 기본. 글자는 코드로 얹고, 돼지는 `assets/naver_img/mascot/`의 고정 PNG. 최근 9개 중 AI 3개 초과, 유형·자세 3연속 금지 |
+| 216px QC | 렌더 글자 크기를 환산해 메인 16px 미달은 실패, 서브 10px 미달은 빼고 다시 렌더링. 돼지 외곽 박스 12%(warning 색은 5%) 초과와 글자 겹침은 실패. 축소본 `_workspace/naver/NN_썸네일_216.png`을 눈으로도 본다 |
+
+**결정 변경**: 위 「썸네일 컨셉 결정」(AI가 글자까지 그림)은 29편까지의 기록이다. 21~29편이 전부 AI 장면이라 30편부터 당분간 카드만 통과한다. `TITLE_LEN`·`BANNED_SUFFIX`처럼 30편에서 바뀌지 않는 규칙은 그대로 적용된다.
+
+**발행 시각**: `slot_text`가 라이브 목록을 먼저 읽는다. 사용자가 발행하며 제목을 고쳐도 `sync`가 비슷한 제목으로 찾고 다르면 알린다. 상태는 `APPROVED`가 사람 전용이라 바꾸지 않고 경고만 한다.
+
+**주 1회 사용자 절차**: 없는 수치를 만들지 않기 위해 지금은 `pipeline.py sync`와 라이브 제목 확인까지다. Creator Advisor 캡처 입력·주제 점수·검색 결과 스냅샷·D+1·3·7 리뷰는 P1로 미뤘다.
+
 ## 내부 링크 — 본문 맥락 링크 1개
 
 **하단에 고정 블록을 만들지 않는다.** 티스토리의 "함께 읽으면 좋은 글" 카드 방식을 네이버로

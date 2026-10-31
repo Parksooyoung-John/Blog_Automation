@@ -365,6 +365,7 @@ PRIMARY_DOMAINS = ("nts.go.kr", "hometax.go.kr", "law.go.kr", "korea.kr", "gov.k
 GUARANTEE_RE = re.compile(r'무조건 (받|환급|돌려)|100% (환급|받|돌려)|반드시 (받|환급)을? 수|확실히 (받|환급)')
 CLICK_RE = re.compile(r'광고.{0,8}(클릭|눌러)|클릭해 주세요')
 HYPOTHETICAL_RE = re.compile(r'가상|예시|계산 예|가정')
+UNOPENED_RE = re.compile(r'아직.{0,12}(개통|발표|공지|공고)|(개통|발표|공지|공고)\S* ?(소식을 )?확인하지 못')
 
 
 def title_skeleton(title: str) -> str:
@@ -462,6 +463,10 @@ def quality_issues(md: str, body: str, text: str, tags: list) -> list:
         used = {x.group(1) for x in UNIT_NUM.finditer(sec)}
         if used & calc and not HYPOTHETICAL_RE.search(sec):
             issues.append(f'계산 값이 있는 섹션에 가상 사례·예시 표시가 없다: {sec.splitlines()[0][:20]}')
+
+    # "아직 안 열렸다"류는 쓰는 날 다시 찾았다는 기록이 있어야 한다 — 29편이 10-28에 열린 서비스를 10-30에 미개통으로 썼다
+    if (m := UNOPENED_RE.search(text)) and not re.match(r'\d{4}-\d\d-\d\d \| \S', memo_value(md, '일정 재확인') or ''):
+        issues.append(f'"{m.group(0)}" — 올해 이름·날짜로 다시 검색하고 `- 일정 재확인: YYYY-MM-DD | 검색어`를 적는다')
 
     # Hard Block
     if m := GUARANTEE_RE.search(text):
@@ -928,6 +933,9 @@ def selftest():
     qfails("## 가상 사례로 계산하면\n\n가상 사례입니다.", "## 받는 돈 계산\n\n정리하면 이렇습니다.", "가상 사례·예시 표시")
     assert qissues(qdoc.replace("가상 사례입니다.", "정리하면 이렇습니다."))[0] == []      # 소제목에 가상이 있으면 된다
     # T7·Hard Block
+    qfails("조건이 있습니다.", "아직 개통 소식을 확인하지 못했습니다.", "일정 재확인")
+    assert not any("일정 재확인" in i for i in qissues(qdoc.replace("조건이 있습니다.", "아직 개통 소식을 확인하지 못했습니다.").replace(
+        "- 고유 근거:", "- 일정 재확인: 2026-10-31 | 2026 연말정산 미리보기 개통\n- 고유 근거:"))[0])
     qfails("조건이 있습니다.", "무조건 받을 수 있습니다.", "결과 보장")
     qfails("조건이 있습니다.", "광고를 클릭해 주세요.", "클릭 유도")
     qfails("## 근거 자료\n\n- 국민연금법", "## 근거 자료\n\n- 국민연금법 제61조\n\n## 덧붙임\n\n- 국민연금법", "맨 끝")

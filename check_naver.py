@@ -325,7 +325,7 @@ def template_issues(md: str, body: str, text: str, keyword, quality: bool = Fals
 
     # 썸네일(G8·G11·G12의 원고 쪽 절반 — 연속 유형은 main에서 본다)
     kind, post_type = memo_value(md, '썸네일 유형'), memo_value(md, '글 유형')
-    if kind not in THUMB_TYPES:
+    if kind not in (THUMB_TYPES + V2_THUMBS if v2 else THUMB_TYPES):
         issues.append(f'작성 메모 `- 썸네일 유형:`이 {"·".join(THUMB_TYPES)} 중 하나가 아니다')
     if post_type not in POST_TYPES:
         issues.append(f'작성 메모 `- 글 유형:`이 {"·".join(POST_TYPES)} 중 하나가 아니다')
@@ -334,7 +334,7 @@ def template_issues(md: str, body: str, text: str, keyword, quality: bool = Fals
         a, b = lines
         if kind == 'card' and not (8 <= len(a) <= 12 and 8 <= len(b) <= 12):
             issues.append(f'card 썸네일 문구는 두 줄 각 8~12자 (지금 {len(a)}·{len(b)}자)')
-        elif len(a) > 12 or len(b) > 22:
+        elif not v2 and (len(a) > 12 or len(b) > 22):      # 30편부터는 v2_thumb_issues가 본다
             issues.append(f'썸네일 문구는 윗줄 12자·아랫줄 22자 이하 (지금 {len(a)}·{len(b)}자)')
         if re.search(r'(못|안) ?\S*니다|없습니다', a + ' ' + b):
             issues.append('썸네일 문구에 단정 표현이 있다 — 조건을 남긴다("못 받을 수 있어요")')
@@ -373,6 +373,11 @@ CLICK_RE = re.compile(r'광고.{0,8}(클릭|눌러)|클릭해 주세요')
 HYPOTHETICAL_RE = re.compile(r'가상|예시|계산 예|가정')
 # V2(2026-10-31, 30편부터) — 최신성·제목. 명세 NAVER_BLOG_HARNESS_TOPIC_FRESHNESS_TITLE_CA_V2.md. 29편이 열린 서비스를 "열리기 전"으로 썼다.
 V2_FROM = 30
+V2_THUMBS = ("number", "compare", "action")      # 코드로 글자를 얹는 정보 카드. scene은 AI 배경 + 코드 글자로만 쓴다
+CATEGORY_COLORS = {"tax": "#006064", "pension": "#2e7d32", "support": "#5b2c6f", "warning": "#a0461a", "card": "#1a3c6e"}
+MASCOT_POSES = ("explain", "calculator", "check", "warning", "curious")
+MAX_SCENE_IN_9 = 3
+JUDGE_COPY_RE = re.compile(r'\d|O|X|vs|될까|되나|가능|불가|계산|확인|수정|신청|오픈|조건|기준|차이')
 FRESH_HOURS = 24
 TITLE_SOFT = (25, 40)               # 명세 7.5 권장 범위. 표시 환경마다 달라 탈락시키지 않고 경고만 한다
 INTENTS = ("definition", "how_to", "calculation", "decision", "comparison", "warning_correction", "event_opening", "experience_review")
@@ -517,6 +522,56 @@ def title_gate_issue(path: str, title: str) -> list:
     if selected != title:
         return [f'원고 제목이 게이트 선정 제목과 다르다: {selected or "선정 없음"}']
     return []
+
+
+def v2_thumb_issues(md: str, text: str) -> list:
+    """30편부터의 대표사진 카피. SEO 제목과 분리하고, 숫자는 제목·본문과 같아야 한다."""
+    issues = []
+    title = re.search(r'^제목: (.+)$', md, re.M).group(1).strip()
+    kind = memo_value(md, '썸네일 유형')
+    lines = thumb_lines(md)
+    if not lines:
+        return ['작성 메모 `- 썸네일 문구: 메인 | 서브`가 없다']
+    main, sub = (re.sub(r'\s', '', x) for x in lines)
+    squeezed = re.sub(r'[\s|｜:]', '', title)
+    if len(main) + len(sub) >= 0.8 * len(squeezed) or (main + sub) in squeezed:
+        issues.append('REJECT_TITLE_COPY_AS_THUMBNAIL — SEO 제목을 그대로 넣었다. 메인 12자 내외 + 서브 한 줄로 다시 쓴다')
+    if len(main) > 12:
+        issues.append(f'메인 카피 {len(main)}자 (12자 이내)')
+    if len(sub) > 14:
+        issues.append(f'서브 카피 {len(sub)}자 (한 줄 14자 이내)')
+    if not JUDGE_COPY_RE.search(lines[0]):
+        issues.append('메인 카피에 숫자·판정·행동이 없다')
+    big = (memo_value(md, '썸네일 강조 숫자') or '').split('|')[0].strip()
+    if kind in ('number', 'action') and not big:
+        issues.append(f'{kind}인데 `- 썸네일 강조 숫자:`가 없다')
+    if missing := unit_nums(' '.join(lines) + ' ' + big) - unit_nums(title + ' ' + text):
+        issues.append('BLOCKED_THUMBNAIL_FACT_MISMATCH — 제목·본문에 없는 숫자: ' + ', '.join(a + b for a, b in sorted(missing)))
+    if memo_value(md, '카테고리 색') not in CATEGORY_COLORS:
+        issues.append(f'작성 메모 `- 카테고리 색:`이 {" · ".join(CATEGORY_COLORS)} 중 하나가 아니다')
+    if memo_value(md, '돼지 자세') not in MASCOT_POSES + ('없음',):
+        issues.append(f'작성 메모 `- 돼지 자세:`가 {" · ".join(MASCOT_POSES)} · 없음 중 하나가 아니다')
+    if kind == 'scene' and not memo_value(md, 'AI 사용 이유'):
+        issues.append('scene인데 `- AI 사용 이유:`가 없다 — 숫자·표·사물로 안 되는 이유를 적는다')
+    return issues
+
+
+def thumb_v2_repeat(rows: dict) -> list:
+    """편 번호 → (유형, 돼지 자세). 30편부터 최근 9개 AI 3개 초과·같은 유형/자세 3연속이면 → [(편, 이유)]."""
+    seq = sorted((int(k), v) for k, v in rows.items() if v[0])
+    out = []
+    for i, (n, (kind, pose)) in enumerate(seq):
+        if n < V2_FROM:
+            continue
+        window = [v for _, v in seq[max(0, i - 8):i + 1]]
+        if kind == 'scene' and sum(k == 'scene' for k, _ in window) > MAX_SCENE_IN_9:
+            out.append((n, f'최근 9개 중 AI 대표사진이 {MAX_SCENE_IN_9}개를 넘는다 — 숫자·비교·자격 카드로 만든다'))
+        last3 = [v for _, v in seq[max(0, i - 2):i + 1]]
+        if len(last3) == 3 and len({k for k, _ in last3}) == 1:
+            out.append((n, f'대표사진 유형 {kind}이(가) 3연속이다'))
+        if len(last3) == 3 and pose and pose != '없음' and all(p == pose for _, p in last3):
+            out.append((n, f'돼지 자세 {pose}이(가) 3연속이다'))
+    return out
 
 
 def unit_nums(s: str) -> set:
@@ -715,7 +770,7 @@ def measure(path, tistory, volumes=None, bench=frozenset()):
             r["format"] += quality_issues(n, b, c, tags, r["v2"])
         if r["v2"]:
             fails_, r["warn"] = v2_issues(n, b, c)
-            r["format"] += fails_ + title_gate_issue(path, r["title"].strip())
+            r["format"] += fails_ + title_gate_issue(path, r["title"].strip()) + v2_thumb_issues(n, c)
         if int(num.group()) >= COMPOSITION_FROM and r["thumb_type"] == "scene" and r["composition"] not in COMPOSITIONS:
             r["format"].append(f'작성 메모 `- 썸네일 구도:`가 목록에 없다 — {" · ".join(COMPOSITIONS)}')
     elif r["new_format"]:
@@ -1069,6 +1124,25 @@ def selftest():
         os.makedirs(os.path.join(d, "_titles"))
         open(os.path.join(d, "_titles", "30.json"), "w", encoding="utf-8").write('{"selected_title": "제목"}')
         assert title_gate_issue(p_, "제목") == [] and any("다르다" in i for i in title_gate_issue(p_, "다른 제목"))
+    # TEST-THUMB — 대표사진 카피
+    tmd = ("제목: 2026 맞벌이 연말정산｜부양가족은 누구에게? 카드 25% 계산\n\n본문 25%와 2개월입니다.\n\n## 작성 메모\n\n"
+           "- 썸네일 유형: number\n- 썸네일 문구: 카드 25% 계산 | 맞벌이 누구 카드?\n- 썸네일 강조 숫자: 25%\n- 카테고리 색: tax\n- 돼지 자세: calculator\n")
+    tbody = "본문 25%와 2개월입니다."
+    assert v2_thumb_issues(tmd, tbody) == [], v2_thumb_issues(tmd, tbody)
+    t1 = tmd.replace("카드 25% 계산 | 맞벌이 누구 카드?", "2026 맞벌이 연말정산 | 부양가족은 누구에게? 카드 25% 계산")     # 001 제목 복사
+    assert any("REJECT_TITLE_COPY" in i for i in v2_thumb_issues(t1, tbody))
+    t5 = tmd.replace("문구: 카드 25% 계산", "문구: 기한 2년 확인")                                                               # 005 숫자 불일치
+    assert any("FACT_MISMATCH" in i and "2년" in i for i in v2_thumb_issues(t5, tbody))
+    assert any("판정·행동" in i for i in v2_thumb_issues(tmd.replace("문구: 카드 25% 계산", "문구: 맞벌이 카드"), tbody))
+    assert any("강조 숫자" in i for i in v2_thumb_issues(tmd.replace("- 썸네일 강조 숫자: 25%\n", ""), tbody))
+    assert any("AI 사용 이유" in i for i in v2_thumb_issues(tmd.replace("유형: number", "유형: scene"), tbody))
+    assert any("카테고리 색" in i for i in v2_thumb_issues(tmd.replace("색: tax", "색: red"), tbody))
+    # 002 최근 9개 AI 3개 초과 — 21~29편이 전부 scene이라 30편 scene은 막힌다
+    past = {str(n): ("scene", None) for n in range(21, 30)}
+    assert any("AI 대표사진" in w for n, w in thumb_v2_repeat({**past, "30": ("scene", "explain")}) if n == 30)
+    assert not any("AI 대표사진" in w for _, w in thumb_v2_repeat({**past, "30": ("number", "explain")}))
+    assert any("3연속" in w for _, w in thumb_v2_repeat({"30": ("number", "a"), "31": ("number", "b"), "32": ("number", "c")}))
+    assert any("돼지 자세" in w for _, w in thumb_v2_repeat({"30": ("number", "a"), "31": ("compare", "a"), "32": ("action", "a")}))
     assert freshness_time("- 최신성 재확인: 2026-10-31 14:00 | q | s\n").hour == 14 and freshness_time("없음") is None
     assert title_skeleton("2026 A｜무엇? 확인할 5가지") == "?확인할 N가지" == title_skeleton("2026 A: 무엇? 확인할 3가지")
     print("selftest ok")
@@ -1099,7 +1173,7 @@ def main():
         print(f'⚠ {VOLUME_CSV} 없음 — 태그 검색량 검사를 건너뜁니다\n')
     bench = sents("".join(open(f, encoding='utf-8').read() for f in glob.glob(f'{BENCH_DIR}/*.txt')))
     allok = True
-    cover_kws, box_titles, thumb_kinds, comps, titles, skels = {}, {}, {}, {}, {}, {}
+    cover_kws, box_titles, thumb_kinds, comps, titles, skels, looks = {}, {}, {}, {}, {}, {}, {}
     for p in sorted(glob.glob('content/naver/*.md')):
         r = measure(p, tistory, volumes, bench)
         if r is None:          # 제목 줄이 없으면 원고가 아니다(메모·프롬프트 파일)
@@ -1110,6 +1184,7 @@ def main():
         comps[os.path.basename(p)] = r["composition"]
         if num := re.match(r'\d+', os.path.basename(p)):
             titles[num.group()], skels[num.group()] = r["title"], r["skeleton"]
+            looks[num.group()] = (r["thumb_type"], memo_value(open(p, encoding='utf-8').read(), '돼지 자세'))
         if r["template"] and not bench:
             print(f'⚠ {BENCH_DIR} 비어 있음 — 벤치마크 문장 중복을 못 봤다. `check_naver.py --fetch-benchmark` 후 다시 실행')
         fails, warns = post_issues(p)       # 25편부터: 클러스터·출처 기록·글 간 유사도 (pipeline.py)
@@ -1164,6 +1239,9 @@ def main():
     for n in title_repeat(titles):
         allok = False
         print(f'CHECK {n}편 — 제목 뼈대가 최근 5편 중 {TITLE_REPEAT[0]}편을 넘게 같다: {title_skeleton(titles[str(n).zfill(2)])}')
+    for n, why in thumb_v2_repeat(looks):
+        allok = False
+        print(f'CHECK {n}편 — {why}')
     for n in section_repeat(skels):
         allok = False
         print(f'CHECK {n}편 — 소제목 구성이 바로 앞 편과 같다. 섹션 순서를 바꾼다')

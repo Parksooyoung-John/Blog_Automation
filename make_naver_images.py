@@ -234,6 +234,16 @@ def canva_selftest():
             pass
     assert _light("#1a5276") == "#c6d4dd"
     assert isinstance(CARDS["40_노령연금_기간채우기"], Card) and set(CANVA_TEMPLATES) == {"hero", "bar", "timeline", "checklist"}
+    # 대표사진 QC — TEST-THUMB-003 돼지 과대, 004 작은 서브 카피
+    assert thumb_qc(96, 52, 0.10) == {"fail": [], "drop_sub": False}
+    assert any("돼지" in x for x in thumb_qc(96, 52, 0.20)["fail"])
+    assert any("돼지" in x for x in thumb_qc(96, 52, 0.10, strict=True)["fail"])
+    assert thumb_qc(96, 30, 0.10)["drop_sub"] and not thumb_qc(96, 0, 0.10)["drop_sub"]
+    assert any("메인" in x for x in thumb_qc(40, 0, 0.10)["fail"])
+    assert set(MASCOT_POSE_PROMPT) == set(MASCOT_POSES)
+    p30 = scene_prompt("- 썸네일 문구: 가 | 나\n- 썸네일 장면: a person\n", 30)
+    assert "No text" in p30 and "Title at the top" not in p30 and '"가"' not in p30          # 30편부터 AI는 글자를 그리지 않는다
+    assert 'Line 1' in scene_prompt("- 썸네일 문구: 가 | 나\n- 썸네일 장면: a person\n", 29)
     print("selftest OK")
 
 
@@ -347,14 +357,186 @@ def memo_value(md: str, key: str):
 
 # 15~17편 썸네일이 전부 '식탁에 앉아 턱 괴고 종이·폰 보기'였다(2026-10-16 사용자 지적). 구도를 작성 메모에서 고르고
 # 바로 앞 편과 같은 구도는 check_naver가 막는다. 목록은 check_naver.COMPOSITIONS와 같은 키를 쓴다.
-from check_naver import COMPOSITIONS
+from check_naver import CATEGORY_COLORS, COMPOSITIONS, MASCOT_POSES, V2_FROM, V2_THUMBS
 
 
 def scene_prompt(md: str, num: int) -> str:
     line1, line2 = (t.replace("/", " ").strip() for t in thumb_text(md))
     comp = COMPOSITIONS.get(memo_value(md, "썸네일 구도") or "", "a natural, varied composition that fits the scene")
+    if num >= V2_FROM:      # 30편부터 한글은 코드로 얹는다(명세 16.1). 모델에는 글자 없는 배경만 맡긴다
+        head = SCENE_PROMPT.split("Title at the top")[0].format(scene=memo_value(md, "썸네일 장면"), composition=comp)
+        return head + "No text, letters, numbers or labels anywhere in the image."
+
     return SCENE_PROMPT.format(scene=memo_value(md, "썸네일 장면"), composition=comp,
                                color=PALETTE[num % len(PALETTE)][1], line1=line1, line2=line2)
+
+
+# ── 30편~ 대표사진: 정보 카드 + 고정 돼지 PNG (NAVER_GUIDE 「V2 규칙」) ───────
+CREAM = "#fdf8ef"
+MASCOT_DIR = OUT / "mascot"
+QC_SIZE = 216                       # 네이버 모바일 그리드 가정 크기
+MAIN_MIN_216, SUB_MIN_216 = 16, 10  # 축소본에서 읽히는 글자 크기(px) — 눈으로 본 축소본 기준값
+MASCOT_RATIO = (0.08, 0.12)
+MASCOT_STRICT_MAX = 0.05            # 세법·가산세처럼 엄격한 주제(warning)
+MASCOT_POSE_PROMPT = {"explain": "pointing to the side with one hoof as if explaining", "calculator": "holding a small calculator",
+                      "check": "holding up a green check mark sign", "warning": "holding a small yellow caution sign",
+                      "curious": "tilting its head with a curious expression"}
+
+
+def thumb_qc(main_px: float, sub_px: float, mascot_ratio: float, strict: bool = False) -> dict:
+    """860px 렌더 값 → 216px 환산 판정. {fail: [...], drop_sub: bool}. 서브가 안 읽히면 키우지 말고 뺀다(명세 16.9)."""
+    scale = QC_SIZE / THUMB
+    fail = []
+    if main_px * scale < MAIN_MIN_216:
+        fail.append(f"메인 카피가 {QC_SIZE}px에서 {main_px * scale:.0f}px — {MAIN_MIN_216}px 이상이 되게 문구를 줄인다")
+    hi = MASCOT_STRICT_MAX if strict else MASCOT_RATIO[1]
+    if mascot_ratio > hi + 0.005:
+        fail.append(f"돼지가 {mascot_ratio:.0%} — {hi:.0%} 이하로 줄인다")
+    return {"fail": fail, "drop_sub": bool(sub_px) and sub_px * scale < SUB_MIN_216}
+
+
+def mascot_width(png: Path, ratio: float) -> tuple:
+    """돼지 외곽 박스가 대표사진의 ratio가 되는 표시 폭 → (폭, 실제 비율). 투명 PNG가 아니면 멈춘다.
+    불투명 픽셀만 세면 10%가 폭 42%로 나와 글자를 가렸다(2026-10-31 시험 렌더) — 눈에 보이는 크기는 박스다."""
+    from PIL import Image
+    im = Image.open(png).convert("RGBA")
+    alpha = im.getchannel("A")
+    opaque = sum(alpha.histogram()[128:]) / (im.width * im.height)
+    if opaque > 0.9:
+        raise SystemExit(f"{png.name}가 투명 배경이 아니다")
+    box = alpha.point(lambda v: 255 if v >= 128 else 0).getbbox()
+    frac = (box[2] - box[0]) * (box[3] - box[1]) / (im.width * im.height)
+    w = THUMB * (ratio / frac) ** 0.5
+    return round(w), frac * (round(w) / THUMB) ** 2
+
+
+def info_thumb_html(kind: str, main: str, sub: str, big: str, color: str, mascot_tag: str, photo: Path = None) -> str:
+    import base64
+    import html as html_lib
+    e = html_lib.escape
+    font = thumb_font()
+    face = f"@font-face {{ font-family: 'Thumb'; src: url(data:font/ttf;base64,{base64.b64encode(font.read_bytes()).decode()}); }}"
+    css = f"""{face} *{{margin:0;padding:0;box-sizing:border-box}}
+.t{{width:{THUMB}px;height:{THUMB}px;position:relative;overflow:hidden;background:{CREAM};font-family:'Thumb';color:#1a1a1a}}
+.bar{{position:absolute;left:0;right:0;top:0;height:22px;background:{color}}}
+.stack{{position:absolute;left:46px;right:46px;top:44px;height:{'198px' if photo else '470px'};text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:stretch}}
+.fit{{white-space:nowrap;display:block}}
+.big{{color:{color};font-size:210px;line-height:1.05}}
+.main{{font-size:96px;line-height:1.15;color:{color}}}
+.sub{{font-size:52px;line-height:1.2;color:#333;{'margin-top:8px' if photo else 'position:absolute;left:46px;right:320px;bottom:120px;text-align:left'}}}
+.vs{{display:flex;gap:14px;margin-bottom:26px}}
+.vs div{{flex:1;background:{color};color:#fff;border-radius:22px;padding:120px 10px;font-size:72px;white-space:nowrap;overflow:hidden}}
+.mark{{align-self:center;width:230px;height:230px;line-height:230px;border-radius:50%;background:{color};color:#fff;font-size:150px;margin-bottom:22px}}
+.mascot{{position:absolute;right:26px;bottom:18px}}
+.photo{{position:absolute;left:0;right:0;top:262px;bottom:0;background:url('{_img_url(photo) if photo else ''}') center/cover}}
+.ai{{position:absolute;left:18px;bottom:18px;font:700 18px {FONT};color:#333;background:rgba(255,255,255,.82);padding:5px 12px;border-radius:14px}}"""
+    head = ""
+    if kind == "number":
+        head = f"<div class='big fit'>{e(big)}</div>"
+    elif kind == "action":
+        head = f"<div class='mark'>{e(big)}</div>"
+    elif kind == "compare":
+        a, _, b = main.partition(" vs ")
+        head = f"<div class='vs'><div class='fit'>{e(a)}</div><div class='fit'>{e(b)}</div></div>"
+        main = "" if b else main
+    subline = f"<div class='sub fit'>{e(sub)}</div>" if sub else ""
+    body = head + (f"<div class='main fit'>{e(main)}</div>" if main else "") + (subline if photo else "")
+    extra = f"<div class='photo'></div><span class='ai'>AI 활용</span>" if photo else ""
+    return f"<style>{css}</style><div class='t'><div class='bar'></div>{extra}<div class='stack'>{body}</div>{'' if photo else subline}{mascot_tag}</div>"
+
+
+def shoot_info_thumb(page, kind: str, main: str, sub: str, big: str, category: str, pose: str, out: Path, photo: Path = None) -> list:
+    """정보 카드(또는 AI 배경 + 코드 글자)를 렌더링한다. → QC 실패 목록. 216px 축소본도 같이 저장한다."""
+    from PIL import Image
+    strict = category == "warning"
+    ratio, mascot = 0.0, ""
+    if pose and pose != "없음" and not photo:
+        png = MASCOT_DIR / f"{pose}.png"
+        if not png.exists():
+            raise SystemExit(f"{png} 없음 — `--mascots`로 만든다")
+        w, ratio = mascot_width(png, MASCOT_STRICT_MAX if strict else sum(MASCOT_RATIO) / 2)
+        mascot = f"<img class='mascot' width='{w}' src='{_img_url(png)}'>"
+    page.set_viewport_size({"width": THUMB, "height": THUMB})
+    for attempt in (sub, ""):
+        page.set_content(info_thumb_html(kind, main, attempt, big, CATEGORY_COLORS[category], mascot, photo))
+        page.evaluate("() => document.fonts.ready")
+        page.wait_for_timeout(300)
+        m = page.evaluate("""() => {
+            document.querySelectorAll('.fit').forEach(el => { let s = parseFloat(getComputedStyle(el).fontSize);
+                while (el.scrollWidth > el.clientWidth && s > 20) { s -= 2; el.style.fontSize = s + 'px'; } });
+            const px = q => { const el = document.querySelector(q); return el ? parseFloat(getComputedStyle(el).fontSize) : 0; };
+            const box = document.querySelector('.stack').getBoundingClientRect();
+            const ms = document.querySelector('.mascot');
+            const mb = ms ? ms.getBoundingClientRect() : null;
+            const hit = mb && [...document.querySelectorAll('.fit, .mark')].some(el => { const b = el.getBoundingClientRect();
+                const range = document.createRange(); range.selectNodeContents(el); const t = range.getBoundingClientRect();
+                return t.right > mb.left && t.left < mb.right && t.bottom > mb.top && t.top < mb.bottom; });
+            return {main: px('.main') || px('.vs div'), sub: px('.sub'), bottom: box.bottom, hit: !!hit};
+        }""")
+        qc = thumb_qc(m["main"], m["sub"], ratio, strict)
+        if not qc["drop_sub"]:
+            break
+        print(f"  서브 카피를 뺐다: {QC_SIZE}px에서 읽히지 않는다 — {sub}")
+    fail = list(qc["fail"])
+    if not m["main"]:
+        fail.append("메인 카피를 찾지 못했다")
+    if m["hit"]:
+        fail.append("글자가 돼지와 겹친다")
+    if m["bottom"] > THUMB - 12:
+        fail.append("글자가 아래로 넘친다")
+    page.query_selector(".t").screenshot(path=str(out))
+    small = Path(__file__).parent / "_workspace" / "naver" / f"{out.stem}_{QC_SIZE}.png"
+    small.parent.mkdir(parents=True, exist_ok=True)
+    Image.open(out).resize((QC_SIZE, QC_SIZE), Image.LANCZOS).save(small)
+    print(f"  {QC_SIZE}px 축소본: {small} (눈으로도 확인)")
+    return fail
+
+
+def mascots_cmd() -> int:
+    """돼지 투명 PNG 5종을 한 번 만든다. 글마다 새로 그리지 않는다."""
+    import base64
+    import os
+
+    import requests
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent / ".env")
+    if not os.environ.get("OPENAI_API_KEY"):
+        print(".env에 OPENAI_API_KEY가 없습니다")
+        return 1
+    MASCOT_DIR.mkdir(parents=True, exist_ok=True)
+    print(f"{GEN_MODEL} {GEN_QUALITY} {len(MASCOT_POSES)}장 — 예상 비용 약 ${len(MASCOT_POSES) * GEN_COST:.2f}")
+    for pose in MASCOT_POSES:
+        prompt = (f"A single character sheet image of the same mascot: {MASCOT}, {MASCOT_POSE_PROMPT[pose]}. Soft 3D-like style, full body, "
+                  "centered, facing slightly left, no shadow, transparent background. No text, letters or numbers.")
+        r = requests.post("https://api.openai.com/v1/images/generations",
+                          headers={"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"},
+                          json={"model": GEN_MODEL, "prompt": prompt, "size": "1024x1024", "quality": GEN_QUALITY, "n": 1,
+                                "background": "transparent", "output_format": "png"}, timeout=300)
+        if not r.ok:
+            raise RuntimeError(f"OpenAI {r.status_code}: {r.text[:300]}")
+        (MASCOT_DIR / f"{pose}.png").write_bytes(base64.b64decode(r.json()["data"][0]["b64_json"]))
+        print(MASCOT_DIR / f"{pose}.png")
+    return 0
+
+
+def thumb_samples_cmd() -> int:
+    """템플릿 3종 시험 렌더 → _workspace/naver/. 숫자는 예시다."""
+    ws = Path(__file__).parent / "_workspace" / "naver" / "tpl"
+    ws.mkdir(parents=True, exist_ok=True)
+    samples = [("number", "카드 25% 계산", "맞벌이 누구 카드?", "25%", "tax", "calculator"),
+               ("compare", "수정신고 vs 경정청구", "과다공제는 어느 쪽?", "", "warning", "warning"),
+               ("action", "따로 살아도 O", "부모님 공제 조건", "O", "support", "check")]
+    code = 0
+    with sync_playwright() as pw:
+        b = pw.chromium.launch(headless=True)
+        page = b.new_page(device_scale_factor=2)
+        for s in samples:
+            out = ws / f"{s[0]}.png"
+            fail = shoot_info_thumb(page, *s, out)
+            print(out, fail or "QC 통과")
+            code |= bool(fail)
+        b.close()
+    return code
 
 
 def _img_url(photo: Path) -> str:
@@ -1129,6 +1311,25 @@ def gen_cmd(num: str) -> int:
 def thumb_cmd(num: str) -> int:
     md = draft_md(num)
     text, kind = thumb_text(md), memo_value(md, "썸네일 유형")
+    if int(num) >= V2_FROM and kind in V2_THUMBS + ("scene",):
+        if not text:
+            print(f"{num}편 작성 메모에 `- 썸네일 문구: 메인 | 서브` 줄이 없습니다")
+            return 1
+        cover = find_cover(num) if kind == "scene" else None
+        if kind == "scene" and not cover:
+            print(f"`--gen {num}`으로 글자 없는 배경을 만들어 cover_{num}.png로 저장한 뒤 다시 실행하세요")
+            return 1
+        big = (memo_value(md, "썸네일 강조 숫자") or "").split("|")[0].strip()
+        with sync_playwright() as pw:
+            b = pw.chromium.launch(headless=True)
+            page = b.new_page(device_scale_factor=2)
+            fail = shoot_info_thumb(page, kind, *(t.replace("/", " ") for t in text), big, memo_value(md, "카테고리 색"),
+                                    memo_value(md, "돼지 자세"), OUT / f"{num}_썸네일.png", cover)
+            b.close()
+        for f in fail:
+            print("  ⚠ 대표사진:", f)
+        print(OUT / f"{num}_썸네일.png")
+        return 1 if fail else 0
     photo = find_cover(num)
     if not text:
         print(f"{num}편 원고 작성 메모에 `- 썸네일 문구: 윗줄 | 아랫줄` 줄이 없습니다")
@@ -1175,6 +1376,10 @@ if __name__ == "__main__":
         sys.exit(1 if bad else 0)
     elif "--gen" in sys.argv:
         sys.exit(gen_cmd(sys.argv[sys.argv.index("--gen") + 1]))
+    elif "--mascots" in sys.argv:
+        sys.exit(mascots_cmd())
+    elif "--thumb-samples" in sys.argv:
+        sys.exit(thumb_samples_cmd())
     elif "--prompt" in sys.argv:
         sys.exit(prompt_cmd(sys.argv[sys.argv.index("--prompt") + 1]))
     elif "--thumb" in sys.argv:

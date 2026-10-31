@@ -462,6 +462,20 @@ def slot_text(rows: list, now=None) -> str:
             f" ({MIN_GAP_HOURS}시간 간격 · 7일 {MAX_PER_WEEK}편, {basis})")
 
 
+def check_naver_v2_from() -> int:
+    from check_naver import V2_FROM     # check_naver가 이 모듈을 가져오므로 함수 안에서 불러온다
+    return V2_FROM
+
+
+def fresh_gate(md: str, now):
+    """2차 최신성 검사(업로드 직전). 재확인이 없거나 24시간을 넘겼으면 붙여넣기 파일을 만들지 않는다."""
+    from check_naver import FRESH_HOURS, freshness_time
+    t = freshness_time(md)
+    if t is None or (now - t).total_seconds() > FRESH_HOURS * 3600:
+        raise SystemExit(f"최신성 재확인이 {'없다' if t is None else f'{t:%m-%d %H:%M}로 {FRESH_HOURS}시간을 넘겼다'} — "
+                         "개통·기간·금액을 공식 출처로 다시 보고 `- 최신성 재확인:` 줄을 고친 뒤 만든다")
+
+
 def paste_gate(nn: int):
     """naver_paste.page_for가 부른다. 원고가 승인 흐름에 올라와 있지 않으면 붙여넣기 파일을 만들지 않는다.
     발행 가능 시각은 막지 않고 알린다 — 붙여넣기 파일은 미리 만들어 둘 수 있어야 한다."""
@@ -475,6 +489,8 @@ def paste_gate(nn: int):
         raise SystemExit(f"{nn:02d}편 상태가 {r['status']}이다 — HUMAN_REVIEW 이상(check_naver 통과)일 때 만든다")
     if not r["published"]:
         print(slot_text(ledger.values()))
+    if nn >= check_naver_v2_from():
+        fresh_gate(post_file(nn).read_text(encoding="utf-8"), datetime.datetime.now())
 
 
 def cmd_list(_args=None):
@@ -723,6 +739,16 @@ def selftest():
     assert next_publish_slot(three, now) == datetime.datetime(2026, 10, 29, 9, 0)
     assert next_publish_slot([{"status": "HUMAN_REVIEW", "published": ""}], now) == now
     assert next_publish_slot([{"status": "HUMAN_REVIEW", "published": "2026-10-27 20:00"}], now) > now   # 상태와 무관하게 센다
+
+    # 2차 최신성 — 24시간 넘은 재확인은 붙여넣기 파일을 막는다
+    fm = "- 최신성 재확인: 2026-10-28 12:00 | 미리보기 2026 | https://www.nts.go.kr/x\n"
+    assert fresh_gate(fm, now) is None
+    for bad_md, at in ((fm, now + datetime.timedelta(hours=24, minutes=1)), ("메모 없음", now)):
+        try:
+            fresh_gate(bad_md, at)
+            raise AssertionError("낡은 재확인이 통과했다")
+        except SystemExit:
+            pass
 
     # 라이브 대조 — 발행 때 고친 제목(27편 실제 사례)도 찾고, 다른 글과 섞지 않는다
     t27 = "2026 맞벌이 부부 연말정산 부양가족 공제 | 카드 합산 안 될 때 누가 올릴까? 25% 계산"

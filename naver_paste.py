@@ -361,8 +361,17 @@ def selftest():
     assert "[큰제목] 1. 첫 결론입니다" in gtext
     pc, phone = CHECKLIST.split("■ 폰에서")                                                       # 체크리스트가 PC/폰으로 나뉘어 있어야 한다
     assert "[이미지]" in pc and "[경험 한 줄]" in phone and "3~5개" in phone
+    fresh = with_freshness(CHECKLIST, "- 최신성 재확인: 2026-10-31 14:00 | q | s\n")
+    assert "최신성 재확인 10-31 14:00" in fresh and with_freshness(CHECKLIST, "메모") == CHECKLIST
     assert parts(md.replace(" #태그넷 #태그다섯", ""))[2] == "#태그하나 #태그둘 #태그셋"        # 27편부터 태그 3개도 읽는다
     print("selftest ok")
+
+
+def with_freshness(page: str, md: str) -> str:
+    """체크리스트 맨 끝에 최신성 재확인 시각을 적는다. 파일을 만든 뒤 늦게 올리는 경우는 코드가 막지 못한다."""
+    from check_naver import freshness_time
+    t = freshness_time(md)
+    return page.replace("· 발행 설정:", f"· 최신성 재확인 {t:%m-%d %H:%M} — 하루 지났으면 개통·기간·금액을 다시 확인\n· 발행 설정:") if t else page
 
 
 def page_for(src: Path, tone: int = None) -> str:
@@ -376,7 +385,8 @@ def page_for(src: Path, tone: int = None) -> str:
         paste_gate(int(num.group()))
     template = bool(num) and int(num.group()) >= TEMPLATE_FROM
     px = PX_BY_POST.get(int(num.group()), TEMPLATE_PX) if num else TEMPLATE_PX
-    return to_html(src.read_text(encoding="utf-8"), tone_of(src) if tone is None else tone, template, px)
+    md = src.read_text(encoding="utf-8")
+    return with_freshness(to_html(md, tone_of(src) if tone is None else tone, template, px), md)
 
 
 if __name__ == "__main__":

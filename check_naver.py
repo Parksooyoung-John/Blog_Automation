@@ -232,7 +232,7 @@ def thumb_lines(md: str):
     return a, b
 
 
-def template_issues(md: str, body: str, text: str, keyword, quality: bool = False) -> list:
+def template_issues(md: str, body: str, text: str, keyword, quality: bool = False, v2: bool = False) -> list:
     """15편부터의 벤치마크 템플릿. body: 플레이스홀더가 남은 본문, text: 플레이스홀더를 뺀 본문. → 문제 설명 목록
 
     quality(27편~): 섹션 고정 순서·번호 1~5 대신 quality_issues()가 구조를 본다.
@@ -269,15 +269,21 @@ def template_issues(md: str, body: str, text: str, keyword, quality: bool = Fals
         issues.append(f'번호 소제목이 {", ".join(nums) or "없음"} — 1~5여야 한다')
 
     # G2 제목
-    lo, hi = TITLE_LEN
-    if not lo <= len(title) <= hi:
-        issues.append(f'제목 {len(title)}자 ({lo}~{hi}자)')
-    if not re.search(r'20\d\d', title[:15]):
-        issues.append('제목 앞 15자에 연도가 없다')
-    if keyword and not 0 <= title.replace(' ', '').find(keyword) < 15:
-        issues.append(f'제목 앞부분에 목표 키워드({keyword})가 없다')
-    if not re.search(r'\d', re.sub(r'20\d\d', '', title)):
-        issues.append('제목에 연도 말고 숫자가 없다')
+    if v2:      # 길이는 v2_issues가 경고만 한다. 일정형 제목에는 연도 말고 숫자가 없을 수 있다
+        if keyword and not 0 <= title.replace(' ', '').find(keyword) < 30:
+            issues.append(f'제목 앞 30자에 목표 키워드({keyword})가 없다')
+        if '|' in title:
+            issues.append('제목 구분자는 `｜` 또는 `:`')
+    else:
+        lo, hi = TITLE_LEN
+        if not lo <= len(title) <= hi:
+            issues.append(f'제목 {len(title)}자 ({lo}~{hi}자)')
+        if not re.search(r'20\d\d', title[:15]):
+            issues.append('제목 앞 15자에 연도가 없다')
+        if keyword and not 0 <= title.replace(' ', '').find(keyword) < 15:
+            issues.append(f'제목 앞부분에 목표 키워드({keyword})가 없다')
+        if not re.search(r'\d', re.sub(r'20\d\d', '', title)):
+            issues.append('제목에 연도 말고 숫자가 없다')
     issues += [f'제목 금지어: {w}' for w in BANNED_TITLE if w in title]
 
     # G3 요약 박스
@@ -365,12 +371,21 @@ PRIMARY_DOMAINS = ("nts.go.kr", "hometax.go.kr", "law.go.kr", "korea.kr", "gov.k
 GUARANTEE_RE = re.compile(r'무조건 (받|환급|돌려)|100% (환급|받|돌려)|반드시 (받|환급)을? 수|확실히 (받|환급)')
 CLICK_RE = re.compile(r'광고.{0,8}(클릭|눌러)|클릭해 주세요')
 HYPOTHETICAL_RE = re.compile(r'가상|예시|계산 예|가정')
+# V2(2026-10-31, 30편부터) — 최신성·제목. 명세 NAVER_BLOG_HARNESS_TOPIC_FRESHNESS_TITLE_CA_V2.md. 29편이 열린 서비스를 "열리기 전"으로 썼다.
+V2_FROM = 30
+FRESH_HOURS = 24
+TITLE_SOFT = (25, 40)               # 명세 7.5 권장 범위. 표시 환경마다 달라 탈락시키지 않고 경고만 한다
+INTENTS = ("definition", "how_to", "calculation", "decision", "comparison", "warning_correction", "event_opening", "experience_review")
+TIME_ROW_RE = re.compile(r'개통|기간|마감|기한|신청일|지급일|일정|시행')
+PRESS_SOURCE_RE = re.compile(r'기사|보도|블로그|이코노미|뉴스|일보|신문|티스토리')
+RELATIVE_RE = re.compile(r'아직|곧 |내일부터|작년|지난해|어제|이번 주')
+YEAR_MIX_RE = re.compile(r'(20\d\d)년 귀속[^.\n]{0,30}\1년 (?:1월|초)')
 UNOPENED_RE = re.compile(r'아직.{0,12}(개통|발표|공지|공고)|(개통|발표|공지|공고)\S* ?(소식을 )?확인하지 못')
 
 
 def title_skeleton(title: str) -> str:
     """제목 뼈대 — 키워드가 놓이는 `|` 앞을 지우고 숫자를 N으로. `확인할 5가지`류 꼬리가 반복되는지 본다."""
-    tail = title.split('|', 1)[-1]
+    tail = re.split(r'[|｜:]', title, maxsplit=1)[-1]
     tail = re.sub(r'\d+(?:[.,]\d+)*', 'N', tail)
     return re.sub(r'.*[?？]\s*', '?', tail).strip()      # 질문 뒤 꼬리가 반복의 정체다
 
@@ -401,14 +416,14 @@ def card_numbers(body: str) -> dict:
     return out
 
 
-def quality_issues(md: str, body: str, text: str, tags: list) -> list:
+def quality_issues(md: str, body: str, text: str, tags: list, v2: bool = False) -> list:
     """27편부터의 품질 규칙. body: 플레이스홀더가 남은 본문, text: 플레이스홀더를 뺀 본문. → 문제 설명 목록"""
     issues = []
     title = re.search(r'^제목: (.+)$', md, re.M).group(1).strip()
     blocks = [x.strip() for x in re.split(r'\n\s*\n', body) if x.strip()]
 
     issues += [f'제목 꼬리 금지: {s}' for s in BANNED_SUFFIX if s in title]
-    if not SITUATION_RE.search(title):
+    if not v2 and not SITUATION_RE.search(title):      # 30편부터는 title_gate가 본다. `10월 28일 오픈`처럼 조건어 없는 일정형 제목이 있다
         issues.append('제목에 구체 상황(받는·사는·넘으면·했을 때 등)이 없다')
 
     tables = sum(is_table(b) for b in blocks)
@@ -477,6 +492,54 @@ def quality_issues(md: str, body: str, text: str, tags: list) -> list:
         if nums - _nums(text):
             issues.append(f'카드에만 있는 숫자({name}): {", ".join(sorted(nums - _nums(text)))} — 본문에도 쓴다')
     return issues
+
+
+def freshness_time(md: str):
+    """`- 최신성 재확인: YYYY-MM-DD HH:MM | 검색어 | 출처` → datetime. 세 칸이 다 없으면 None."""
+    import datetime
+    parts = [x.strip() for x in (memo_value(md, '최신성 재확인') or '').split('|')]
+    if len(parts) < 3 or not all(parts):
+        return None
+    try:
+        return datetime.datetime.strptime(parts[0], '%Y-%m-%d %H:%M')
+    except ValueError:
+        return None
+
+
+def unit_nums(s: str) -> set:
+    return {(m.group(1), m.group(2).replace(' ', '')) for m in UNIT_NUM.finditer(s)
+            if not (m.group(2) == '년' and re.fullmatch(r'20\d\d', m.group(1)))}
+
+
+def v2_issues(md: str, body: str, text: str) -> tuple:
+    """30편부터의 최신성·제목 규칙. → (실패 목록, 경고 목록)"""
+    issues, warns = [], []
+    title = re.search(r'^제목: (.+)$', md, re.M).group(1).strip()
+
+    # 날짜·기간은 1차 기관 근거 — 기사·블로그는 변경 사실을 찾는 데만 쓴다(명세 6.1)
+    for r in facts(md):
+        if r[4] == 'VERIFIED' and TIME_ROW_RE.search(r[0] + r[1]) and PRESS_SOURCE_RE.search(r[2]):
+            issues.append(f'BLOCKED_NEEDS_REVIEW — 일정 근거가 기사·블로그뿐이다: {r[0]} ({r[2][:24]})')
+    if freshness_time(md) is None:
+        issues.append('작성 메모 `- 최신성 재확인: YYYY-MM-DD HH:MM | 검색어 | 출처`가 없다')
+
+    # 제목의 숫자·단위는 본문에 그대로 있어야 한다 (2년과 2개월 충돌)
+    for n, u in sorted(unit_nums(title) - unit_nums(text)):
+        issues.append(f'BLOCKED_NEEDS_REVIEW — 제목의 {n}{u}이(가) 본문에 없다')
+    if m := YEAR_MIX_RE.search(text):
+        issues.append(f'귀속연도와 신고연도가 섞였다: {m.group(0)[:30]}')
+
+    intent = memo_value(md, '검색 의도')
+    if intent not in INTENTS:
+        issues.append(f'작성 메모 `- 검색 의도:`가 {" · ".join(INTENTS)} 중 하나가 아니다')
+    if len([x for x in (memo_value(md, '보조 의도') or '').split('|') if x.strip()]) > 2:
+        issues.append('보조 의도는 2개까지다')
+
+    if not TITLE_SOFT[0] <= len(title) <= TITLE_SOFT[1]:
+        warns.append(f'제목 {len(title)}자 (권장 {TITLE_SOFT[0]}~{TITLE_SOFT[1]}자, 핵심은 앞 30자)')
+    warns += [f'상대 표현 — 발행일에 다시 볼 것: {ln.strip()[:40]}'
+              for ln in text.split('\n') if RELATIVE_RE.search(ln) and not ln.startswith('|')]
+    return issues, warns
 
 
 def title_repeat(titles: dict) -> list:
@@ -624,6 +687,8 @@ def measure(path, tistory, volumes=None, bench=frozenset()):
         "template": bool(num) and int(num.group()) >= TEMPLATE_FROM,
         "quality": bool(num) and int(num.group()) >= QUALITY_FROM,
         "skeleton": section_skeleton(b),
+        "v2": bool(num) and int(num.group()) >= V2_FROM,
+        "warn": [],
         "thumb_type": memo_value(n, '썸네일 유형'),
         "composition": memo_value(n, '썸네일 구도'),
     }
@@ -632,9 +697,12 @@ def measure(path, tistory, volumes=None, bench=frozenset()):
         r["format"] = format_issues(r["chars"], len(numbered) if r["quality"] else 5, r["images"], tables, r["thumb"],
                                     LENGTH_TEMPLATE)
         r["format"] += heading_issues(numbered)
-        r["format"] += template_issues(n, b, c, target_keyword(n), r["quality"])
+        r["format"] += template_issues(n, b, c, target_keyword(n), r["quality"], r["v2"])
         if r["quality"]:
-            r["format"] += quality_issues(n, b, c, tags)
+            r["format"] += quality_issues(n, b, c, tags, r["v2"])
+        if r["v2"]:
+            fails_, r["warn"] = v2_issues(n, b, c)
+            r["format"] += fails_
         if int(num.group()) >= COMPOSITION_FROM and r["thumb_type"] == "scene" and r["composition"] not in COMPOSITIONS:
             r["format"].append(f'작성 메모 `- 썸네일 구도:`가 목록에 없다 — {" · ".join(COMPOSITIONS)}')
     elif r["new_format"]:
@@ -955,6 +1023,35 @@ def selftest():
     assert title_repeat({"20": t5, "21": t5, "22": "a", "23": "b", "24": "c", "25": "d", "26": "e", "27": t5}) == []
     assert section_repeat({"26": ["#", "#"], "27": ["#", "#"]}) == [27]
     assert section_repeat({"25": ["#"], "26": ["#"], "27": ["#", "*"]}) == []          # 26편 이전은 판정하지 않는다
+    # 30편부터의 최신성·제목 — 29편 실제 사고를 고정한다
+    vdoc = qdoc.replace("제목: 2026 국민연금 일찍 받는 사람 | 5년 당기면 얼마나", "제목: 2026 국민연금 일찍 받는 사람｜당기면 얼마나").replace(
+        "- 고유 근거:", "- 검색 의도: decision\n- 최신성 재확인: 2026-10-31 14:00 | 국민연금 조기수령 2026 | https://www.nps.or.kr/a\n- 고유 근거:")
+
+    def vissues(src):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "30_t.md")
+            open(path, "w", encoding="utf-8").write(src)
+            n_, b_, c_, tg = parts(path)
+            return v2_issues(n_, b_, c_)[0] + template_issues(n_, b_, c_, target_keyword(n_), True, True) + quality_issues(n_, b_, c_, tg, True)
+
+    assert vissues(vdoc) == [], vissues(vdoc)
+    assert any("권장" in w for w in v2_issues(vdoc.replace("당기면 얼마나 깎일까? 63세 기준으로 계산", "63세 기준으로 계산하면 조기수령이 얼마나 줄어드는지 비교합니다"), "", "")[1])     # 길이는 경고
+    assert not any("구체 상황" in i for i in vissues(vdoc.replace("일찍 받는 사람", "조기수령")))                 # 조건어 강제 해제
+
+    def vfails(old, new, word):
+        assert old in vdoc, old
+        got = vissues(vdoc.replace(old, new, 1))
+        assert any(word in i for i in got), (word, got)
+    vfails("사람｜", "사람 | ", "구분자")
+    vfails("- 최신성 재확인: 2026-10-31 14:00 | 국민연금 조기수령 2026 | https://www.nps.or.kr/a\n", "", "최신성 재확인")
+    vfails("| 국민연금 조기수령 2026 | https://www.nps.or.kr/a", "| 검색어만", "최신성 재확인")
+    vfails("- 검색 의도: decision", "- 검색 의도: 기타", "검색 의도")
+    vfails("- 검색 의도: decision", "- 검색 의도: decision\n- 보조 의도: how_to | comparison | definition", "보조 의도")
+    vfails("| 수령나이 | 63세 | 국민연금법 |", "| 신청 기간 | 63세 | 더데일리이코노미 기사 |", "일정 근거가 기사")    # 29편의 기간 근거
+    vfails("63세 기준으로 계산", "63세 기준 7년 계산", "제목의 7년")                                                # 2년/2개월 충돌
+    vfails("조건이 있습니다.", "2026년 귀속은 2026년 1월에 정산합니다.", "귀속연도")
+    assert freshness_time("- 최신성 재확인: 2026-10-31 14:00 | q | s\n").hour == 14 and freshness_time("없음") is None
+    assert title_skeleton("2026 A｜무엇? 확인할 5가지") == "?확인할 N가지" == title_skeleton("2026 A: 무엇? 확인할 3가지")
     print("selftest ok")
 
 
@@ -1016,6 +1113,8 @@ def main():
             print('         옛 명칭:', t)
         if r["geo_required"] and len(r["geo"]) < MIN_GEO_QUERIES:
             print(f'         GEO: 작성 메모에 `- GEO 질의: a | b` 줄이 없거나 {MIN_GEO_QUERIES}개 미만이다')
+        for t in r["warn"]:
+            print('         경고:', t)
         for t in r["format"]:
             print('         형식:', t)
         if r["judged"]:

@@ -1,0 +1,24 @@
+thumbnail_id: "TH-20261031-30"
+status: "OK"
+seo_title: "2026 IRP 세액공제 계산｜연금저축과 나눠 납입하는 방법"
+template_type: "calculation"
+main_copy: "600 + 300만원"
+sub_copy: "연금저축 + IRP"
+bottom_badge: "세액공제 합산 900만원"
+copy_candidates: "600 + 300만원 | 최대 148.5만원 | 148.5만 vs 118.8만 | 합산 900만원 | 800만원 넣으면 132만원"
+verified_number: "900, 600, 300"
+verified_rows: "연금저축 한도 / 합산 한도 / 기본 조합 / 가상 사례 배분 1"
+verified_source_url: "https://call.nts.go.kr/call/qna/selectQnaInfo.do?ctgId=CTG11905&mi=1318"
+verified_at: "2026-10-31 23:41"
+category: "pension"
+color_code: "pension_green"
+human_required: false
+mascot_asset: "face.png"
+mascot_pose: "face"
+mascot_area_ratio: 0.093
+mascot_position: "lower_right_safe"
+platform_badge_safe_zone: true
+mobile_preview_passed: true
+fact_check_passed: true
+output_original: "30_썸네일.png"
+output_mobile_preview: "30_썸네일_216.png"

@@ -8,7 +8,7 @@
   "reader_problem": "연말에 IRP와 연금저축에 얼마를 어떻게 넣어야 세액공제를 다 받는지 계산하고 싶다",
   "verified_facts": [
     "연금저축 연 600만원, 합산 연 900만원",
-    "총급여 5,500만원 이하 15%, 초과 12%",
+    "소득세 15%·12%, 지방소득세 포함 16.5%·13.2%",
     "해지 시 기타소득 16.5%"
   ],
   "unique_value": [
@@ -40,12 +40,20 @@
   "publication_date": "2026-11-05",
   "candidates": [
     {
-      "title": "2026 IRP 세액공제 계산｜같은 납입액도 135만원·120만원 갈리는 이유",
+      "title": "2026 IRP 세액공제 계산｜연금저축과 나눠 납입하는 방법",
       "intent": 25,
-      "clarity": 13,
+      "clarity": 14,
+      "specificity": 11,
+      "differentiation": 8,
+      "why": "글의 핵심인 배분과 맞고 틀릴 숫자를 약속하지 않는다"
+    },
+    {
+      "title": "2026 IRP 세액공제 계산｜900만원 채우면 148.5만원·118.8만원",
+      "intent": 22,
+      "clarity": 14,
       "specificity": 15,
-      "differentiation": 9,
-      "why": "계산 의도와 맞고 본문 3번 표의 값을 그대로 약속한다"
+      "differentiation": 3,
+      "why": "상위 글과 같은 약속이다"
     },
     {
       "title": "2026 IRP 세액공제 계산｜연금저축 600만원 넘기면 생기는 일",
@@ -53,23 +61,15 @@
       "clarity": 12,
       "specificity": 13,
       "differentiation": 8,
-      "why": "한도 하나에만 초점이라 계산 의도가 약하다"
+      "why": "한도 하나에만 초점이다"
     },
     {
-      "title": "2026 IRP 세액공제 계산｜900만원 채우면 135만원, 해지하면 148.5만원",
-      "intent": 22,
+      "title": "2026 IRP 세액공제 계산｜같은 1,000만원도 148.5만원·132만원",
+      "intent": 23,
       "clarity": 12,
       "specificity": 15,
       "differentiation": 9,
-      "why": "숫자가 많고 해지가 앞에 나와 의도가 흐려진다"
-    },
-    {
-      "title": "IRP 세액공제 계산 방법｜총급여 5,500만원 기준 15%와 12%",
-      "intent": 20,
-      "clarity": 12,
-      "specificity": 12,
-      "differentiation": 4,
-      "why": "상위 글과 같은 정보라 차별점이 약하다"
+      "why": "가상 사례 값이 일반 금액처럼 읽힌다"
     },
     {
       "title": "연말 IRP 얼마 넣을까｜연금저축과 나누는 세액공제 계산",
@@ -77,7 +77,7 @@
       "clarity": 13,
       "specificity": 9,
       "differentiation": 7,
-      "why": "상황은 좋지만 구체 숫자가 없다"
+      "why": "구체 숫자가 없다"
     },
     {
       "title": "연금저축 vs IRP 세액공제｜1,000만원 넣으면 어디가 먼저일까",
@@ -85,7 +85,7 @@
       "clarity": 12,
       "specificity": 11,
       "differentiation": 7,
-      "why": "비교형이라 계산 의도와 조금 다르다"
+      "why": "비교형이라 계산 의도와 다르다"
     },
     {
       "title": "2026 IRP 세액공제 한도｜연금저축 600만원·합산 900만원 구조",
@@ -93,7 +93,7 @@
       "clarity": 12,
       "specificity": 12,
       "differentiation": 3,
-      "why": "한도 설명형이라 계산 의도가 아니다"
+      "why": "한도 설명형이다"
     },
     {
       "title": "2026 연말정산 IRP 계산｜납입액 나누는 법과 공제액 비교",
@@ -102,28 +102,12 @@
       "specificity": 8,
       "differentiation": 7,
       "why": "구체성이 낮다"
-    },
-    {
-      "title": "IRP 해지하면 공제보다 더 낼까｜900만원 공제와 16.5% 계산",
-      "intent": 12,
-      "clarity": 12,
-      "specificity": 13,
-      "differentiation": 9,
-      "why": "해지 의도라 이 글의 중심이 아니다"
-    },
-    {
-      "title": "2026 IRP 세액공제 계산｜총급여 5,000만원 1,000만원 납입 예",
-      "intent": 22,
-      "clarity": 10,
-      "specificity": 13,
-      "differentiation": 6,
-      "why": "가상 사례 값이 제목에 나오면 내 사례처럼 읽힌다"
     }
   ],
   "results": [
     {
-      "title": "2026 IRP 세액공제 계산｜같은 납입액도 135만원·120만원 갈리는 이유",
-      "score": 95,
+      "title": "2026 IRP 세액공제 계산｜연금저축과 나눠 납입하는 방법",
+      "score": 93,
       "status": "FINAL",
       "reasons": []
     },
@@ -134,8 +118,8 @@
       "reasons": []
     },
     {
-      "title": "2026 IRP 세액공제 계산｜900만원 채우면 135만원, 해지하면 148.5만원",
-      "score": 89,
+      "title": "2026 IRP 세액공제 계산｜같은 1,000만원도 148.5만원·132만원",
+      "score": 90,
       "status": "FINAL",
       "reasons": [
         "숫자가 핵심 기준 2개를 넘는다"
@@ -148,15 +132,9 @@
       "reasons": []
     },
     {
-      "title": "2026 IRP 세액공제 계산｜총급여 5,000만원 1,000만원 납입 예",
-      "score": 84,
-      "status": "REWORK",
-      "reasons": []
-    },
-    {
-      "title": "IRP 세액공제 계산 방법｜총급여 5,500만원 기준 15%와 12%",
-      "score": 81,
-      "status": "REWORK",
+      "title": "2026 IRP 세액공제 계산｜900만원 채우면 148.5만원·118.8만원",
+      "score": 85,
+      "status": "FINAL",
       "reasons": [
         "숫자가 핵심 기준 2개를 넘는다"
       ]
@@ -174,28 +152,22 @@
       "reasons": []
     },
     {
-      "title": "IRP 해지하면 공제보다 더 낼까｜900만원 공제와 16.5% 계산",
-      "score": 76,
-      "status": "REWORK",
-      "reasons": []
-    },
-    {
       "title": "2026 IRP 세액공제 한도｜연금저축 600만원·합산 900만원 구조",
       "score": 73,
       "status": "DISCARD",
       "reasons": []
     }
   ],
-  "selected_title": "2026 IRP 세액공제 계산｜같은 납입액도 135만원·120만원 갈리는 이유",
-  "score": 95,
+  "selected_title": "2026 IRP 세액공제 계산｜연금저축과 나눠 납입하는 방법",
+  "score": 93,
   "alternatives": [
     {
       "title": "2026 IRP 세액공제 계산｜연금저축 600만원 넘기면 생기는 일",
       "score": 90
     },
     {
-      "title": "2026 IRP 세액공제 계산｜900만원 채우면 135만원, 해지하면 148.5만원",
-      "score": 89
+      "title": "2026 IRP 세액공제 계산｜같은 1,000만원도 148.5만원·132만원",
+      "score": 90
     }
   ],
   "rejected": [
@@ -205,5 +177,5 @@
       "detail": []
     }
   ],
-  "verified_at": "2026-10-31T23:22"
+  "verified_at": "2026-10-31T23:41"
 }

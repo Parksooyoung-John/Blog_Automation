@@ -506,6 +506,19 @@ def freshness_time(md: str):
         return None
 
 
+def title_gate_issue(path: str, title: str) -> list:
+    """원고 제목이 title_gate가 고른 제목과 같아야 한다. 판정 결과 파일은 `_titles/NN.json`."""
+    import json
+    name = os.path.basename(path)[:2]
+    gate = os.path.join(os.path.dirname(path), '_titles', f'{name}.json')
+    if not os.path.exists(gate):
+        return [f'제목 게이트 결과가 없다: _titles/{name}.json — `title_gate.py {name}`']
+    selected = json.load(open(gate, encoding='utf-8')).get('selected_title', '')
+    if selected != title:
+        return [f'원고 제목이 게이트 선정 제목과 다르다: {selected or "선정 없음"}']
+    return []
+
+
 def unit_nums(s: str) -> set:
     return {(m.group(1), m.group(2).replace(' ', '')) for m in UNIT_NUM.finditer(s)
             if not (m.group(2) == '년' and re.fullmatch(r'20\d\d', m.group(1)))}
@@ -702,7 +715,7 @@ def measure(path, tistory, volumes=None, bench=frozenset()):
             r["format"] += quality_issues(n, b, c, tags, r["v2"])
         if r["v2"]:
             fails_, r["warn"] = v2_issues(n, b, c)
-            r["format"] += fails_
+            r["format"] += fails_ + title_gate_issue(path, r["title"].strip())
         if int(num.group()) >= COMPOSITION_FROM and r["thumb_type"] == "scene" and r["composition"] not in COMPOSITIONS:
             r["format"].append(f'작성 메모 `- 썸네일 구도:`가 목록에 없다 — {" · ".join(COMPOSITIONS)}')
     elif r["new_format"]:
@@ -1050,6 +1063,12 @@ def selftest():
     vfails("| 수령나이 | 63세 | 국민연금법 |", "| 신청 기간 | 63세 | 더데일리이코노미 기사 |", "일정 근거가 기사")    # 29편의 기간 근거
     vfails("63세 기준으로 계산", "63세 기준 7년 계산", "제목의 7년")                                                # 2년/2개월 충돌
     vfails("조건이 있습니다.", "2026년 귀속은 2026년 1월에 정산합니다.", "귀속연도")
+    with tempfile.TemporaryDirectory() as d:
+        p_ = os.path.join(d, "30_t.md")
+        assert any("결과가 없다" in i for i in title_gate_issue(p_, "제목"))
+        os.makedirs(os.path.join(d, "_titles"))
+        open(os.path.join(d, "_titles", "30.json"), "w", encoding="utf-8").write('{"selected_title": "제목"}')
+        assert title_gate_issue(p_, "제목") == [] and any("다르다" in i for i in title_gate_issue(p_, "다른 제목"))
     assert freshness_time("- 최신성 재확인: 2026-10-31 14:00 | q | s\n").hour == 14 and freshness_time("없음") is None
     assert title_skeleton("2026 A｜무엇? 확인할 5가지") == "?확인할 N가지" == title_skeleton("2026 A: 무엇? 확인할 3가지")
     print("selftest ok")

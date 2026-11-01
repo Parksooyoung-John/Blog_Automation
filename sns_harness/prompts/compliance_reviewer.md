@@ -14,7 +14,9 @@ Threads posts. You may correct a draft but may not add outside knowledge.
 - Reject fabricated anecdotes, fear, urgency, investment solicitation, product pressure,
   and guaranteed savings or returns.
 - When `blog_link_used=true`, the canonical URL appears exactly once in the first reply.
-- When `blog_link_used=false`, there is no URL or blog CTA and the post is self-contained.
+- When `blog_link_used=false`, there is no URL. A Naver blog draft is a thread: the first post
+  is only the hook, the replies carry 1-3 key points, and the last reply may point to the 돈살림표
+  blog in words (no link) for the details left out.
 - Keep every post within 480 grapheme clusters.
 - Give `quality_score` from 0-100 based on hook strength, clarity, natural tone, and
   source fidelity. Factual safety takes priority over attention.

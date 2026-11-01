@@ -91,6 +91,31 @@ class HookType(StrEnum):
     EMPATHY = "경험/공감"
 
 
+# Stored separately from the legacy Hook유형 so performance analysis keeps one stable vocabulary.
+HOOK_TYPE_LABELS = {
+    HookType.NUMBER: "숫자형",
+    HookType.MISTAKE: "실수방지형",
+    HookType.COMPARISON: "비교형",
+    HookType.EMPATHY: "공감형",
+    HookType.QUESTION: "질문형",
+    HookType.CURIOSITY: "질문형",
+}
+
+
+class CandidateType(StrEnum):
+    INFO = "정보형"
+    INFO_EMPATHY = "정보+공감형"
+    QUESTION = "질문형"
+    BLOG_CONVERSION = "블로그전환형"
+
+
+class ApprovalStatus(StrEnum):
+    PENDING = "검토대기"
+    APPROVED = "승인"
+    REVISE = "수정필요"
+    EXCLUDED = "제외"
+
+
 class OfficialSource(BaseModel):
     claim: str = Field(min_length=1, max_length=500)
     url: str = Field(min_length=1, max_length=2000)
@@ -201,6 +226,11 @@ class SourcePost(BaseModel):
         return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+def candidate_key(source_key: str, variant: int) -> str:
+    """Queue key of the Nth candidate of one source; the first keeps the plain source key."""
+    return source_key if variant == 0 else f"{source_key}#{variant + 1}"
+
+
 def grapheme_len(value: str) -> int:
     return len(regex.findall(r"\X", value))
 
@@ -223,6 +253,9 @@ class ThreadsDraft(BaseModel):
     hook_type: HookType | None = None
     hook_text: str = Field(default="", max_length=80)
     blog_link_used: bool = True
+    candidate_type: CandidateType | None = None
+    # One-sentence core claim; the pair selector compares it to keep the two drafts distinct.
+    core_claim: str = Field(default="", max_length=200)
     # "card" only when a table, number comparison or procedure reads better as an image.
     visual: Literal["text", "card"] = "text"
     # Guide rubric 0-10 (money impact 3, number 2, mistake 2, comparison 2, question 1); None = unscored.
@@ -258,17 +291,22 @@ class ThreadsDraft(BaseModel):
         return self
 
 
+BLOG_CANDIDATE_COUNT = 5
+
+
 class BlogDraftCandidates(BaseModel):
-    candidates: list[ThreadsDraft] = Field(min_length=3, max_length=3)
+    candidates: list[ThreadsDraft] = Field(
+        min_length=BLOG_CANDIDATE_COUNT, max_length=BLOG_CANDIDATE_COUNT
+    )
 
     @model_validator(mode="after")
     def validate_distinct_hooks(self) -> BlogDraftCandidates:
         types = [candidate.hook_type for candidate in self.candidates]
         texts = [candidate.hook_text for candidate in self.candidates]
-        if None in types or len(set(types)) != 3:
-            raise ValueError("blog candidates require three distinct hook types")
-        if len(set(texts)) != 3:
-            raise ValueError("blog candidates require three distinct hook texts")
+        if None in types or len(set(types)) != BLOG_CANDIDATE_COUNT:
+            raise ValueError("blog candidates require five distinct hook types")
+        if len(set(texts)) != BLOG_CANDIDATE_COUNT:
+            raise ValueError("blog candidates require five distinct hook texts")
         return self
 
 
@@ -378,6 +416,9 @@ class QueueItem(BaseModel):
     topic: str = ""
     hook_type: HookType | None = None
     blog_link_used: bool = False
+    candidate_type: str = ""
+    # None = legacy/manual item with no review gate; blog candidates start at 검토대기.
+    approval_status: ApprovalStatus | None = None
     thumbnail_number: int | None = None
     thumbnail_file: str = ""
     thumbnail_url: str = ""
@@ -424,6 +465,10 @@ class QueueItem(BaseModel):
             )
         )
 
+    @property
+    def is_publishable(self) -> bool:
+        return self.approval_status in (None, ApprovalStatus.APPROVED)
+
     def to_product_offer(self) -> ProductOffer | None:
         if not self.has_product_input:
             return None
@@ -461,7 +506,6 @@ SALES_BLOCKED_PHRASES = (
     "효능",
 )
 HOOK_BLOCKED_PHRASES = ("모르면 손해", "무조건", "반드시", "지금 당장")
-BLOG_CTA_PHRASES = ("프로필 블로그", "블로그에 정리", "자세한 내용은 블로그")
 GENERIC_TITLE_WORDS = {
     "기준", "계산", "방법", "순서", "이유", "조건", "신청", "조회", "정리"
 }
@@ -474,6 +518,9 @@ def _topic_words(title: str) -> set[str]:
         if len(word) >= 3 and word not in GENERIC_TITLE_WORDS:
             words.add(word.lower())
     return words
+
+
+FIRST_PERSON_RE = re.compile(r"저는|제가|나는|내가|저도|우리 (?:집|회사|부부)")
 
 
 def _validate_naver_hook(draft: ThreadsDraft, source: SourcePost) -> list[str]:
@@ -507,8 +554,12 @@ def _validate_naver_hook(draft: ThreadsDraft, source: SourcePost) -> list[str]:
         marker in hook for marker in ("놓치", "실수", "헷갈", "착각", "잘못", "그냥")
     ):
         issues.append("mistake hook must identify a likely mistake or confusion")
-    if draft.hook_type is HookType.EMPATHY:
-        issues.append("blog drafts cannot fabricate experience or empathy hooks")
+    if draft.hook_type is HookType.EMPATHY and FIRST_PERSON_RE.search(draft.posts[0]):
+        issues.append("empathy hook must not claim a first-person experience")
+    if draft.candidate_type is not None:
+        is_conversion = draft.candidate_type is CandidateType.BLOG_CONVERSION
+        if draft.blog_link_used != is_conversion:
+            issues.append("only 블로그전환형 candidates carry the blog link")
     return issues
 
 
@@ -555,8 +606,8 @@ def validate_draft_against_source(
     elif not draft.blog_link_used:
         if source.url in combined or links:
             issues.append("link-free blog draft must not contain URLs")
-        if any(phrase in combined for phrase in BLOG_CTA_PHRASES):
-            issues.append("link-free blog draft must not contain a blog CTA")
+        if source.source is SourceKind.NAVER and draft.format is not PostFormat.THREAD:
+            issues.append("link-free blog draft must be a hook post plus key-point replies")
     elif draft.format is PostFormat.SINGLE:
         if source.url not in draft.posts[0] or links.count(source.url) != 1:
             issues.append("single post must include the canonical source URL once")

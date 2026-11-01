@@ -7,7 +7,7 @@
     python -X utf8 pipeline.py links NN                # 내부링크 후보·넣을 문단·기존 글 수정 후보·후속 글
     python -X utf8 pipeline.py sync                    # 라이브 목록에서 logNo·발행일 채우기
     python -X utf8 pipeline.py linkcheck               # 발행 글의 내부 링크가 살아 있는 글을 가리키는지
-    python -X utf8 pipeline.py perf                    # 24h·7d·30d 점검 대상
+    python -X utf8 pipeline.py perf                    # 24h·7d·28d·30d 점검 대상
     python -X utf8 pipeline.py perf add NN 24h views=9 search_in=1 search_kw=키워드 ...
     python -X utf8 pipeline.py --selftest
 
@@ -28,7 +28,8 @@ LEDGER_COLS = ["post", "status", "cluster", "role", "portfolio", "primary_kw", "
 CAND_COLS = ["id", "cluster", "order", "role", "keyword", "intent", "volume", "serp_fresh", "geo_cited",
              "official", "diff", "season", "score", "decision", "status", "post"]
 PERF_COLS = ["post", "checkpoint", "date", "views", "visitors", "search_in", "search_kw", "home_in", "avg_time",
-             "likes", "comments", "link_clicks", "threads_in", "flag", "grade"]
+             "likes", "comments", "link_clicks", "threads_in", "flag", "grade",
+             "thumb_changed_at", "title_changed", "impressions", "ctr"]     # 대표사진 효과 기록. 노출수가 없으면 클릭률을 쓰지 않는다
 
 # 순서 있는 본선. SCHEDULED는 예약발행을 쓸 때만 거친다.
 FLOW = ["IDEA", "RESEARCHING", "DRAFT", "SEO_REVIEW", "HUMAN_REVIEW", "APPROVED", "SCHEDULED", "PUBLISHED"]
@@ -63,7 +64,7 @@ SCOPE = re.compile(r"연말정산|세액공제|소득공제|세금|연금|노후
 FAMILY_MONEY = re.compile(r"부모|자녀|배우자|맞벌이|가족|직장인|월급|급여|연봉|퇴사|이직|생활비|공제|환급|지원|수당|보험료|월세|연말정산")
 OFF_TOPIC = re.compile(r"드라마|예능|연예|아이돌|가수|배우 |스포츠|축구|야구|결말|사건|사고|맛집|여행|게임")
 ACCEPT_AT, HOLD_AT = 75, 60
-CHECKPOINTS = {"24h": 1, "7d": 7, "30d": 30}
+CHECKPOINTS = {"24h": 1, "7d": 7, "28d": 28, "30d": 30}
 GRACE_DAYS = 3
 BOILER_MIN = 5             # 같은 문단이 이만큼 글에 그대로 있으면 템플릿 고정 문구로 본다(복사한 문단이 면제되지 않게 크게 잡는다)
 SIM_TITLE, SIM_BODY, SIM_Q = 0.70, 0.60, 0.70
@@ -652,7 +653,7 @@ def cmd_perf(args, today=None):
     if args[:1] == ["add"]:
         nn, cp = int(args[1]), args[2]
         if cp not in CHECKPOINTS:
-            raise SystemExit("체크포인트는 24h·7d·30d")
+            raise SystemExit(f"체크포인트는 {'·'.join(CHECKPOINTS)}")
         rec = {c: "" for c in PERF_COLS}
         rec.update(post=f"{nn:02d}", checkpoint=cp, date=today.isoformat())
         for kv in args[3:]:
@@ -660,6 +661,8 @@ def cmd_perf(args, today=None):
             if k not in PERF_COLS:
                 raise SystemExit(f"알 수 없는 지표: {k}")
             rec[k] = v
+        if rec["ctr"] and not rec["impressions"]:
+            raise SystemExit("노출수 없이 클릭률을 기록하지 않는다 (추정 금지)")
         same = [to_int(r["views"]) for r in rows if r["checkpoint"] == cp and r["views"]]
         rec["grade"] = grade(rec, sum(same) / len(same) if same else 0)
         rows = [r for r in rows if not (r["post"] == rec["post"] and r["checkpoint"] == cp)] + [rec]
@@ -801,6 +804,8 @@ def selftest():
     assert grade({**base, "home_in": "3"}, 10) == "C" and grade(base, 10) == "D"
     assert grade({**base, "flag": "중복위험", "search_in": "5"}, 10) == "E"
     assert due_checkpoints("2026-10-01", {"24h"}, datetime.date(2026, 10, 9)) == ["7d"]
+    assert "28d" in due_checkpoints("2026-10-01", {"24h", "7d"}, datetime.date(2026, 10, 29)), "대표사진 효과는 7일·28일로 본다"
+    assert {"thumb_changed_at", "title_changed", "impressions", "ctr"} <= set(PERF_COLS)
     assert due_checkpoints("2026-10-01", set(), datetime.date(2026, 10, 20)) == []
 
     # 링크 점검 — 목록에 없는 logNo로 가는 링크만 잡는다

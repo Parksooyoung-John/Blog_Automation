@@ -1,0 +1,86 @@
+{
+  "face": {
+    "hash": "00dd5e75d48f5db96926b998e1274880df962b7731db353fd55baa862bc2ace9",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "point_left": {
+    "hash": "e5db30bbb6af0d913128e9c00aef28436421de16d101eccf0c02c5173f76927d",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "point_up": {
+    "hash": "429f693af982625ac7f8448a683449ee7bd18b8fd042c0cd950ceab433ef1991",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "calculator": {
+    "hash": "c0376db60c43522bc073709bb12f2a47769954e97a847301229ebafd6c28f8aa",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "document": {
+    "hash": "ec40b9392d3d442f8362fe037d1b93a59839d8c1caddd4266961a34477e91535",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "phone": {
+    "hash": "e63e2d94b033dc544fb9a3b145f7ff06cf201c8d0c11d971a379b897539c6a93",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "laptop": {
+    "hash": "42c08014fd088a84a41f2aaa2f3f49ab9ee8dd7882c0d7efba3709b19adec199",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "thinking": {
+    "hash": "563945f49512056d6c204b67d5e46f0065c1e21977f339d06d6d9e1c09f5585e",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "surprised": {
+    "hash": "3ca0a02335bff0ea8f1f9c4dfd9fce792c6659b2af6edc44b071a8b6a40855a5",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "check": {
+    "hash": "7c25a4f8fbc9d2b60412dee86260830834edff47d5d74c759f2d8737a993de9b",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "coin": {
+    "hash": "50812b66520f820f3e0bfdab832b3abcd8c141ae7f536f0fae44f181ff24e934",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "family": {
+    "hash": "df1b9c00b8245c9d9dc5faa72f21fb627a1f0b5c6e783d5e7e9e9873e9671aa5",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "bust_calculator": {
+    "hash": "3388498d12f92b19fff18d7dd01b6e2fe443088accb40edf941986199397a6da",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  },
+  "prop_coins": {
+    "hash": "992ba2c201038a087b4223c4cfc7334e8619342d1208ba536cc28fa708fa492c",
+    "version": 1,
+    "approved_at": "2026-11-01",
+    "status": "approved"
+  }
+}

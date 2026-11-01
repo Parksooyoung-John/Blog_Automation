@@ -1,24 +1,42 @@
-thumbnail_id: "TH-20261031-30"
+thumbnail_id: "TH-20261101-30"
 status: "OK"
 seo_title: "2026 IRP 세액공제 계산｜연금저축과 나눠 납입하는 방법"
-template_type: "calculation"
-main_copy: "600 + 300만원"
-sub_copy: "연금저축 + IRP"
-bottom_badge: "세액공제 합산 900만원"
-copy_candidates: "600 + 300만원 | 최대 148.5만원 | 148.5만 vs 118.8만 | 합산 900만원 | 800만원 넣으면 132만원"
-verified_number: "900, 600, 300"
+template_type: "comparison"
+main_copy: "연금저축 600, / IRP 300?"
+sub_copy: "꼭 이렇게 나눠야 할까"
+bottom_badge: "900만원 한도, 나누는 법 정리"
+copy_candidates: ["연금저축 600, IRP 300?", "600 + 300만원", "148.5만 vs 118.8만"]
+selection_reason: "본문이 제시한 기본 조합을 질문으로 던져 나누는 법 계산을 읽게 한다. 최대 금액은 구간 조건을 대표사진에서 읽기 어려워 뺐다"
+verified_number: "900, 300, 600"
 verified_rows: "연금저축 한도 / 합산 한도 / 기본 조합 / 가상 사례 배분 1"
 verified_source_url: "https://call.nts.go.kr/call/qna/selectQnaInfo.do?ctgId=CTG11905&mi=1318"
 verified_at: "2026-10-31 23:41"
 category: "pension"
 color_code: "pension_green"
-human_required: false
-mascot_asset: "face.png"
-mascot_pose: "face"
-mascot_area_ratio: 0.093
+mascot_asset: "pig_bust_calculator.png"
+mascot_pose: "calculator"
+mascot_pose_reason: "주제 tax_calculation"
+renderer: "code"
+template_id: "compare"
+card_copy: "연금저축 | 600만원 | IRP | 300만원 | +"
+mascot_area_ratio: 0.135
 mascot_position: "lower_right_safe"
-platform_badge_safe_zone: true
-mobile_preview_passed: true
-fact_check_passed: true
+ai_mark_safe_zone_clear: true
+auto_qc_passed: true
+auto_fact_checks_passed: true
+number_evidence: ["300: 기본 조합 / 본문 69행", "300만원: 기본 조합 / 본문 69행", "600: 연금저축 한도 / 본문 9행", "600만원: 연금저축 한도 / 본문 9행", "900만원: 합산 한도 / 본문 9행"]
 output_original: "30_썸네일.png"
-output_mobile_preview: "30_썸네일_216.png"
+output_mobile_preview: "30_썸네일_160.png"
+requested_template: "compare"
+actual_template: "compare"
+template_fallback_reason: ""
+asset_version: 1
+asset_hash: "3388498d12f92b19fff18d7dd01b6e2fe443088accb40edf941986199397a6da"
+asset_status: "approved"
+blocks: []
+warnings: []
+manual_review_required: false
+manual_review_reasons: []
+sample_check_due: true
+previews: ["C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\30_썸네일_160.png", "C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\30_썸네일_320.png"]
+fact_note: "자동 검사 통과는 사실 정확성 보장이 아니다. 의미 일치는 근거 문장과 사람이 본다"

@@ -235,6 +235,23 @@ def canva_selftest():
             pass
     assert _light("#1a5276") == "#c6d4dd"
     assert isinstance(CARDS["40_노령연금_기간채우기"], Card) and set(CANVA_TEMPLATES) == {"hero", "bar", "timeline", "checklist"}
+    money = cards_thumb_html("연금저축 600, / IRP 300?", "보조", "하단", ["연금저축", "600만원", "IRP", "300만원", "+"], coins=True)
+    assert money.count("class='coin'") == 2 and "class='num fit'>600<" in money and "class='unit'>만원<" in money and "class='plus'" in money
+    assert money.count("class='main fit'") == 2, "메인의 /는 줄바꿈이다"
+    plain = cards_thumb_html("메인?", "보조", "하단", ["A안", "600만원", "B안", "300만원"])
+    assert "class='plus'" not in plain and "class='coin'" not in plain and "class='spark'" not in plain, "단순 비교에는 더하기·동전을 넣지 않는다"
+    words = cards_thumb_html("메인?", "보조", "", ["연금저축", "한도 넘긴/돈은", "IRP", "남은"])
+    assert "class='coin'" not in words and "class='plus'" not in words and ">한도 넘긴<" in words and "btext" not in words.split("</style>")[1], "하단은 생략할 수 있다"
+    head = headline_thumb_html("언제까지?", "", "하단", "12월 18일")
+    assert "class='focus fit'>12월 18일<" in head and "class='card'" in head and "class='sub" not in head.split("</style>")[1]
+    assert "class='focus" not in headline_thumb_html("언제까지?", "보조", "하단").split("</style>")[1]
+    from thumb_gate import MASTER_DIR
+    import base64 as _b, io as _io
+    from PIL import Image as _I
+    full = cards_thumb_html("메인?", "보조", "하단", ["가", "나", "다", "라"], MASTER_DIR / "pig_face.png")
+    src = re.search(r"class='mascot' src='data:image/png;base64,([^']+)'", full).group(1)
+    w, h = _I.open(_io.BytesIO(_b.b64decode(src))).size
+    assert w < 1600 and h == 1200, "전신은 투명 여백을 잘라 넣는다"
     # 대표사진 판정은 thumb_gate.py --selftest가 본다. 여기서는 AI에 글자·돼지를 맡기지 않는지만 고정한다
     p30 = scene_prompt("- 썸네일 문구: 가 | 나\n- 썸네일 장면: a person\n", 30)
     assert "No text" in p30 and "Title at the top" not in p30 and '"가"' not in p30 and "piglet" not in p30.lower()
@@ -367,141 +384,178 @@ def scene_prompt(md: str, num: int) -> str:
                                color=PALETTE[num % len(PALETTE)][1], line1=line1, line2=line2)
 
 
-# ── 30편~ 대표사진: 코드 렌더 + 마스터 돼지 (판정은 thumb_gate.py) ─────────
-def mascot_tag(png: Path, ratio: float) -> tuple:
-    """돼지를 외곽 박스로 잘라 그 면적이 대표사진의 ratio가 되게 놓는다 → (img 태그, 실제 비율).
-    투명 여백을 안 자르면 겹침·배지 판정이 실제보다 넓은 상자로 돌아간다."""
+# ── 30편~ 대표사진: 코드 렌더 + 등록 자산 (판정은 thumb_gate.py) ─────────
+def _thumb_page(body: str) -> str:
+    """compare·headline 공통 틀(1080 좌표)."""
+    import base64
+    green, dark, band = "#116530", "#222", "#207d31"
+    face = f"@font-face{{font-family:'T';src:url(data:font/ttf;base64,{base64.b64encode(thumb_font().read_bytes()).decode()})}}"
+    css = f"""{face}*{{margin:0;padding:0;box-sizing:border-box}}
+.t{{width:1080px;height:1080px;position:relative;overflow:hidden;background:#fefcf5;font-family:'T'}}
+.fit{{white-space:nowrap;display:block}}
+.hero{{position:absolute;left:65px;width:950px;top:46px;height:344px;display:flex;flex-direction:column;justify-content:center;text-align:center;color:{green};font-size:150px;line-height:1.12;letter-spacing:-3px}}
+.sub{{position:absolute;left:65px;width:950px;top:398px;text-align:center;color:{dark};font-size:76px;line-height:1.1}}
+.card{{position:absolute;top:516px;height:372px;background:#f0fbea;border:5px solid #fff;border-radius:40px;box-shadow:0 4px 18px rgba(30,90,40,.13)}}
+.pill{{position:absolute;left:22px;right:22px;top:20px;height:82px;line-height:80px;background:{band};color:#fff;border-radius:41px;text-align:center;font-size:50px}}
+.num{{position:absolute;right:14px;left:40px;top:124px;font-size:112px;line-height:1;color:{green};letter-spacing:-2px;text-align:right}}
+.unit{{position:absolute;right:22px;top:258px;font-size:58px;line-height:1;color:{green}}}
+.body{{position:absolute;left:14px;right:14px;top:124px;text-align:center;color:{dark};font-size:52px;line-height:1.25}}
+.focus{{position:absolute;left:20px;right:20px;top:120px;text-align:center;color:{green};font-size:128px;line-height:1.1;letter-spacing:-2px}}
+.coin{{position:absolute}}
+.plus{{position:absolute;left:346px;top:644px;width:46px;font-size:72px;line-height:1;text-align:center;color:{green}}}
+.band{{position:absolute;left:0;right:0;bottom:0;height:160px;background:{band}}}
+.btext{{position:absolute;left:65px;width:841px;bottom:36px;color:#fff;font-size:76px;line-height:88px}}
+.mascot{{position:absolute}}
+.spark{{position:absolute;background:{band};height:10px;border-radius:5px}}"""
+    return f"<style>{css}</style><div class='t'>{body}</div>"
+
+
+def _pig_tag(pig: Path, place: str = None) -> str:
+    """돼지를 외곽 박스로 잘라 넣는다. 전신 파일은 1600 캔버스라 여백까지 크기로 잡힌다.
+    상반신은 잘린 면을 띠 위에 올리고, 전신은 발을 띠 뒤로 넣어 같은 자리에 맞춘다."""
     import base64
     import io
     from PIL import Image
-    im = Image.open(png).convert("RGBA")
+    place = place or ("right:-4px;bottom:160px;width:392px" if pig.name.startswith("pig_bust_") else "right:16px;bottom:100px;height:470px")
+    im = Image.open(pig).convert("RGBA")
     im = im.crop(im.getchannel("A").point(lambda v: 255 if v >= 128 else 0).getbbox())
-    w = round(THUMB * (ratio * im.width / im.height) ** 0.5)
     buf = io.BytesIO()
     im.save(buf, "PNG")
-    src = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
-    return f"<img class='mascot' width='{w}' src='{src}'>", (w / THUMB) ** 2 * im.height / im.width
+    return f"<img class='mascot' src='data:image/png;base64,{base64.b64encode(buf.getvalue()).decode()}' style='{place}'>"
 
 
-def info_thumb_html(kind: str, main: str, sub: str, badge: str, big: str, color: str, mascot_tag: str, photo: Path = None) -> str:
+def _text_tags(main: str, sub: str, badge: str) -> tuple:
+    import html as html_lib
+    e = html_lib.escape
+    hero = "<div class='hero'>" + "".join(f"<div class='main fit'>{e(x.strip())}</div>" for x in main.split("/")) + "</div>"
+    return hero + (f"<div class='sub fit'>{e(sub)}</div>" if sub else ""), "<div class='band'></div>" + (f"<div class='btext fit'>{e(badge)}</div>" if badge else "")
+
+
+def cards_thumb_html(main: str, sub: str, badge: str, cards: list, pig: Path = None, coins: bool = False) -> str:
+    """compare: 메인, 비교 카드 2개, 돼지. 2026-11-01 사용자가 확정한 틀이다. 더하기는 합산할 때만, 동전·강조선은 `- 썸네일 소품: 동전`일 때만."""
     import base64
     import html as html_lib
-    from thumb_gate import BADGE_ZONE, CREAM
-    BAND_H = 124        # 프로필 돼지는 아래가 잘린 그림이라 이 띠 위에 앉힌다
+    from thumb_gate import PROPS, can_add, card_amount
     e = html_lib.escape
-    face = f"@font-face {{ font-family: 'Thumb'; src: url(data:font/ttf;base64,{base64.b64encode(thumb_font().read_bytes()).decode()}); }}"
-    css = f"""{face} *{{margin:0;padding:0;box-sizing:border-box}}
-.t{{width:{THUMB}px;height:{THUMB}px;position:relative;overflow:hidden;background:{CREAM};font-family:'Thumb';color:#1a1a1a}}
-.bar{{position:absolute;left:0;right:0;top:0;height:22px;background:{color}}}
-.stack{{position:absolute;left:46px;right:46px;top:{'40px' if photo else '40px'};height:{'200px' if photo else '345px'};text-align:center;display:flex;flex-direction:column;justify-content:center}}
-.fit{{white-space:nowrap;display:block}}
-.main{{font-size:{'92px' if photo else '120px'};line-height:1.15;color:{color}}}
-.sub{{font-size:{'46px' if photo else '56px'};line-height:1.2;color:#333;margin-top:14px}}
-.vs{{display:flex;align-items:center;gap:10px;margin-bottom:6px}}
-.vs .fit{{flex:1;background:{color};color:#fff;border-radius:22px;padding:52px 8px;font-size:68px;overflow:hidden;min-width:0}}
-.vs b{{font-size:44px;color:{color};flex:none}}
-.mark{{align-self:center;width:120px;height:120px;line-height:120px;border-radius:50%;background:{color};color:#fff;font-size:76px;margin-bottom:8px}}
-.band{{position:absolute;left:0;right:0;bottom:0;height:{BAND_H}px;background:{color}}}
-.badge{{position:absolute;left:46px;right:{BADGE_ZONE[0] + 14:.0f}px;bottom:{(BAND_H - 70) // 2}px;color:#fff;font-size:58px;line-height:70px}}
-.mascot{{position:absolute;right:44px;bottom:{BAND_H}px}}
-.photo{{position:absolute;left:0;right:0;top:250px;bottom:{BAND_H}px;background:url('{_img_url(photo) if photo else ''}') center/cover}}"""
-    head = ""
-    if kind == "action":
-        head = f"<div class='mark'>{e(big)}</div>"
-    elif kind == "compare" and " vs " in main:
-        a, _, b = main.partition(" vs ")
-        head = f"<div class='vs'><div class='fit'>{e(a)}</div><b>vs</b><div class='fit'>{e(b)}</div></div>"
-        main = ""
-    lines = "".join(f"<div class='main fit'>{e(x.strip())}</div>" for x in main.split("/") if x.strip())
-    sub_tag = f"<div class='sub fit'>{e(sub)}</div>" if sub else ""
-    badge_tag = f"<div class='badge fit'>{e(badge)}</div>" if badge else ""
-    extra = "<div class='photo'></div>" if photo else ""
-    return f"<style>{css}</style><div class='t'><div class='bar'></div>{extra}<div class='stack'>{head}{lines}{sub_tag}</div><div class='band'></div>{badge_tag}{mascot_tag}</div>"
+    spark = lambda pos, deg: f"<div class='spark' style='{pos};width:38px;transform:rotate({deg}deg)'></div>"
+    is_money = all(card_amount(c) for c in cards[1:4:2])
+    coins = coins and is_money
+    coin_src = "data:image/png;base64," + base64.b64encode((PROPS / "coins.png").read_bytes()).decode() if coins else ""
+    tags = []
+    for left, width, title, body, coin in ((36, 310, cards[0], cards[1], "left:26px;top:748px;width:150px"), (392, 296, cards[2], cards[3], "left:386px;top:782px;width:112px")):
+        if is_money:
+            num, unit = card_amount(body)
+            inner = f"<div class='num fit'>{e(num)}</div><div class='unit'>{e(unit)}</div>"
+        else:
+            inner = "<div class='body'>" + "".join(f"<div class='fit'>{e(x.strip())}</div>" for x in body.split("/") if x.strip()) + "</div>"
+        tags.append(f"<div class='card' style='left:{left}px;width:{width}px'><div class='pill fit'>{e(title)}</div>{inner}</div>")
+        if coins:
+            tags.append(f"<img class='coin' src='{coin_src}' style='{coin}'>")
+    if coins:
+        tags += [spark("left:30px;top:706px", 28), spark("left:56px;top:676px", 62)]
+    if can_add(cards):
+        tags.append("<div class='plus'>+</div>")
+    pig_tag = (_pig_tag(pig) + (spark("right:44px;top:514px", -55) + spark("right:12px;top:552px", -25) if coins else "")) if pig else ""
+    top, bottom = _text_tags(main, sub, badge)
+    return _thumb_page(f"{top}{''.join(tags)}{pig_tag}{bottom}")
 
 
-def shoot_info_thumb(page, md: str, out: Path, photo: Path = None, mascot: Path = None) -> tuple:
-    """대표사진 렌더 → (QC 실패 목록, 돼지 비율, 216px 미리보기 경로)."""
-    from PIL import Image
-    from thumb_gate import CATEGORY_COLORS, MASCOT_RATIO, QC_SIZE, copy_of, mobile_qc
-    kind = memo_value(md, "썸네일 유형")
-    category = memo_value(md, "카테고리 색")
-    color = CATEGORY_COLORS[category]
-    main, sub, badge = copy_of(md)
-    big = (memo_value(md, "썸네일 강조 숫자") or "").split("|")[0].strip()
-    strict = category == "warning"
-    ratio, tag = 0.0, ""
-    if mascot:
-        tag, ratio = mascot_tag(mascot, 0.05 if strict else sum(MASCOT_RATIO) / 2)
-    page.set_viewport_size({"width": THUMB, "height": THUMB})
-    for attempt in (sub, ""):
-        page.set_content(info_thumb_html(kind, main, attempt, badge, big, color, tag, photo))
-        page.evaluate("() => document.fonts.ready")
-        page.wait_for_timeout(300)
-        m = page.evaluate("""() => {
-            document.querySelectorAll('.fit').forEach(el => { let s = parseFloat(getComputedStyle(el).fontSize);
-                while (el.scrollWidth > el.clientWidth && s > 20) { s -= 2; el.style.fontSize = s + 'px'; } });
-            const px = q => { const el = document.querySelector(q); return el ? parseFloat(getComputedStyle(el).fontSize) : 0; };
-            const rect = el => { const r = document.createRange(); r.selectNodeContents(el); const b = r.getBoundingClientRect();
-                                 return {left: b.left, right: b.right, top: b.top, bottom: b.bottom}; };
-            const ms = document.querySelector('.mascot');
-            const mb = ms ? ms.getBoundingClientRect() : null;
-            const texts = [...document.querySelectorAll('.fit, .mark')].map(rect);
-            const hit = mb && texts.some(t => t.right > mb.left && t.left < mb.right && t.bottom > mb.top && t.top < mb.bottom);
-            const st = document.querySelector('.stack').getBoundingClientRect();
-            const bd = document.querySelector('.badge');
-            const clash = bd && st.bottom > bd.getBoundingClientRect().top;
-            return {main: px('.main') || px('.vs .fit'), sub: px('.sub'), texts, hit: !!hit, clash: !!clash,
-                    mascot: mb ? {right: mb.right, bottom: mb.bottom} : null};
-        }""")
-        qc = mobile_qc(m["main"], m["sub"], ratio, strict, m["mascot"], m["texts"], color)
-        if not qc["drop_sub"]:
-            break
-        print(f"  서브 카피를 뺐다: {QC_SIZE}px에서 읽히지 않는다 — {sub}")
+def headline_thumb_html(main: str, sub: str, badge: str, focus: str = "", pig: Path = None) -> str:
+    """headline: 비교가 핵심이 아닌 글. 메인, 핵심 숫자 카드(있을 때), 돼지. 2026-11-01 사용자 승인."""
+    import html as html_lib
+    tag = f"<div class='card' style='left:36px;width:640px'><div class='focus fit'>{html_lib.escape(focus)}</div></div>" if focus else ""
+    pig_tag = ""
+    if pig:
+        bust = pig.name.startswith("pig_bust_")
+        centered = "left:50%;transform:translateX(-50%);" + ("bottom:160px;width:392px" if bust else "bottom:100px;height:470px")
+        pig_tag = _pig_tag(pig, None if focus else centered)
+    top, bottom = _text_tags(main, sub, badge)
+    return _thumb_page(f"{top}{tag}{pig_tag}{bottom}")
+
+
+def shoot_thumb(page, html: str, out: Path) -> tuple:
+    """렌더 → (QC 실패 목록, 돼지 비율, 축소본 목록). 글자가 넘치면 정해진 하한까지만 줄이고 실패 사유를 낸다. 재시도하지 않는다."""
+    from thumb_gate import OUT_SIZE, THUMB as T, mobile_qc, save_previews
+    page.set_viewport_size({"width": OUT_SIZE, "height": OUT_SIZE})
+    page.set_content(html)
+    page.evaluate("() => document.fonts.ready")
+    page.wait_for_timeout(300)
+    m = page.evaluate("""() => {
+        document.querySelectorAll('.fit').forEach(el => { let s = parseFloat(getComputedStyle(el).fontSize);
+            while (el.scrollWidth > el.clientWidth && s > 20) { s -= 2; el.style.fontSize = s + 'px'; } });
+        const px = q => { const els = [...document.querySelectorAll(q)]; return els.length ? Math.min(...els.map(el => parseFloat(el.style.fontSize || getComputedStyle(el).fontSize))) : 0; };
+        const rect = el => { const r = document.createRange(); r.selectNodeContents(el); const b = r.getBoundingClientRect();
+                             return {left: b.left, right: b.right, top: b.top, bottom: b.bottom}; };
+        const ms = document.querySelector('.mascot').getBoundingClientRect();
+        const band = document.querySelector('.band').getBoundingClientRect().top;
+        const texts = [...document.querySelectorAll('.fit')].map(rect);
+        const pig = {left: ms.left, right: Math.min(ms.right, 1080), top: ms.top, bottom: Math.min(ms.bottom, band)};
+        const hit = texts.some(t => t.right > pig.left && t.left < pig.right && t.bottom > pig.top && t.top < pig.bottom);
+        return {main: px('.main'), sub: px('.sub'), badge: px('.btext'), title: px('.pill'), num: px('.num'), body: px('.body .fit'), focus: px('.focus'), texts, pig, hit};
+    }""")
+    k = T / OUT_SIZE
+    scale = lambda r: {a: v * k for a, v in r.items()}
+    ratio = (m["pig"]["right"] - m["pig"]["left"]) * (m["pig"]["bottom"] - m["pig"]["top"]) / OUT_SIZE ** 2
+    qc = mobile_qc(m["main"] * k, m["sub"] * k, ratio, scale(m["pig"]), [scale(r) for r in m["texts"]], "#116530")
     fail = list(qc["fail"])
+    if qc["drop_sub"] or (m["badge"] and m["badge"] < 56):
+        fail.append(f"BLOCKED_MOBILE_READABILITY — 보조·하단 문구가 작아진다(보조 {m['sub']:.0f}px, 하단 {m['badge']:.0f}px). 글자를 줄이지 말고 문구를 줄이거나 생략한다")
+    small_card = [n for n, v, lo in (("이름표", m["title"], 40), ("카드 숫자", m["num"], 70), ("카드 문장", m["body"], 40), ("핵심 숫자", m["focus"], 70)) if v and v < lo]
+    if small_card:
+        fail.append(f"BLOCKED_MOBILE_READABILITY — {'·'.join(small_card)}가 작아진다. 내용을 줄이거나 headline으로 바꾼다")
     if m["hit"]:
         fail.append("BLOCKED_MOBILE_READABILITY — 글자가 돼지와 겹친다")
-    if m["clash"]:
-        fail.append("BLOCKED_MOBILE_READABILITY — 글자가 하단 배지와 겹친다")
     page.query_selector(".t").screenshot(path=str(out))
-    small = Path(__file__).parent / "_workspace" / "naver" / f"{out.stem}_{QC_SIZE}.png"
-    small.parent.mkdir(parents=True, exist_ok=True)
-    Image.open(out).resize((QC_SIZE, QC_SIZE), Image.LANCZOS).save(small)
-    print(f"  {QC_SIZE}px 축소본: {small} (눈으로도 확인)")
-    return fail, ratio, small
+    return fail, ratio, save_previews(out)
 
 
-def info_thumb_cmd(num: str, md: str, kind: str, draft: bool) -> int:
-    """30편~ 대표사진. 숫자·카피 → 마스터 돼지 → 렌더·QC → manifest 순서로 멈춘다. --draft는 돼지 없는 확인용이다."""
-    from thumb_gate import THUMB as T, OUT_SIZE, copy_issues, mascot_status, parts_text, write_manifest
-    assert T == THUMB
-    blocked = copy_issues(md, parts_text(md))
-    for b in blocked:
-        print("  ⚠", b)
-    if blocked:
-        return 1
-    cover = find_cover(num) if kind == "scene" else None
-    if kind == "scene" and not cover:
-        print(f"`--gen {num}`으로 글자 없는 배경을 만들어 cover_{num}.png로 저장한 뒤 다시 실행하세요")
-        return 1
-    status, mascot = mascot_status(memo_value(md, "돼지 자세"), memo_value(md, "카테고리 색"))
+def info_thumb_cmd(num: str, md: str, kind: str) -> int:
+    """30편~ 대표사진. 카피 → 틀 선택 → 돼지 → 렌더·QC → manifest. 승인 전 틀은 미리보기만 만들고 대표사진 파일을 쓰지 않는다."""
+    from thumb_gate import (APPROVED_TEMPLATES, PROP_FILES, SAMPLE_EVERY, asset_info, card_mascot, choose_pose, copy_of, manual_reasons, mascot_status,
+                            parts_text, recent_poses, review_copy, select_template, thumb_cards, trim_copy, write_manifest)
+    blocks, warns = review_copy(md, parts_text(md))
+    requested, template, fallback = select_template(md)
+    if fallback:
+        warns.append(f"{requested or '유형 없음'} → {template}: {fallback}")
+    pose, status, mascot, why = choose_pose(md, recent_poses(num))
+    if status == "OK":
+        status, mascot = card_mascot(pose, mascot)
     if status != "OK":
-        print(f"  {status} — assets/naver_img/mascot_master/{memo_value(md, '돼지 자세')}.png (프로필 돼지, 투명 배경)가 필요하다")
-        if not draft:
-            return 1
-    if kind == "scene":
-        mascot = None       # 그림에 다른 돼지를 얹지 않는다
-    out = (Path(__file__).parent / "_workspace" / "naver" / f"{num}_초안.png") if status != "OK" else OUT / f"{num}_썸네일.png"
-    with sync_playwright() as pw:
-        b = pw.chromium.launch(headless=True)
-        page = b.new_page(device_scale_factor=OUT_SIZE / THUMB)
-        fail, ratio, small = shoot_info_thumb(page, md, out, cover, mascot)
-        b.close()
-    for f in fail:
-        print("  ⚠ 대표사진:", f)
-    manifest = write_manifest(num, md, status if status != "OK" else ("BLOCKED" if fail else "OK"), mascot, ratio, not fail, out, small)
+        blocks.append(f"{status} — pig_{pose}.png")
+    coins = PROP_FILES.get(memo_value(md, "썸네일 소품") or "") == "coins"
+    if coins and mascot_status("prop_coins")[0] != "OK":
+        blocks.append(f"{mascot_status('prop_coins')[0]} — 소품 coins.png")
+    main, sub, badge = trim_copy(*copy_of(md))
+    approved = template in APPROVED_TEMPLATES
+    out = OUT / f"{num}_썸네일.png" if approved else Path(__file__).parent / "_workspace" / "naver" / f"{num}_{template}_미리보기.png"
+    fail, ratio, previews = [], 0.0, []
+    if not blocks:
+        focus = (memo_value(md, "썸네일 강조 숫자") or "").split("|")[0].strip()
+        html = cards_thumb_html(main, sub, badge, thumb_cards(md), mascot, coins) if template == "compare" else headline_thumb_html(main, sub, badge, focus, mascot)
+        with sync_playwright() as pw:
+            b = pw.chromium.launch(headless=True)
+            fail, ratio, previews = shoot_thumb(b.new_page(device_scale_factor=1), html, out)
+            b.close()
+    blocks += fail
+    manual = manual_reasons(md, template) + (["자동 검사 차단을 해결해야 한다"] if blocks else [])
+    info = asset_info(mascot.stem.replace("pig_", "", 1)) if mascot else {}
+    state = "BLOCKED" if blocks else ("OK" if approved else "PENDING_TEMPLATE_APPROVAL")
+    manifest = write_manifest(num, md, state, mascot, ratio, not blocks, out, previews[0] if previews else out, pose, why, "code", template, {
+        "requested_template": requested, "actual_template": template, "template_fallback_reason": fallback,
+        "asset_version": info.get("version", ""), "asset_hash": info.get("hash", ""), "asset_status": info.get("status", ""),
+        "blocks": blocks, "warnings": warns, "manual_review_required": bool(manual), "manual_review_reasons": manual,
+        "sample_check_due": int(num) % SAMPLE_EVERY == 0, "previews": [str(p) for p in previews],
+        "fact_note": "자동 검사 통과는 사실 정확성 보장이 아니다. 의미 일치는 근거 문장과 사람이 본다"})
+    print(f"  틀: {template}" + (f" (요청 {requested}: {fallback})" if fallback else "") + f" / 돼지: {pose} ({why})")
+    for w in warns:
+        print("  경고:", w)
+    for x in blocks:
+        print("  ⚠ 차단:", x)
+    for x in manual:
+        print("  사람 확인:", x)
     print(out)
     print(manifest)
-    return 1 if fail or status != "OK" else 0
+    return 0 if state == "OK" else 1
 
 
 def _img_url(photo: Path) -> str:
@@ -1287,7 +1341,7 @@ def thumb_cmd(num: str) -> int:
     md = draft_md(num)
     text, kind = thumb_text(md), memo_value(md, "썸네일 유형")
     if int(num) >= V2_FROM and kind in V2_THUMBS + ("scene",):
-        return info_thumb_cmd(num, md, kind, "--draft" in sys.argv)
+        return info_thumb_cmd(num, md, kind)
     photo = find_cover(num)
     if not text:
         print(f"{num}편 원고 작성 메모에 `- 썸네일 문구: 윗줄 | 아랫줄` 줄이 없습니다")

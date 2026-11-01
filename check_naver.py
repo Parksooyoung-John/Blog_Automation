@@ -325,8 +325,8 @@ def template_issues(md: str, body: str, text: str, keyword, quality: bool = Fals
 
     # 썸네일(G8·G11·G12의 원고 쪽 절반 — 연속 유형은 main에서 본다)
     kind, post_type = memo_value(md, '썸네일 유형'), memo_value(md, '글 유형')
-    if kind not in (THUMB_TYPES + V2_THUMBS if v2 else THUMB_TYPES):
-        issues.append(f'작성 메모 `- 썸네일 유형:`이 {"·".join(THUMB_TYPES)} 중 하나가 아니다')
+    if kind not in (V2_THUMBS if v2 else THUMB_TYPES):
+        issues.append(f'작성 메모 `- 썸네일 유형:`이 {"·".join(V2_THUMBS if v2 else THUMB_TYPES)} 중 하나가 아니다')
     if post_type not in POST_TYPES:
         issues.append(f'작성 메모 `- 글 유형:`이 {"·".join(POST_TYPES)} 중 하나가 아니다')
     lines = thumb_lines(md)
@@ -373,9 +373,9 @@ CLICK_RE = re.compile(r'광고.{0,8}(클릭|눌러)|클릭해 주세요')
 HYPOTHETICAL_RE = re.compile(r'가상|예시|계산 예|가정')
 # V2(2026-10-31, 30편부터) — 최신성·제목. 명세 NAVER_BLOG_HARNESS_TOPIC_FRESHNESS_TITLE_CA_V2.md. 29편이 열린 서비스를 "열리기 전"으로 썼다.
 V2_FROM = 30
-V2_THUMBS = ("number", "compare", "action")      # 코드로 글자를 얹는 정보 카드. scene은 AI 배경 + 코드 글자로만 쓴다
+V2_THUMBS = ("number", "compare", "action", "headline")      # 코드 렌더. scene은 현재 운영에서 비활성화했다(시안에만 쓴다)
 CATEGORY_COLORS = {"tax": "#006064", "pension": "#2e7d32", "support": "#5b2c6f", "warning": "#a0461a", "card": "#1a3c6e"}
-MASCOT_POSES = ("face", "explain", "calculator", "check", "warning", "curious")      # face: 프로필 원본에서 배경만 지운 얼굴
+MASCOT_POSES = ("face", "point_left", "point_up", "calculator", "document", "phone", "laptop", "thinking", "surprised", "check", "coin", "family")
 MAX_SCENE_IN_9 = 3
 JUDGE_COPY_RE = re.compile(r'\d|O|X|vs|될까|되나|가능|불가|계산|확인|수정|신청|오픈|조건|기준|차이')
 FRESH_HOURS = 24
@@ -721,8 +721,10 @@ def measure(path, tistory, volumes=None, bench=frozenset()):
             r["format"] += quality_issues(n, b, c, tags, r["v2"])
         if r["v2"]:
             fails_, r["warn"] = v2_issues(n, b, c)
-            from thumb_gate import copy_issues
-            r["format"] += fails_ + title_gate_issue(path, r["title"].strip()) + copy_issues(n, c)
+            from thumb_gate import review_copy
+            blocks_, thumb_warns = review_copy(n, c)
+            r["warn"] += thumb_warns
+            r["format"] += fails_ + title_gate_issue(path, r["title"].strip()) + blocks_
         if int(num.group()) >= COMPOSITION_FROM and r["thumb_type"] == "scene" and r["composition"] not in COMPOSITIONS:
             r["format"].append(f'작성 메모 `- 썸네일 구도:`가 목록에 없다 — {" · ".join(COMPOSITIONS)}')
     elif r["new_format"]:
@@ -1045,7 +1047,8 @@ def selftest():
     assert section_repeat({"25": ["#"], "26": ["#"], "27": ["#", "*"]}) == []          # 26편 이전은 판정하지 않는다
     # 30편부터의 최신성·제목 — 29편 실제 사고를 고정한다
     vdoc = qdoc.replace("제목: 2026 국민연금 일찍 받는 사람 | 5년 당기면 얼마나", "제목: 2026 국민연금 일찍 받는 사람｜당기면 얼마나").replace(
-        "- 고유 근거:", "- 검색 의도: decision\n- 최신성 재확인: 2026-10-31 14:00 | 국민연금 조기수령 2026 | https://www.nps.or.kr/a\n- 고유 근거:")
+        "- 고유 근거:", "- 검색 의도: decision\n- 최신성 재확인: 2026-10-31 14:00 | 국민연금 조기수령 2026 | https://www.nps.or.kr/a\n- 고유 근거:").replace(
+        "- 썸네일 유형: scene", "- 썸네일 유형: headline")
 
     def vissues(src):
         with tempfile.TemporaryDirectory() as d:
@@ -1055,6 +1058,7 @@ def selftest():
             return v2_issues(n_, b_, c_)[0] + template_issues(n_, b_, c_, target_keyword(n_), True, True) + quality_issues(n_, b_, c_, tg, True)
 
     assert vissues(vdoc) == [], vissues(vdoc)
+    assert any("썸네일 유형" in i for i in vissues(vdoc.replace("- 썸네일 유형: headline", "- 썸네일 유형: scene"))), "scene은 30편부터 비활성화"
     assert any("권장" in w for w in v2_issues(vdoc.replace("당기면 얼마나 깎일까? 63세 기준으로 계산", "63세 기준으로 계산하면 조기수령이 얼마나 줄어드는지 비교합니다"), "", "")[1])     # 길이는 경고
     assert not any("구체 상황" in i for i in vissues(vdoc.replace("일찍 받는 사람", "조기수령")))                 # 조건어 강제 해제
 
@@ -1106,7 +1110,7 @@ def main():
         print(f'⚠ {VOLUME_CSV} 없음 — 태그 검색량 검사를 건너뜁니다\n')
     bench = sents("".join(open(f, encoding='utf-8').read() for f in glob.glob(f'{BENCH_DIR}/*.txt')))
     allok = True
-    cover_kws, box_titles, thumb_kinds, comps, titles, skels, looks = {}, {}, {}, {}, {}, {}, {}
+    cover_kws, box_titles, thumb_kinds, comps, titles, skels = {}, {}, {}, {}, {}, {}
     for p in sorted(glob.glob('content/naver/*.md')):
         r = measure(p, tistory, volumes, bench)
         if r is None:          # 제목 줄이 없으면 원고가 아니다(메모·프롬프트 파일)
@@ -1117,9 +1121,6 @@ def main():
         comps[os.path.basename(p)] = r["composition"]
         if num := re.match(r'\d+', os.path.basename(p)):
             titles[num.group()], skels[num.group()] = r["title"], r["skeleton"]
-            md_ = open(p, encoding='utf-8').read()
-            looks[num.group()] = {"kind": r["thumb_type"], "pose": memo_value(md_, '돼지 자세'), "composition": r["composition"],
-                                  "main": (thumb_lines(md_) or ("",))[0]}
         if r["template"] and not bench:
             print(f'⚠ {BENCH_DIR} 비어 있음 — 벤치마크 문장 중복을 못 봤다. `check_naver.py --fetch-benchmark` 후 다시 실행')
         fails, warns = post_issues(p)       # 25편부터: 클러스터·출처 기록·글 간 유사도 (pipeline.py)
@@ -1174,10 +1175,6 @@ def main():
     for n in title_repeat(titles):
         allok = False
         print(f'CHECK {n}편 — 제목 뼈대가 최근 5편 중 {TITLE_REPEAT[0]}편을 넘게 같다: {title_skeleton(titles[str(n).zfill(2)])}')
-    from thumb_gate import repeat_issues
-    for n, why in repeat_issues(looks):
-        allok = False
-        print(f'CHECK {n}편 — {why}')
     for n in section_repeat(skels):
         allok = False
         print(f'CHECK {n}편 — 소제목 구성이 바로 앞 편과 같다. 섹션 순서를 바꾼다')

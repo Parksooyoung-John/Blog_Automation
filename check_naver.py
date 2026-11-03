@@ -607,6 +607,16 @@ def composition_repeat(comps: dict) -> list:
 CARD_ENABLED = False
 
 
+# 8편은 3차 자료의 마감일(11-30)·감액률(10%)을 썼고 메모에 "공식 수치는 아님"이라고 적은 채 발행됐다.
+# 공식은 12-01·5%였다(2026-11-03 발견). 이런 표시가 남은 글은 발행 뒤에도 계속 알린다.
+UNOFFICIAL_RE = re.compile(r'공식 수치는 아님|공식 수치 아님|3차 자료|대조 권장|공식 확인 전')
+
+
+def unofficial_posts(texts: dict) -> list:
+    """편 번호 → 원고. 작성 메모에 공식 확인 전 수치라는 표시가 남은 글."""
+    return sorted(k for k, v in texts.items() if '## 작성 메모' in v and UNOFFICIAL_RE.search(v.split('## 작성 메모', 1)[1]))
+
+
 def card_paused(kinds: dict) -> list:
     """CARD_ENABLED가 꺼져 있는데 썸네일 유형이 card인 원고."""
     return [] if CARD_ENABLED else [k for k, v in sorted(kinds.items()) if v == "card"]
@@ -959,6 +969,7 @@ def selftest():
     if not CARD_ENABLED:      # card 보류 중: scene 3연속은 통과, card 원고는 막는다
         assert thumb_streak({"15": "scene", "16": "scene", "17": "scene"}) == []
         assert card_paused({"15": "scene", "16": "card", "14": None}) == ["16"]
+    assert unofficial_posts({"08": "본문 3차 자료\n## 작성 메모\n- **공식 수치는 아님**", "09": "본문 3차 자료\n## 작성 메모\n- 출처 확인", "10": "메모 없음"}) == ["08"]
     assert same_box_title({"15": [SUMMARY_TITLE], "16": [SUMMARY_TITLE]}) == []        # 템플릿 고정 제목은 중복으로 안 본다
 
     # 27편부터의 품질 규칙 — 표 3·박스 2·FAQ 2·태그 4, 고유 근거·1차 출처·가상 표시
@@ -1169,6 +1180,9 @@ def main():
     for name in composition_repeat(comps):
         allok = False
         print(f'CHECK {name} — 썸네일 구도가 바로 앞 편과 같다. 다른 구도를 고른다')
+    texts = {os.path.basename(f)[:2]: open(f, encoding='utf-8').read() for f in glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'content', 'naver', '[0-9][0-9]_*.md'))}
+    for n in unofficial_posts(texts):
+        print(f'⚠ {n}편 — 작성 메모에 공식 확인 전 수치라는 표시가 있다. 발행 글이면 공식 자료와 대조한다 (8편이 이렇게 틀린 채 발행됐다)')
     for name in card_paused(thumb_kinds):
         allok = False
         print(f'CHECK {name} — card 썸네일은 보류 중이다(CARD_ENABLED). scene으로 만든다')

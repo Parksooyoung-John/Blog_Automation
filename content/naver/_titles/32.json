@@ -1,0 +1,179 @@
+{
+  "primary_query": "퇴직금 세금 계산",
+  "secondary_queries": [
+    "퇴직금 세금 얼마나",
+    "퇴직금 세금 계산기 세후"
+  ],
+  "primary_intent": "calculation",
+  "reader_problem": "퇴직금을 받기 전에 세금이 얼마나 떼이는지, 세후로 얼마를 받는지 알고 싶다",
+  "verified_facts": [
+    "근속연수공제와 환산급여 12배",
+    "세율 6~45%",
+    "국세청 사례 20년·1억원 112만원",
+    "지방소득세 10%",
+    "연금계좌 60일 이연"
+  ],
+  "unique_value": [
+    "같은 3,000만원의 근속연수별 세금 비교",
+    "국세청 사례 재계산"
+  ],
+  "serp_repeated_terms": [
+    "세후",
+    "실수령액",
+    "계산기",
+    "근속연수",
+    "총정리"
+  ],
+  "serp_gaps": [
+    "근속연수가 세금을 가르는 구조 설명"
+  ],
+  "serp_titles": [
+    "퇴직금 계산방법, 세전·세후 실수령액은 얼마?",
+    "퇴직금 계산할 때 이것 모르면 손해! 평균임금·근속연수·세금 핵심 정리",
+    "퇴직금 세금 몇프로? 2026 퇴직소득세 계산기·세후 수령액 정리",
+    "퇴직금 계산기｜세금부터 실수령액까지 한 번에 확인!",
+    "퇴직금에도 세금이? 퇴직소득세 계산 방법과 IRP로 받을 때 달라지는 점",
+    "퇴직금 세금 계산방법｜퇴직소득세·실수령액 예시와 IRP 수령 차이",
+    "퇴직금 세금 몇프로, 몇 년 다녔는지에 따라 달라서 직접 따져 봤어요",
+    "퇴직금계산기 사용법, 평균임금 계산부터 퇴직소득세까지",
+    "퇴직금 세금계산기 어디서 이용할까? 홈택스로 실수령액 계산하는 방법",
+    "퇴직금 계산 방법 총정리｜1년 근무하면 얼마 받을까? 세금과 실수령액까지"
+  ],
+  "publication_date": "2026-11-07",
+  "candidates": [
+    {
+      "title": "2026 퇴직금 세금 계산｜근속연수가 세금을 가르는 이유",
+      "intent": 24,
+      "clarity": 14,
+      "specificity": 10,
+      "differentiation": 8,
+      "why": "계산 질의와 이 글의 차별점(근속연수)을 함께 약속한다"
+    },
+    {
+      "title": "2026 퇴직금 세금 계산｜같은 3,000만원도 근속연수로 갈린다",
+      "intent": 23,
+      "clarity": 13,
+      "specificity": 11,
+      "differentiation": 8,
+      "why": "구체적이지만 가상 사례 금액을 제목에 올린다"
+    },
+    {
+      "title": "2026 퇴직금 세금 계산｜세후 금액 구하는 6단계",
+      "intent": 24,
+      "clarity": 14,
+      "specificity": 10,
+      "differentiation": 6,
+      "why": "세후 의도에 맞지만 흔한 구성이다"
+    },
+    {
+      "title": "2026 퇴직소득세 계산｜근속연수공제와 환산급여 쉽게 정리",
+      "intent": 21,
+      "clarity": 13,
+      "specificity": 10,
+      "differentiation": 6,
+      "why": "용어 중심이라 대표 질의와 어긋난다"
+    },
+    {
+      "title": "2026 퇴직금 세금 계산｜IRP로 받으면 달라지는 점까지",
+      "intent": 21,
+      "clarity": 13,
+      "specificity": 9,
+      "differentiation": 7,
+      "why": "IRP가 본문 비중보다 크게 보인다"
+    },
+    {
+      "title": "2026 퇴직금 세금 계산｜1억원이면 세금 112만원인 이유",
+      "intent": 22,
+      "clarity": 13,
+      "specificity": 11,
+      "differentiation": 7,
+      "why": "국세청 사례를 앞세우지만 국세만인 금액이다"
+    },
+    {
+      "title": "2026 퇴직금 세금 계산｜얼마나 떼이고 얼마 받나",
+      "intent": 23,
+      "clarity": 12,
+      "specificity": 7,
+      "differentiation": 5,
+      "why": "의도는 맞지만 막연하다"
+    },
+    {
+      "title": "2026 퇴직금 세금 계산 방법｜근속연수별 비교",
+      "intent": 22,
+      "clarity": 13,
+      "specificity": 9,
+      "differentiation": 7,
+      "why": "짧고 맞지만 이유가 빠진다"
+    }
+  ],
+  "results": [
+    {
+      "title": "2026 퇴직금 세금 계산｜근속연수가 세금을 가르는 이유",
+      "score": 91,
+      "status": "FINAL",
+      "reasons": []
+    },
+    {
+      "title": "2026 퇴직금 세금 계산｜같은 3,000만원도 근속연수로 갈린다",
+      "score": 90,
+      "status": "FINAL",
+      "reasons": []
+    },
+    {
+      "title": "2026 퇴직금 세금 계산｜세후 금액 구하는 6단계",
+      "score": 89,
+      "status": "FINAL",
+      "reasons": []
+    },
+    {
+      "title": "2026 퇴직금 세금 계산｜1억원이면 세금 112만원인 이유",
+      "score": 88,
+      "status": "FINAL",
+      "reasons": []
+    },
+    {
+      "title": "2026 퇴직금 세금 계산 방법｜근속연수별 비교",
+      "score": 86,
+      "status": "FINAL",
+      "reasons": []
+    },
+    {
+      "title": "2026 퇴직금 세금 계산｜IRP로 받으면 달라지는 점까지",
+      "score": 85,
+      "status": "FINAL",
+      "reasons": []
+    },
+    {
+      "title": "2026 퇴직금 세금 계산｜얼마나 떼이고 얼마 받나",
+      "score": 82,
+      "status": "REWORK",
+      "reasons": []
+    },
+    {
+      "title": "2026 퇴직소득세 계산｜근속연수공제와 환산급여 쉽게 정리",
+      "score": 70,
+      "status": "DISCARD",
+      "reasons": []
+    }
+  ],
+  "selected_title": "2026 퇴직금 세금 계산｜근속연수가 세금을 가르는 이유",
+  "score": 91,
+  "alternatives": [
+    {
+      "title": "2026 퇴직금 세금 계산｜같은 3,000만원도 근속연수로 갈린다",
+      "score": 90
+    },
+    {
+      "title": "2026 퇴직금 세금 계산｜세후 금액 구하는 6단계",
+      "score": 89
+    }
+  ],
+  "rejected": [
+    {
+      "title": "2026 퇴직소득세 계산｜근속연수공제와 환산급여 쉽게 정리",
+      "reason": "DISCARD",
+      "detail": []
+    }
+  ],
+  "verified_at": "2026-11-04T21:40"
+}

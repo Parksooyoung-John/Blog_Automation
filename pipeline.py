@@ -412,6 +412,10 @@ def cmd_status(args):
             nxt = "EVIDENCE_REQUIRED" if any("EVIDENCE_REQUIRED" in x for x in probs) else "QA_BLOCKED"
             raise SystemExit("HUMAN_REVIEW로 올리려면 check_naver가 통과해야 한다:\n  " + "\n  ".join(probs or ["check_naver 확인 필요"])
                              + f"\n→ `pipeline.py status {nn:02d} {nxt}`로 기록하고 고친 뒤 다시 올린다")
+    # 확인 질문·검수를 기다리는 사이 다른 명령이 장부에 쓴 줄을 덮어쓰지 않게 쓰기 직전에 다시 읽는다
+    # (2026-11-04 `status 32 APPROVED`가 그 사이 `start`가 넣은 33편 줄을 지웠다)
+    rows = read_csv(LEDGER, LEDGER_COLS)
+    r = next(x for x in rows if num_of(x["post"]) == nn)
     try:
         check_move(r["status"], new, logno, tty)
     except ValueError as e:

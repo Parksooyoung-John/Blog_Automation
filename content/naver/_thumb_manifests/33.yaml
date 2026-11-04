@@ -1,0 +1,49 @@
+thumbnail_id: "TH-20261104-33"
+status: "OK"
+seo_title: "2026 국민연금 반환일시금｜10년 못 채웠을 때 받는 조건과 금액"
+template_type: "calculation"
+main_copy: "가입기간 10년 미만"
+sub_copy: "일시금, 받을까?"
+bottom_badge: "국민연금 반환일시금"
+copy_candidates: ["가입기간 10년 미만", "낸 보험료 + 이자", "반납은 24회까지"]
+selection_reason: "독자가 자기 가입기간이 10년에 못 미치는지 먼저 떠올리게 숫자 하나를 크게 둔다. 받을지 말지는 3절이 답한다"
+verified_number: "10"
+verified_rows: "지급 사유 / 청구 기한 / 법령 시행일"
+verified_source_url: "https://nps.or.kr/pnsinfo/ntpsklg/getOHAF0100M0.do"
+verified_at: "2026-11-04 23:48"
+category: "pension"
+color_code: "pension_green"
+mascot_asset: "pig_coin.png"
+mascot_pose: "coin"
+mascot_pose_reason: "주제 refund_support"
+renderer: "code"
+template_id: "number"
+card_copy: ""
+mascot_area_ratio: 0.068
+mascot_position: "lower_right_safe"
+ai_mark_safe_zone_clear: true
+auto_qc_passed: true
+auto_fact_checks_passed: true
+number_evidence: ["10년: 지급 사유 / 본문 1행"]
+output_original: "33_썸네일.png"
+output_mobile_preview: "33_썸네일_160.png"
+requested_template: "number"
+actual_template: "number"
+template_fallback_reason: ""
+layout: "number"
+layout_approved: true
+operating_layout: "number"
+recent_templates: ["compare", "headline", "compare"]
+highlight_phrase: ""
+preview_layout_output: ""
+preview_layout_qc: []
+asset_version: 1
+asset_hash: "50812b66520f820f3e0bfdab832b3abcd8c141ae7f536f0fae44f181ff24e934"
+asset_status: "approved"
+blocks: []
+warnings: []
+manual_review_required: false
+manual_review_reasons: []
+sample_check_due: false
+previews: ["C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\33_썸네일_160.png", "C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\33_썸네일_320.png"]
+fact_note: "자동 검사 통과는 사실 정확성 보장이 아니다. 의미 일치는 근거 문장과 사람이 본다"

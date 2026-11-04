@@ -30,8 +30,10 @@ CREAM = "#fdf8ef"
 MAIN_MIN_QC, SUB_MIN_QC = 12, 7.5              # 160px 축소본에서 읽히는 글자 크기(px)
 MASCOT_RATIO = (0.13, 0.25)                    # 2026-11-01 사용자 확정 시안의 돼지가 13.5%라 하한을 13%로 낮췄다
 BADGE_ZONE = (160 * THUMB / OUT_SIZE, 90 * THUMB / OUT_SIZE)     # 내부 AI 표시 안전영역(오른쪽 아래, 1080 기준 160×90). 네이버 공식 크기가 아니다. 실제 표시는 게시 화면에서 본다
-MAX_MAIN, MAX_SUB, MAX_BADGE, MIN_CANDIDATES = 16, 14, 14, 3     # 공백 제외. 메인은 2줄까지, 후보는 내부에서 3개 만들어 1개를 고른다
-APPROVED_TEMPLATES = {"compare", "headline"}   # 사용자가 미리보기를 승인한 틀(headline 2026-11-01). 새 틀은 승인 전까지 미리보기만 만든다
+MAX_MAIN, MAX_SUB, MAX_BADGE, MIN_CANDIDATES = 16, 14, 14, 3     # 공백 제외. 후보는 내부에서 3개 만들어 1개를 고른다
+MAX_LINES = {"compare": 2, "number": 2, "headline_v2": 3}     # 판별 메인 줄 수. 질문형만 상황·대상·질문 3줄을 쓴다
+LAYOUT = {"compare": "compare", "number": "number", "headline": "headline_v2"}     # 틀마다 지금 판
+APPROVED_LAYOUTS = {"compare", "number", "headline_v2"}   # 사용자가 미리보기를 승인한 판(compare 2026-11-01, number·headline_v2 2026-11-04). 승인 전 판은 미리보기만 만들고 운영은 headline_v2로 한다
 SAMPLE_EVERY = 5                               # 안정화된 틀은 5편마다 1편 축소본을 표본 확인한다(발행을 기다리게 하지 않는다)
 
 NUM_RE = re.compile(r"(\d+(?:[.,]\d+)*)\s*(만원|억원|만|억|%|개월|년|원)?")
@@ -200,18 +202,42 @@ def card_copy_issues(cards: list) -> list:
     return issues
 
 
-def select_template(md: str) -> tuple:
-    """→ (요청한 틀, 실제 틀, 대체 이유). 카드가 없거나 맞지 않으면 예전 코드로 돌아가지 않고 headline으로 처리한다."""
-    kind = memo_value(md, "썸네일 유형") or ""
+def number_parts(main: str):
+    """number 메인 → (기준 대상, 숫자+단위, 뒤 낱말). 숫자 묶음이 하나이고 기준 대상 낱말이 있을 때만.
+    `25%`만 크게 쓰면 공제율처럼 읽힌다. `총급여의 25%`처럼 무엇의 숫자인지가 붙어야 한다."""
+    flat = main.replace("/", " ")
+    found = [m for m in NUM_RE.finditer(flat) if m.group(2) and not re.fullmatch(r"20\d\d", m.group(1))]
+    if len(found) != 1:
+        return None
+    m = found[0]
+    before, after = flat[:m.start()].strip(), flat[m.end():].strip()
+    return (before, m.group(0).strip(), after) if re.search(r"[가-힣]", before + after) else None
+
+
+def template_fit(md: str) -> dict:
+    """틀마다 맞지 않는 이유. 빈 문자열이면 맞는다."""
+    main = copy_of(md)[0]
     cards = thumb_cards(md)
-    if kind == "headline":
-        return kind, "headline", ""
+    problems = card_copy_issues(cards) if cards else ["`- 썸네일 카드:`가 없다"]
+    return {"compare": f"카드가 맞지 않는다: {problems[0]}" if cards and problems else (problems[0] if problems else ""),
+            "number": "" if number_parts(main) else "메인에 숫자 하나와 기준 대상 낱말이 없다",
+            "headline": ""}
+
+
+def select_template(md: str, recent=()) -> tuple:
+    """→ (요청한 틀, 실제 틀, 이유). 지정한 틀이 맞으면 그대로, 안 맞으면 headline으로 바꾸고 이유를 남긴다.
+    지정이 없으면 맞는 틀 중에서 고르고, 맞는 틀이 둘 이상일 때만 최근 글의 틀을 피한다."""
+    kind = memo_value(md, "썸네일 유형") or ""
+    fit = template_fit(md)
     if kind == "scene":
         return kind, "headline", "scene은 현재 운영에서 비활성화했다"
-    if not cards:
-        return kind, "headline", "`- 썸네일 카드:`가 없다"
-    problems = card_copy_issues(cards)
-    return (kind, "headline", f"카드가 맞지 않는다: {problems[0]}") if problems else (kind, "compare", "")
+    if kind in fit:
+        return (kind, kind, "") if not fit[kind] else (kind, "headline", fit[kind])
+    lines = copy_of(md)[0].count("/") + 1
+    ready = [t for t in ("compare", "number", "headline") if not fit[t] and lines <= MAX_LINES[operating_layout(t)]]
+    pick = next((t for t in ready if t not in recent), ready[0]) if len(ready) > 1 else ready[0]
+    why = f"자동: 맞는 틀 {', '.join(ready)}" + (f", 최근 {AVOID_RECENT}편의 {ready[0]}를 피했다" if pick != ready[0] else "")
+    return kind, pick, why if len(ready) > 1 else f"자동: {fit['compare']}"
 
 
 def review_copy(md: str, text: str) -> tuple:
@@ -232,8 +258,15 @@ def review_copy(md: str, text: str) -> tuple:
         blocks.append(f"서브 카피 {len(s_)}자 (한 줄 {MAX_SUB}자 이내) — 문구를 줄이거나 생략한다")
     if len(b_) > MAX_BADGE:
         blocks.append(f"하단 배지 {len(b_)}자 ({MAX_BADGE}자 이내) — 문구를 줄이거나 생략한다")
-    if main.count("/") > 1:
-        blocks.append("메인 카피는 2줄까지다")
+    template = select_template(md)[1]
+    limit = MAX_LINES[operating_layout(template)]
+    if main.count("/") + 1 > limit:
+        blocks.append(f"메인 카피는 {operating_layout(template)}에서 {limit}줄까지다")
+    phrase = (memo_value(md, "썸네일 강조 구절") or "").strip()
+    if phrase and not any(phrase in x.strip() for x in main.split("/")):
+        blocks.append(f"`- 썸네일 강조 구절:`이 메인 한 줄 안에 그대로 없다: {phrase}")
+    if template == "headline" and operating_layout(template) == "headline_v2" and not phrase:
+        warns.append("headline에 `- 썸네일 강조 구절:`이 없다 — 강조 없이 그린다")
     if not SPECIFIC_RE.search(main + sub + badge):
         blocks.append("카피에 숫자·대상·조건·선택 문제가 하나도 없다")
     if m := BANNED_RE.search(main + sub + badge):
@@ -242,8 +275,6 @@ def review_copy(md: str, text: str) -> tuple:
     card_bodies = [c for c in cards[1:4:2] if c]
     warns += repeat_copy_issues(main, [sub, badge, *[c for c in card_bodies if not card_amount(c)]])
     warns += claim_issues([badge, *[c.replace("/", " ") for c in card_bodies]], text)
-    if select_template(md)[1] == "headline" and not (memo_value(md, "썸네일 강조 숫자") or "").strip():
-        warns.append("headline에 `- 썸네일 강조 숫자:`가 없다 — 가운데가 비어 보인다")
     if len(cards) == 5 and cards[4] == "+":
         if not can_add(cards):
             warns.append("더하기를 뺐다 — 단위가 같은 두 금액이 아니다")
@@ -280,8 +311,8 @@ def manual_reasons(md: str, template: str) -> list:
     """사람이 봐야 하는 이유. 안정화된 틀과 근거 문장이 있는 글은 기다리게 하지 않는다."""
     main, sub, _ = copy_of(md)
     out = []
-    if template not in APPROVED_TEMPLATES:
-        out.append(f"새 틀 {template}: 미리보기 승인 전이다")
+    if LAYOUT.get(template, template) not in APPROVED_LAYOUTS:
+        out.append(f"새 판 {LAYOUT.get(template, template)}: 미리보기 승인 전이다 — 운영 대표사진은 {operating_layout(template)}로 만들었다")
     if "?" in main + sub and not evidence_quotes(md):
         out.append("질문의 답이 본문 어디인지 `- 썸네일 근거:`가 없어 미검증이다")
     return out
@@ -300,6 +331,16 @@ def number_evidence(md: str, text: str) -> list:
         at = next((i + 1 for i, ln in enumerate(lines) if n in {x for x, _ in _number_units(ln)} and "## 작성 메모" not in ln), 0)
         out.append(f"{n}{u}: {row} / 본문 {at}행")
     return out
+
+
+def operating_layout(template: str) -> str:
+    """운영 대표사진에 쓰는 판. 지금 판이 승인 전이면 승인된 headline_v2."""
+    layout = LAYOUT.get(template, template)
+    return layout if layout in APPROVED_LAYOUTS else "headline_v2"
+
+
+def recent_templates(num: str, count: int = AVOID_RECENT) -> list:
+    return recent_poses(num, count, "actual_template")
 
 
 def template_for(intent: str) -> str:
@@ -328,12 +369,12 @@ def mascot_status(pose: str, master_dir: Path = None) -> tuple:
     return "OK", png
 
 
-def recent_poses(num: str, count: int = AVOID_RECENT) -> list:
-    """manifest에 남은 이전 글의 자세, 최근 것부터."""
+def recent_poses(num: str, count: int = AVOID_RECENT, field: str = "mascot_pose") -> list:
+    """manifest에 남은 이전 글의 값(기본은 자세), 최근 것부터."""
     out = []
     for n in range(int(num) - 1, int(num) - 1 - count, -1):
         p = MANIFESTS / f"{n}.yaml"
-        m = re.search(r'^mascot_pose: "(.*)"', p.read_text(encoding="utf-8"), re.M) if p.exists() else None
+        m = re.search(rf'^{field}: "(.*)"', p.read_text(encoding="utf-8"), re.M) if p.exists() else None
         if m and m.group(1):
             out.append(m.group(1))
     return out
@@ -553,7 +594,7 @@ def selftest():
 
     def doc(main="600 + 300만원", sub="연금저축·IRP 나누기", badge="합산 900만원 한도", extra=""):
         return (f"제목: 2026 IRP 세액공제 계산｜연금저축과 나눠 납입하는 방법\n\n{text}\n\n## 작성 메모\n\n"
-                f"- 썸네일 유형: number\n- 썸네일 문구: {main} | {sub}\n- 썸네일 배지: {badge}\n- 썸네일 후보: a | b | c\n- 썸네일 선택 이유: 사유\n"
+                f"- 썸네일 유형: compare\n- 썸네일 문구: {main} | {sub}\n- 썸네일 배지: {badge}\n- 썸네일 후보: a | b | c\n- 썸네일 선택 이유: 사유\n"
                 f"- 카테고리 색: pension\n- 돼지 자세: calculator\n{extra}\n{facts_tbl}")
 
     assert copy_issues(doc(), text) == [], copy_issues(doc(), text)
@@ -575,7 +616,7 @@ def selftest():
     blocks, warns = review_copy(doc("연금저축 600, / IRP 300?", "꼭 이렇게 나눠야 할까", "IRP 300 한도"), text)
     assert blocks == [] and any("다시 적었다" in w for w in warns), "단순 반복은 경고만"
     assert trim_copy("합산 900만원", "합산 900만원", "합산 900만원") == ("합산 900만원", "", "")
-    assert any("2줄" in i for i in copy_issues(doc("600 / 300 / 900"), text))
+    assert any("2줄" in i for i in copy_issues(doc("600 / 300 / 900", extra=card), text)), "compare는 2줄까지"
     for bad in ("전부", "누구나", "모르면 손해", "무조건"):
         assert any("금지" in i for i in copy_issues(doc(f"{bad} 900만원"), text)), bad
     assert any("`최대`" in i for i in copy_issues(doc("최대 148.5만원", "IRP·연금저축 세액공제", "연 900만원 한도"), text))
@@ -598,18 +639,36 @@ def selftest():
     assert copy_issues(doc(extra="- 썸네일 근거: 합산 900만원 한도를 나누는 법"), text) == []
     assert any("근거" in i for i in copy_issues(doc(extra="- 썸네일 근거: 본문에 없는 문장"), text))
     assert manual_reasons(doc("600 / 300?", "고민"), "compare") and not manual_reasons(doc(), "compare")
-    assert not manual_reasons(doc("600 / 300?", "고민", extra="- 썸네일 근거: 합산"), "compare") and manual_reasons(doc(), "새틀") and not manual_reasons(doc(), "headline")
-    assert any("강조 숫자" in w for w in review_copy(doc(), text)[1]), "숫자 없는 headline은 경고"
-    assert not any("강조 숫자" in w for w in review_copy(doc(extra="- 썸네일 강조 숫자: 900만원"), text)[1])
+    assert not manual_reasons(doc("600 / 300?", "고민", extra="- 썸네일 근거: 합산"), "compare") and manual_reasons(doc(), "새틀")
+    assert not manual_reasons(doc(), "headline") and not manual_reasons(doc(), "number")
+    assert operating_layout("새틀") == "headline_v2" and any("headline_v2로" in x for x in manual_reasons(doc(), "새틀")), "승인 전 판은 사람이 보고, 운영은 headline_v2로 만든다"
     # TEST-THUMB-TEMPLATE-006: 금액 배분 → compare, 신청·조회 → headline, 카드 누락 → headline 대체
     assert select_template(ok)[1:] == ("compare", "")
-    assert select_template(doc(extra="- 썸네일 유형: x").replace("- 썸네일 유형: number", "- 썸네일 유형: headline").replace("- 썸네일 유형: x\n", ""))[:2] == ("headline", "headline")
-    got = select_template(doc().replace("- 썸네일 유형: number", "- 썸네일 유형: action"))
+    assert select_template(doc(extra="- 썸네일 유형: x").replace("- 썸네일 유형: compare", "- 썸네일 유형: headline").replace("- 썸네일 유형: x\n", ""))[:2] == ("headline", "headline")
+    got = select_template(doc().replace("- 썸네일 유형: compare", "- 썸네일 유형: action"))
     assert got[:2] == ("action", "headline") and "없다" in got[2], "신청·조회 글은 카드 없이 headline"
     got = select_template(ok.replace(card, "- 썸네일 카드: 연금저축 | IRP"))
     assert got[1] == "headline" and "맞지 않는다" in got[2], "카드 필드 누락은 조용히 넘어가지 않고 이유를 남긴다"
     assert select_template(ok.replace("600만원", "개인형 퇴직연금과 연금저축 합산"))[1] == "headline", "카드가 과밀하면 headline"
-    assert select_template(doc().replace("- 썸네일 유형: number", "- 썸네일 유형: scene"))[1:] == ("headline", "scene은 현재 운영에서 비활성화했다")
+    assert select_template(doc().replace("- 썸네일 유형: compare", "- 썸네일 유형: scene"))[1:] == ("headline", "scene은 현재 운영에서 비활성화했다")
+    # TEST-THUMB-FORMAT-007: number는 숫자 하나와 기준 대상이 있어야 한다. 자동 선택은 맞는 틀이 둘 이상일 때만 반복을 피한다
+    num_doc = lambda main, kind="number": doc(main, "나는 넘겼을까?", "").replace("- 썸네일 유형: compare", f"- 썸네일 유형: {kind}")
+    assert number_parts("총급여의 25%") == ("총급여의", "25%", "") and number_parts("25%") is None and number_parts("600만원 / 300만원") is None
+    assert select_template(num_doc("합산 900만원"))[1:] == ("number", "")
+    got = select_template(num_doc("900만원"))
+    assert got[1] == "headline" and "기준 대상" in got[2], "숫자만 크게 쓰면 공제율처럼 읽혀 headline으로 바꾼다"
+    auto = ok.replace("- 썸네일 유형: compare\n", "")
+    assert select_template(auto)[1] == "compare" and select_template(auto, ("compare",))[1] == "headline", "compare·headline이 다 맞으면 최근 틀을 피한다"
+    assert select_template(num_doc("연금 안내", "x").replace("- 썸네일 유형: x\n", ""), ("headline",))[1] == "headline", "맞는 틀이 하나면 반복해도 그대로"
+    assert select_template(ok, ("compare", "compare", "compare"))[1] == "compare", "지정한 틀은 반복이어도 쓴다"
+    # 줄 수는 판마다. 질문형만 3줄
+    three = "따로 사는 / 부모님도 / 공제될까?"
+    hl = lambda extra="": doc(three, "나이·소득 조건 확인", "", extra).replace("- 썸네일 유형: compare", "- 썸네일 유형: headline")
+    assert any("compare에서 2줄" in i for i in copy_issues(doc(three, "", "", card), text))
+    assert not any("줄까지" in i for i in copy_issues(hl(), text)), "질문형은 3줄"
+    assert any("강조 구절" in w for w in review_copy(hl(), text)[1])
+    assert not any("강조 구절" in w for w in review_copy(hl("- 썸네일 강조 구절: 공제될까?"), text)[1])
+    assert any("강조 구절" in i for i in copy_issues(hl("- 썸네일 강조 구절: 부모님도 공제"), text)), "줄을 넘는 구절은 막는다"
 
     # TEST-THUMB-MASCOT-002: 등록 안 된 돼지·승인 없이 바뀐 파일은 쓰지 않는다. 승인한 새 버전은 쓴다
     from PIL import Image

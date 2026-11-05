@@ -1,0 +1,49 @@
+thumbnail_id: "TH-20261105-34"
+status: "OK"
+seo_title: "2026 국민연금 임의계속가입｜60세 넘어 65세 전까지 더 내는 방법"
+template_type: "headline"
+main_copy: "60세 넘어도 / 국민연금 / 낼 수 있을까?"
+sub_copy: "65세 생일 전날까지"
+bottom_badge: "임의계속가입"
+copy_candidates: ["60세 넘어도 국민연금 낼 수 있을까?", "65세 생일 전날까지", "보험료 9.5% 전부 본인"]
+selection_reason: "60세 독자가 \"나도 더 낼 수 있나\"를 바로 떠올리게 가능 여부를 질문으로 두고, 답의 핵심 기한을 보조 문구로 둔다"
+verified_number: "60"
+verified_rows: "신청 기한 / 제외 대상"
+verified_source_url: "https://www.nps.or.kr/pnsinfo/ntpsklg/getOHAF0032M0.do"
+verified_at: "2026-11-05 00:40"
+category: "pension"
+color_code: "pension_green"
+mascot_asset: "pig_thinking.png"
+mascot_pose: "thinking"
+mascot_pose_reason: "주제 comparison"
+renderer: "code"
+template_id: "headline"
+card_copy: ""
+mascot_area_ratio: 0.161
+mascot_position: "lower_right_safe"
+ai_mark_safe_zone_clear: true
+auto_qc_passed: true
+auto_fact_checks_passed: true
+number_evidence: ["60: 신청 기한 / 본문 1행", "65: 신청 기한 / 본문 1행"]
+output_original: "34_썸네일.png"
+output_mobile_preview: "34_썸네일_160.png"
+requested_template: "headline"
+actual_template: "headline"
+template_fallback_reason: ""
+layout: "headline_v2"
+layout_approved: true
+operating_layout: "headline_v2"
+recent_templates: ["number", "compare", "headline"]
+highlight_phrase: "낼 수 있을까?"
+preview_layout_output: ""
+preview_layout_qc: []
+asset_version: 1
+asset_hash: "563945f49512056d6c204b67d5e46f0065c1e21977f339d06d6d9e1c09f5585e"
+asset_status: "approved"
+blocks: []
+warnings: []
+manual_review_required: false
+manual_review_reasons: []
+sample_check_due: false
+previews: ["C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\34_썸네일_160.png", "C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\34_썸네일_320.png"]
+fact_note: "자동 검사 통과는 사실 정확성 보장이 아니다. 의미 일치는 근거 문장과 사람이 본다"

@@ -453,6 +453,13 @@ def next_publish_slot(rows: list, now):
     return slot
 
 
+def early_slot(rows: list, r: dict, when):
+    """r이 when에 발행됐을 때, 그 앞 글들 기준 발행 가능 시각이 더 늦으면 그 시각. 지켰으면 None."""
+    before = [x for x in rows if x is not r and x["published"] and published_at(x["published"]) < when]
+    slot = next_publish_slot(before, when)
+    return slot if slot > when else None
+
+
 def slot_text(rows: list, now=None) -> str:
     """발행 가능 시각 안내. 장부만 보면 안 된다 — 27~29편이 발행됐는데 장부에 없어 "10-31 이후"라고 잘못 안내했다."""
     now = now or datetime.datetime.now()
@@ -619,7 +626,14 @@ def cmd_sync(_args=None):
     for r in rows:
         p = matched.get(r["post"])
         if p and (not r["logno"] or len(r["published"]) <= 10):      # 발행 간격을 보려고 시각까지 넣는다
+            fresh = not r["published"]
             r["logno"], r["published"] = p["logNo"], f"{p['when']:%Y-%m-%d %H:%M}"
+            # 간격 경고는 `status PUBLISHED`가 시각을 처음 쓸 때만 떴다. sync가 먼저 채우면 건너뛰어
+            # 33편이 32편 2시간 뒤에 발행됐는데 아무것도 알리지 않았다(2026-11-05)
+            slot = early_slot(rows, r, p["when"]) if fresh else None
+            if slot:
+                print(f"⚠ {r['post']}편: 발행 간격 초과 — {p['when']:%Y-%m-%d %H:%M}에 발행됐는데 {slot:%Y-%m-%d %H:%M} 이후가 맞았다 "
+                      f"({MIN_GAP_HOURS}시간 · 7일 {MAX_PER_WEEK}편)")
         if p and norm_title(p["title"]) != norm_title(titles[r["post"]]) and num_of(r["post"]) >= RULES_FROM:
             print(f"⚠ {r['post']}편: 라이브 제목이 원고와 다르다 — {p['title'].strip()}")
     write_csv(LEDGER, LEDGER_COLS, rows)
@@ -740,6 +754,9 @@ def selftest():
     def pub(*ts):
         return [{"status": "PUBLISHED", "published": t} for t in ts]
     assert next_publish_slot(pub("2026-10-26 23:00"), now) == now                        # 37시간 지났다
+    led = [{"post": "32", "published": "2026-11-04 22:02"}, {"post": "33", "published": ""}]
+    assert early_slot(led, led[1], datetime.datetime(2026, 11, 5, 0, 3)) == datetime.datetime(2026, 11, 6, 10, 2), "33편: 2시간 뒤 발행은 경고"
+    assert early_slot(led, led[1], datetime.datetime(2026, 11, 6, 11, 0)) is None
     assert next_publish_slot(pub("2026-10-27 01:00"), now) == datetime.datetime(2026, 10, 28, 13, 0)   # 35시간 → 1시간 뒤
     assert next_publish_slot(pub("2026-10-27", "2026-10-24 09:00"), now) == now          # 날짜만 있는 기록은 0시
     three = pub("2026-10-22 09:00", "2026-10-24 09:00", "2026-10-26 09:00")      # 7일 안에 3편 → 4편째는 첫 글 + 7일

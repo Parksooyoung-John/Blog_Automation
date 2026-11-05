@@ -455,6 +455,7 @@ def next_publish_slot(rows: list, now):
 
 def early_slot(rows: list, r: dict, when):
     """r이 when에 발행됐을 때, 그 앞 글들 기준 발행 가능 시각이 더 늦으면 그 시각. 지켰으면 None."""
+    when = when.replace(tzinfo=None)      # 라이브 시각은 KST aware, 장부 시각은 KST naive다
     before = [x for x in rows if x is not r and x["published"] and published_at(x["published"]) < when]
     slot = next_publish_slot(before, when)
     return slot if slot > when else None
@@ -757,6 +758,8 @@ def selftest():
     led = [{"post": "32", "published": "2026-11-04 22:02"}, {"post": "33", "published": ""}]
     assert early_slot(led, led[1], datetime.datetime(2026, 11, 5, 0, 3)) == datetime.datetime(2026, 11, 6, 10, 2), "33편: 2시간 뒤 발행은 경고"
     assert early_slot(led, led[1], datetime.datetime(2026, 11, 6, 11, 0)) is None
+    kst = datetime.timezone(datetime.timedelta(hours=9))      # sync는 라이브의 aware 시각을 넘긴다 — naive만 시험해 첫 실행에서 TypeError가 났다
+    assert early_slot(led, led[1], datetime.datetime(2026, 11, 5, 0, 3, tzinfo=kst)) == datetime.datetime(2026, 11, 6, 10, 2)
     assert next_publish_slot(pub("2026-10-27 01:00"), now) == datetime.datetime(2026, 10, 28, 13, 0)   # 35시간 → 1시간 뒤
     assert next_publish_slot(pub("2026-10-27", "2026-10-24 09:00"), now) == now          # 날짜만 있는 기록은 0시
     three = pub("2026-10-22 09:00", "2026-10-24 09:00", "2026-10-26 09:00")      # 7일 안에 3편 → 4편째는 첫 글 + 7일

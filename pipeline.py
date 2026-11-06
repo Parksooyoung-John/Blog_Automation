@@ -9,6 +9,10 @@
     python -X utf8 pipeline.py linkcheck               # 발행 글의 내부 링크가 살아 있는 글을 가리키는지
     python -X utf8 pipeline.py perf                    # 24h·7d·28d·30d 점검 대상
     python -X utf8 pipeline.py perf add NN 24h views=9 search_in=1 search_kw=키워드 ...
+    python -X utf8 pipeline.py queries add metric=query post=28 query=수정신고 방법 source=캡처.png
+    python -X utf8 pipeline.py queries import 파일.csv  # 같은 열 이름의 CSV
+    python -X utf8 pipeline.py queries trend           # 완료된 같은 길이 기간끼리만 비교
+    python -X utf8 pipeline.py queries plan            # 검색어 묶음 → 기존 글 대조 → UPDATE·NEW·HOLD
     python -X utf8 pipeline.py --selftest
 
 상태 기록의 목적은 "APPROVED 이전에는 붙여넣기 파일도 안 만든다"를 코드로 막는 것이다(naver_paste.page_for).
@@ -29,7 +33,7 @@ CAND_COLS = ["id", "cluster", "order", "role", "keyword", "intent", "volume", "s
              "official", "diff", "season", "score", "decision", "status", "post"]
 PERF_COLS = ["post", "checkpoint", "date", "views", "visitors", "search_in", "search_kw", "home_in", "avg_time",
              "likes", "comments", "link_clicks", "threads_in", "flag", "grade",
-             "thumb_changed_at", "title_changed", "impressions", "ctr"]     # 대표사진 효과 기록. 노출수가 없으면 클릭률을 쓰지 않는다
+             "thumb_changed_at", "title_changed", "impressions", "ctr", "body_changed_at", "change_kind"]     # 대표사진 효과 기록. 노출수가 없으면 클릭률을 쓰지 않는다
 
 # 순서 있는 본선. SCHEDULED는 예약발행을 쓸 때만 거친다.
 FLOW = ["IDEA", "RESEARCHING", "DRAFT", "SEO_REVIEW", "HUMAN_REVIEW", "APPROVED", "SCHEDULED", "PUBLISHED"]
@@ -688,13 +692,14 @@ def cmd_perf(args, today=None):
         write_csv(PERF, PERF_COLS, rows)
         print(f"{rec['post']}편 {cp} 등급 {rec['grade']}")
         if rec["search_kw"]:
-            print(f"검색 유입 키워드 \"{rec['search_kw']}\" → _candidates.csv에 IDEA 후보로 추가, 연관 세부 글 2개를 `score`로 채점한다")
-            cands = read_csv(CANDS, CAND_COLS)
+            # 예전에는 검색어마다 후보를 하나씩 만들었다 — 검색어마다 글 하나가 된다. 관측으로만 쌓고 `queries plan`이 묶는다
+            qrows = read_csv(QUERIES, QUERY_COLS)
             for kw in rec["search_kw"].split("|"):
-                if kw.strip() and not any(c["keyword"] == kw.strip() for c in cands):
-                    cands.append({**{c: "" for c in CAND_COLS}, "id": f"p{rec['post']}-{len(cands) + 1}",
-                                  "keyword": kw.strip(), "intent": f"{rec['post']}편 검색 유입 {cp}"})
-            write_csv(CANDS, CAND_COLS, cands)
+                if kw.strip():
+                    qrows, _ = add_query(qrows, {"captured_at": rec["date"], "metric": "query", "post": rec["post"],
+                                                 "query": kw.strip(), "source": f"perf add {cp}", "note": "기간·건수 미기재"})
+            write_csv(QUERIES, QUERY_COLS, qrows)
+            print(f"검색 유입 키워드 \"{rec['search_kw']}\" → {QUERIES.name}에 기록. `queries plan`으로 기존 글과 대조한다")
         if cp == "30d" and rec["grade"] in ("D", "C") and not to_int(rec["search_in"]):
             print("30일간 검색 유입 없음 → 제목·도입·검색 의도 재검토 (삭제하지 않는다, UPDATE_REQUIRED 후보)")
         return
@@ -704,6 +709,149 @@ def cmd_perf(args, today=None):
             d = due_checkpoints(r["published"], {k for p, k in done if p == r["post"]}, today)
             if d:
                 print(f"{r['post']}편 {r['primary_kw'][:24]:<24} 발행 {r['published']} — 점검 대상: {', '.join(d)}")
+
+
+# ---- 실제 유입 검색어 (2026-11-06) ----------------------------------------
+# 통계 캡처를 손으로 옮긴다. 화면에 없는 값은 비워 두고, 비율로 건수를 역산하지 않는다.
+
+QUERIES, GROUPS = DIR / "_queries.csv", DIR / "_query_groups.csv"
+QUERY_COLS = ["captured_at", "period_start", "period_end", "period_type", "complete", "metric", "post", "query",
+              "count", "share", "source", "note"]
+QUERY_KEY = ("period_start", "period_end", "period_type", "metric", "post", "query", "source")
+QUERY_METRICS = {"views", "visitors", "search_in", "query"}
+GROUP_COLS = ["group_id", "queries", "intent", "observations", "post", "overlap", "decision", "reason", "boundary",
+              "title_thumb", "related"]
+INTENTS = [("오류·누락", r"수정|정정|잘못|오류|누락|경정"), ("금액·계산", r"얼마|계산|금액|세율|가산세"),
+           ("기한·일정", r"기한|기간|언제|마감"), ("절차·신청", r"방법|신청|홈택스|하는\s?법|절차"),
+           ("자격·가능", r"조건|대상|가능|될까|되나"), ("비교·선택", r"vs|차이|비교"),
+           ("예외 상황", r"같은\s?날|해외|알바|집체|심리검사")]
+RELATED_AT = 0.20      # `실업급여 5차`↔`5차 실업인정`이 0.25다. 병합이 아니라 관련 표시라 낮게 둔다
+
+
+def add_query(rows: list, rec: dict) -> tuple:
+    """→ (rows, 추가했나). 같은 캡처를 다시 넣으면 중복으로 본다."""
+    rec = {c: (rec.get(c) or "").strip() for c in QUERY_COLS}
+    if rec["metric"] not in QUERY_METRICS:
+        raise ValueError(f"metric은 {'·'.join(sorted(QUERY_METRICS))} 중 하나다: {rec['metric']}")
+    if rec["post"]:
+        rec["post"] = f"{num_of(rec['post']):02d}"
+    key = tuple(rec[k] for k in QUERY_KEY)
+    if any(tuple(r[k] for k in QUERY_KEY) == key for r in rows):
+        return rows, False
+    return rows + [rec], True
+
+
+def intent_of(q: str) -> str:
+    """낱말이 나오는 순서대로 의도를 잇는다. `수정신고 방법`은 오류·누락+절차·신청이다."""
+    hits = sorted((m.start(), name) for name, pat in INTENTS for m in [re.search(pat, q)] if m)
+    return "+".join(dict.fromkeys(n for _, n in hits)) or "미분류"
+
+
+def group_queries(rows: list) -> list:
+    """검색어 → 묶음. 공백을 지운 글자가 같거나 낱말 집합이 같을 때만 묶는다. 비슷한 것은 related로만 남긴다."""
+    groups = []
+    for r in rows:
+        if r["metric"] != "query" or not r["query"]:
+            continue
+        q = r["query"]
+        flat, words = re.sub(r"\s+", "", q), frozenset(q.split())
+        g = next((g for g in groups if flat in g["flat"] or words in g["words"]), None)
+        if not g:
+            g = {"flat": set(), "words": set(), "queries": [], "rows": []}
+            groups.append(g)
+        g["flat"].add(flat)
+        g["words"].add(words)
+        if q not in g["queries"]:
+            g["queries"].append(q)
+        g["rows"].append(r)
+    for i, g in enumerate(groups, 1):
+        g["id"], g["intent"] = f"q{i:02d}", intent_of(g["queries"][0])
+        g["obs"] = len({(r["period_start"], r["period_end"], r["post"], r["source"]) for r in g["rows"]})
+    for g in groups:
+        a = min(g["flat"])
+        g["related"] = [h["id"] for h in groups if h is not g and jaccard(a, min(h["flat"])) >= RELATED_AT]
+    return groups
+
+
+def judge_group(g: dict, bodies: dict, titles: dict) -> dict:
+    """묶음 → UPDATE·NEW·HOLD와 근거. 원고는 읽기만 한다. 제목·대표사진은 늘 keep이다."""
+    landed = [r["post"] for r in g["rows"] if r["post"]]
+    text = " ".join(g["queries"])
+    best, cover = max(((k, contain(text, t)) for k, t in titles.items()), key=lambda x: x[1], default=("", 0))
+    post = max(set(landed), key=landed.count) if landed else best if cover >= 0.70 else ""
+    out = {"group_id": g["id"], "queries": " | ".join(g["queries"]), "intent": g["intent"], "observations": str(g["obs"]),
+           "post": post, "overlap": f"{cover:.2f}" if not landed else "유입", "title_thumb": "keep",
+           "related": " ".join(g["related"])}
+    if post:
+        body = re.sub(r"\s+", "", bodies.get(post, ""))
+        missing = [w for w in dict.fromkeys(w for q in g["queries"] for w in q.split()) if re.sub(r"\s+", "", w) not in body]
+        if missing:
+            return {**out, "decision": "UPDATE", "reason": f"{post}편 본문에 없는 낱말: {', '.join(missing)}",
+                    "boundary": f"{post}편의 질문 안에서 본문 보완만 제안한다. 새 글로 쪼개지 않는다"}
+        return {**out, "decision": "HOLD", "reason": f"{post}편 본문이 이미 이 낱말을 모두 다룬다",
+                "boundary": f"{post}편과 같은 질문 — 새 글이면 중복이다"}
+    if g["obs"] >= 2:
+        return {**out, "decision": "NEW", "reason": f"맞는 글 없음(최대 겹침 {best}편 {cover:.2f}), 관측 {g['obs']}회. 공식 근거 확인 전(official=?)",
+                "boundary": f"가장 가까운 글은 {best}편 — 그 글이 답하지 않는 상황만 다룬다"}
+    return {**out, "decision": "HOLD", "reason": "맞는 글이 없고 관측이 1회뿐이다", "boundary": "관측이 더 쌓이면 다시 본다"}
+
+
+def query_trend(rows: list) -> tuple:
+    """→ (비교 줄, 제외 행 수). 기간이 있고 집계가 끝났고 건수가 있는 행끼리, 같은 길이의 바로 앞 기간과만 비교한다."""
+    nums = [r for r in rows if r["metric"] != "query"]
+    ok = [r for r in nums if r["period_start"] and r["period_end"] and r["complete"] == "Y" and r["count"]]
+    lines = []
+    for key in sorted({(r["metric"], r["post"], r["period_type"]) for r in ok}):
+        seq = sorted((r for r in ok if (r["metric"], r["post"], r["period_type"]) == key), key=lambda r: r["period_start"])
+        for a, b in zip(seq, seq[1:]):
+            span = lambda r: (datetime.date.fromisoformat(r["period_end"]) - datetime.date.fromisoformat(r["period_start"])).days
+            if span(a) != span(b) or datetime.date.fromisoformat(b["period_start"]) - datetime.date.fromisoformat(a["period_end"]) != datetime.timedelta(days=1):
+                continue
+            prev, cur = to_int(a["count"]), to_int(b["count"])
+            lines.append((key[0], key[1] or "전체", b["period_start"], b["period_end"], prev, cur,
+                          f"{(cur - prev) / prev:+.0%}" if prev else "-"))
+    return lines, len(nums) - len(ok)
+
+
+def post_bodies() -> dict:
+    return {p.name[:2]: p.read_text(encoding="utf-8").split("## 작성 메모")[0] for p in DIR.glob("[0-9][0-9]_*.md")}
+
+
+def cmd_queries(args):
+    rows = read_csv(QUERIES, QUERY_COLS)
+    sub = args[0] if args else "plan"
+    if sub in ("add", "import"):
+        if sub == "add":
+            recs = [dict(kv.partition("=")[::2] for kv in args[1:])]
+        else:
+            with open(args[1], encoding="utf-8-sig", newline="") as f:
+                recs = list(csv.DictReader(f))
+        added = 0
+        for rec in recs:
+            unknown = set(rec) - set(QUERY_COLS)
+            if unknown:
+                raise SystemExit(f"알 수 없는 열: {', '.join(sorted(unknown))}")
+            rec.setdefault("captured_at", f"{datetime.datetime.now():%Y-%m-%d %H:%M}")
+            rows, ok = add_query(rows, rec)
+            added += ok
+            if not ok:
+                print(f"중복이라 넣지 않았다: {rec.get('metric')} {rec.get('post')} {rec.get('query')} {rec.get('period_start')}")
+        write_csv(QUERIES, QUERY_COLS, rows)
+        print(f"{added}행 추가 · 전체 {len(rows)}행")
+    elif sub == "trend":
+        lines, skipped = query_trend(rows)
+        for m, p, a, b, prev, cur, pct in lines:
+            print(f"{m:<10}{p:<5}{a}~{b}  {prev} → {cur}  {pct}")
+        print(f"추세 제외 {skipped}행 (기간·완료 여부·건수 불명) — 참고 신호로만 쓴다")
+    elif sub == "plan":
+        out = [judge_group(g, post_bodies(), existing_titles()) for g in group_queries(rows)]
+        write_csv(GROUPS, GROUP_COLS, out)
+        for o in out:
+            print(f"{o['group_id']} {o['decision']:<6} {o['post'] or '-':<3} [{o['intent']}] {o['queries']}  — {o['reason']}"
+                  + (f"  (관련: {o['related']})" if o["related"] else ""))
+        print(f"→ {GROUPS.name}. NEW는 공식 근거를 확인한 뒤 사람이 _candidates.csv에 넣는다(자동으로 넣지 않는다)")
+    else:
+        raise SystemExit("queries add key=value ... | queries import 파일.csv | queries trend | queries plan")
 
 
 # ---- 자체 시험 ----------------------------------------------------------
@@ -837,11 +985,40 @@ def selftest():
     assert broken_links({"224000000002": h}, {"224000000001", "224000000002"}) == [("224000000002", "224000000009")]
     assert post_issues(sorted(DIR.glob("[0-9][0-9]_*.md"))[0]) == ([], [])        # 24편 이전 글은 새 규칙 대상이 아니다
     assert paste_gate(24) is None
+    # 실제 유입 검색어 — 날짜 없는 캡처, 중복, 묶음, 판정
+    q = lambda **k: {"metric": "query", **k}
+    rows, ok = add_query([], q(post="28", query="수정신고 방법", source="a.png"))
+    rows, dup = add_query(rows, q(post="28", query="수정신고 방법", source="a.png"))
+    assert ok and not dup and len(rows) == 1, "같은 캡처 재입력은 중복"
+    rows, _ = add_query(rows, {"metric": "views", "post": "", "share": "12%", "source": "b.png"})
+    assert rows[-1]["count"] == "", "비율로 건수를 역산하지 않는다"
+    wk = [{"metric": "views", "period_type": "week", "complete": "Y", "period_start": a, "period_end": b, "count": c, "source": "s"}
+          for a, b, c in (("2026-10-19", "2026-10-25", "150"), ("2026-10-26", "2026-11-01", "186"))]
+    for w in wk:
+        rows, _ = add_query(rows, w)
+    lines, skipped = query_trend(rows)
+    assert len(lines) == 1 and lines[0][4:] == (150, 186, "+24%") and skipped == 1, (lines, skipped)
+    for t in ("5차실업인정", "5차 실업인정", "실업급여 5차", "수정신고 가산세"):
+        rows, _ = add_query(rows, q(post="", query=t, source="c.png"))
+    gs = {g["queries"][0]: g for g in group_queries(rows)}
+    assert gs["5차실업인정"]["queries"] == ["5차실업인정", "5차 실업인정"], "띄어쓰기만 다르면 한 묶음, 원문 둘 다 남긴다"
+    assert "실업급여 5차" in gs and gs["실업급여 5차"]["id"] in gs["5차실업인정"]["related"], "비슷한 것은 관련 후보로만"
+    assert gs["수정신고 방법"]["intent"] == "오류·누락+절차·신청" and gs["수정신고 가산세"]["intent"] == "오류·누락+금액·계산"
+    bodies = {"28": "수정신고는 홈택스에서 합니다. 방법은 아래와 같습니다."}
+    titles = {"28": "연말정산 부양가족 잘못 공제 수정신고", "19": "실업급여 구직활동 5차"}
+    j = judge_group(gs["수정신고 방법"], bodies, titles)
+    assert j["decision"] == "HOLD" and j["post"] == "28" and j["title_thumb"] == "keep", j
+    j = judge_group(gs["수정신고 가산세"], {"28": bodies["28"]}, {"28": "연말정산 부양가족 수정신고 가산세"})
+    assert j["decision"] == "UPDATE" and "가산세" in j["reason"] and j["title_thumb"] == "keep", j
+    assert judge_group(gs["실업급여 5차"], {}, {"40": "근로장려금"})["decision"] == "HOLD", "맞는 글 없고 관측 1회면 보류"
+    rows, _ = add_query(rows, q(post="", query="실업급여 5차", source="d.png", period_start="2026-11-02"))
+    g = next(g for g in group_queries(rows) if g["queries"][0] == "실업급여 5차")
+    assert judge_group(g, {}, {"40": "근로장려금"})["decision"] == "NEW", "독립 질문이 두 번 관측되면 새 글 후보"
     print("selftest ok")
 
 
 COMMANDS = {"score": cmd_score, "start": cmd_start, "status": cmd_status, "list": cmd_list, "links": cmd_links,
-            "linkcheck": cmd_linkcheck, "sync": cmd_sync, "perf": cmd_perf}
+            "linkcheck": cmd_linkcheck, "sync": cmd_sync, "perf": cmd_perf, "queries": cmd_queries}
 
 if __name__ == "__main__":
     if "--selftest" in sys.argv:

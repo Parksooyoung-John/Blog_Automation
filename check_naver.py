@@ -530,6 +530,14 @@ def unit_nums(s: str) -> set:
             if not (m.group(2) == '년' and re.fullmatch(r'20\d\d', m.group(1)))}
 
 
+def year_warns(title: str, text: str) -> list:
+    """제목 연도와 본문의 `X년 귀속`이 다르면 경고. 연말정산은 2026년 귀속을 2027년 1월에 신고해 제목 연도가 어느 쪽인지 갈린다."""
+    # 세금 신고 글만 본다. 31편(건강보험료)은 2026년 보험료에 2025년 귀속 소득을 쓰는 게 맞는 내용이라 걸렸다
+    ty = re.search(r'20\d\d', title) if re.search(r'연말정산|세액공제|소득공제|경정청구|종합소득세', title) else None
+    return [f'제목 연도 {ty.group()}와 본문의 {x}년 귀속이 다르다 — 제목 연도가 귀속 연도인지 신고 연도인지 첫 문단에 밝힌다'
+            for x in sorted(set(re.findall(r'(20\d\d)년 귀속', text))) if ty and x != ty.group()]
+
+
 def v2_issues(md: str, body: str, text: str) -> tuple:
     """30편부터의 최신성·제목 규칙. → (실패 목록, 경고 목록)"""
     issues, warns = [], []
@@ -547,6 +555,7 @@ def v2_issues(md: str, body: str, text: str) -> tuple:
         issues.append(f'BLOCKED_NEEDS_REVIEW — 제목의 {n}{u}이(가) 본문에 없다')
     if m := YEAR_MIX_RE.search(text):
         issues.append(f'귀속연도와 신고연도가 섞였다: {m.group(0)[:30]}')
+    warns += year_warns(title, text)
 
     intent = memo_value(md, '검색 의도')
     if intent not in INTENTS:
@@ -1085,6 +1094,7 @@ def selftest():
     vfails("| 수령나이 | 63세 | 국민연금법 |", "| 신청 기간 | 63세 | 더데일리이코노미 기사 |", "일정 근거가 기사")    # 29편의 기간 근거
     vfails("63세 기준으로 계산", "63세 기준 7년 계산", "제목의 7년")                                                # 2년/2개월 충돌
     vfails("조건이 있습니다.", "2026년 귀속은 2026년 1월에 정산합니다.", "귀속연도")
+    assert year_warns("2026 연말정산 환급", "2025년 귀속분을 올해 2월에 정산했습니다.") and not year_warns("2026 연말정산", "2026년 귀속분입니다.") and not year_warns("2026 건강보험료 11월 조정", "2025년 귀속 소득"), "작성 연도·귀속 연도 불일치(세금 신고 글만)"
     with tempfile.TemporaryDirectory() as d:
         p_ = os.path.join(d, "30_t.md")
         assert any("결과가 없다" in i for i in title_gate_issue(p_, "제목"))

@@ -247,6 +247,7 @@ def canva_selftest():
     for eol in ("\n", "\r\n"):     # 시안 원고(26·27편)가 CRLF라 `## 작성 메모\n`을 못 찾고 배지가 조용히 빠졌다
         m = set_memo(set_memo(f"본문{eol}## 작성 메모{eol}{eol}- 썸네일 문구: a | b{eol}", "썸네일 배지", "새 배지"), "썸네일 문구", "c | d")
         assert "- 썸네일 배지: 새 배지" in m and "- 썸네일 문구: c | d" in m and "a | b" not in m, repr(m)
+    assert published_cards(["61_경정청구_수정신고", "75_경정청구_처리일정"], [{"post": "28", "status": "PUBLISHED"}]) == ["61_경정청구_수정신고"], "발행 글 카드는 --card가 다시 그리지 않는다"
     n = number_thumb_html("총급여의 25%", "나는 넘겼을까?", "배지")
     assert ">총급여의<" in n and ">25%<" in n and "class='card'" not in n.split("</style>")[1] and "class='band'" not in n
     from thumb_gate import MASTER_DIR
@@ -1299,6 +1300,18 @@ CARDS = {
         post_look(34), "기타임의계속가입자의 가장 낮은 보험료", "국민연금공단 안내 · 2026년 4월~2027년 3월",
         "96,235", "원", "기준소득월액 101.3만원 × 보험료율 9.5%",
         "회사 몫 없이 본인이 전부 냅니다."),
+    "75_경정청구_처리일정": timeline_card(
+        post_look(35), "경정청구 뒤 일정은 이렇게 흘러갑니다", "국세기본법 제45조의2 · 제51조",
+        [("청구일", "세무서 접수", "청구서를 받은 날부터 기한을 셉니다"),
+         ("2개월 안", "결과 통지", "결정하거나 할 이유가 없다고 알립니다"),
+         ("결정 후 30일 안", "환급 지급", "밀린 국세가 있으면 먼저 충당합니다")],
+        "실제로는 기한보다 일찍 처리되기도 합니다."),
+    "76_경정청구_통지지연": checklist_card(
+        post_look(35), "2개월이 지나도 소식이 없다면", "국세기본법 제45조의2 제3항·제4항",
+        [("관할 세무서에 진행 상황 묻기", "결정이 늦으면 세무서가 진행 상황을 알려야 합니다"),
+         ("2개월 다음 날부터 불복 청구", "이의신청·심사청구·심판청구"),
+         ("결정 통지 뒤 입금 확인", "결정한 날부터 30일 안에 지급")],
+        "통지가 없어도 기다리지 않고 다음 절차로 넘어갈 수 있습니다."),
 }
 
 # 34번(14편)부터는 글 색 + 글자 1.5배다. ACCENT를 습관대로 쓰면 작은 글자·다른 색 카드가 조용히 나온다.
@@ -1448,6 +1461,14 @@ def unreferenced(names) -> list:
     return [n for n in names if f"{n}.png" not in text]
 
 
+def published_cards(names, ledger=None) -> list:
+    """이미 발행된 글(장부 LIVE)이 쓰는 카드. `--card 경정청구_`가 35편 카드를 만들면서 28편(발행)의 61번까지 다시 그렸다(2026-11-06)."""
+    from pipeline import LEDGER, LEDGER_COLS, LIVE, read_csv
+    live = {r["post"] for r in (ledger if ledger is not None else read_csv(LEDGER, LEDGER_COLS)) if r["status"] in LIVE}
+    texts = {p.name[:2]: p.read_text(encoding="utf-8") for p in (Path(__file__).parent / "content" / "naver").glob("[0-9][0-9]_*.md")}
+    return [n for n in names if any(f"{n}.png" in t for k, t in texts.items() if k in live)]
+
+
 def draft_md(num: str):
     drafts = list((Path(__file__).parent / "content" / "naver").glob(f"{num}_*.md"))
     return drafts[0].read_text(encoding="utf-8") if drafts else ""
@@ -1586,6 +1607,10 @@ if __name__ == "__main__":
         picked = {k: v for k, v in CARDS.items() if key in k}
         if not picked:
             sys.exit(f"'{key}'가 들어간 카드가 없습니다")
+        locked = [] if "--force" in sys.argv else published_cards(picked)
+        for n in locked:      # 발행 글의 카드는 다시 그리면 라이브 이미지와 파일이 어긋난다. 고칠 때만 --force
+            print(f"  건너뜀: {n} — 발행된 글이 쓰는 카드다(다시 그리려면 --force)")
+        picked = {k: v for k, v in picked.items() if k not in locked}
         with sync_playwright() as pw:
             b = pw.chromium.launch(headless=True)
             bad = shoot_cards(b.new_page(device_scale_factor=2), picked)

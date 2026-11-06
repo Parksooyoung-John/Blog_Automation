@@ -1,0 +1,49 @@
+thumbnail_id: "TH-20261106-35"
+status: "OK"
+seo_title: "2026 연말정산 경정청구 처리기간｜청구 뒤 2개월 통지와 30일 환급"
+template_type: "calculation"
+main_copy: "청구 후 2개월"
+sub_copy: "결과 안 오면?"
+bottom_badge: "연말정산 경정청구"
+copy_candidates: ["청구 후 2개월", "결정 후 30일", "회사도 청구 가능"]
+selection_reason: "청구한 독자가 \"언제 오나\"를 먼저 묻는다. 법정 기한 하나를 크게 두고, 늦을 때의 답은 2절이 준다"
+verified_number: "2"
+verified_rows: "결과 통지 / 통지 없을 때 / 법령 시행일 / 가상 일정"
+verified_source_url: "https://www.law.go.kr/LSW/lsLawLinkInfo.do?lsJoLnkSeq=1001119822&lsId=001586&chrClsCd=010202&print=print"
+verified_at: "2026-11-06 12:30"
+category: "tax"
+color_code: "tax_teal"
+mascot_asset: "pig_phone.png"
+mascot_pose: "phone"
+mascot_pose_reason: "주제 lookup"
+renderer: "code"
+template_id: "number"
+card_copy: ""
+mascot_area_ratio: 0.065
+mascot_position: "lower_right_safe"
+ai_mark_safe_zone_clear: true
+auto_qc_passed: true
+auto_fact_checks_passed: true
+number_evidence: ["2개월: 결과 통지 / 본문 1행"]
+output_original: "35_썸네일.png"
+output_mobile_preview: "35_썸네일_160.png"
+requested_template: "number"
+actual_template: "number"
+template_fallback_reason: ""
+layout: "number"
+layout_approved: true
+operating_layout: "number"
+recent_templates: ["headline", "number", "compare"]
+highlight_phrase: ""
+preview_layout_output: ""
+preview_layout_qc: []
+asset_version: 1
+asset_hash: "e63e2d94b033dc544fb9a3b145f7ff06cf201c8d0c11d971a379b897539c6a93"
+asset_status: "approved"
+blocks: []
+warnings: []
+manual_review_required: false
+manual_review_reasons: []
+sample_check_due: true
+previews: ["C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\35_썸네일_160.png", "C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\35_썸네일_320.png"]
+fact_note: "자동 검사 통과는 사실 정확성 보장이 아니다. 의미 일치는 근거 문장과 사람이 본다"

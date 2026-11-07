@@ -1,0 +1,49 @@
+thumbnail_id: "TH-20261107-36"
+status: "OK"
+seo_title: "2026 실업급여 알바 신고｜숨기면 2배, 사업주와 짜면 5배"
+template_type: "headline"
+main_copy: "실업급여 받으면서 / 알바해도 / 될까?"
+sub_copy: "실업인정일에 신고"
+bottom_badge: "실업급여 알바"
+copy_candidates: ["실업급여 받으면서 알바해도 될까?", "월 60시간이면 취업", "숨기면 2배 추가징수"]
+selection_reason: "수급 중 알바를 고민하는 독자의 가능 여부 질문을 그대로 두고, 답의 핵심(신고 시점)을 보조 문구로 둔다"
+verified_number: ""
+verified_rows: ""
+verified_source_url: "https://m.work24.go.kr/cm/c/f/1100/selecSystInfo.do?currentPageNo=1&recordCountPerPage=10&systId=SI00000454&systClId=SC00000378&systClId=SC00000378"
+verified_at: "2026-11-07 10:30"
+category: "warning"
+color_code: "warning_brown"
+mascot_asset: "pig_surprised.png"
+mascot_pose: "surprised"
+mascot_pose_reason: "주제 warning"
+renderer: "code"
+template_id: "headline"
+card_copy: ""
+mascot_area_ratio: 0.158
+mascot_position: "lower_right_safe"
+ai_mark_safe_zone_clear: true
+auto_qc_passed: true
+auto_fact_checks_passed: true
+number_evidence: []
+output_original: "36_썸네일.png"
+output_mobile_preview: "36_썸네일_160.png"
+requested_template: "headline"
+actual_template: "headline"
+template_fallback_reason: ""
+layout: "headline_v2"
+layout_approved: true
+operating_layout: "headline_v2"
+recent_templates: ["number", "headline", "number"]
+highlight_phrase: "될까?"
+preview_layout_output: ""
+preview_layout_qc: []
+asset_version: 1
+asset_hash: "3ca0a02335bff0ea8f1f9c4dfd9fce792c6659b2af6edc44b071a8b6a40855a5"
+asset_status: "approved"
+blocks: []
+warnings: []
+manual_review_required: false
+manual_review_reasons: []
+sample_check_due: false
+previews: ["C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\36_썸네일_160.png", "C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\36_썸네일_320.png"]
+fact_note: "자동 검사 통과는 사실 정확성 보장이 아니다. 의미 일치는 근거 문장과 사람이 본다"

@@ -1,0 +1,49 @@
+thumbnail_id: "TH-20261107-37"
+status: "OK"
+seo_title: "2026 국민연금 임의가입｜소득 없어도 가입하는 조건과 최소 보험료"
+template_type: "calculation"
+main_copy: "최소 월 96,235원"
+sub_copy: "나도 가입될까?"
+bottom_badge: "국민연금 임의가입"
+copy_candidates: ["최소 월 96,235원", "소득 없어도 가입될까?", "18세부터 60세 전까지"]
+selection_reason: "가입을 고민하는 독자가 가장 먼저 묻는 최소 금액을 크게 두고, 자격 질문은 1절이 답한다"
+verified_number: "96,235"
+verified_rows: "최소 월 보험료 / 가상 1년"
+verified_source_url: "https://www.nps.or.kr/pnsinfo/ntpsklg/getOHAF0029M0.do"
+verified_at: "2026-11-07 12:00"
+category: "pension"
+color_code: "pension_green"
+mascot_asset: "pig_coin.png"
+mascot_pose: "coin"
+mascot_pose_reason: "주제 refund_support"
+renderer: "code"
+template_id: "number"
+card_copy: ""
+mascot_area_ratio: 0.068
+mascot_position: "lower_right_safe"
+ai_mark_safe_zone_clear: true
+auto_qc_passed: true
+auto_fact_checks_passed: true
+number_evidence: ["96,235원: 최소 월 보험료 / 본문 11행"]
+output_original: "37_썸네일.png"
+output_mobile_preview: "37_썸네일_160.png"
+requested_template: "number"
+actual_template: "number"
+template_fallback_reason: ""
+layout: "number"
+layout_approved: true
+operating_layout: "number"
+recent_templates: ["headline", "number", "headline"]
+highlight_phrase: ""
+preview_layout_output: ""
+preview_layout_qc: []
+asset_version: 1
+asset_hash: "50812b66520f820f3e0bfdab832b3abcd8c141ae7f536f0fae44f181ff24e934"
+asset_status: "approved"
+blocks: []
+warnings: []
+manual_review_required: false
+manual_review_reasons: []
+sample_check_due: false
+previews: ["C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\37_썸네일_160.png", "C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\37_썸네일_320.png"]
+fact_note: "자동 검사 통과는 사실 정확성 보장이 아니다. 의미 일치는 근거 문장과 사람이 본다"

@@ -30,7 +30,7 @@ LEDGER, CANDS, PERF = DIR / "_pipeline.csv", DIR / "_candidates.csv", DIR / "_pe
 
 LEDGER_COLS = ["post", "status", "cluster", "role", "portfolio", "primary_kw", "score", "approved", "logno", "published"]
 CAND_COLS = ["id", "cluster", "order", "role", "keyword", "intent", "volume", "serp_fresh", "geo_cited",
-             "official", "diff", "season", "score", "decision", "status", "post"]
+             "official", "diff", "season", "score", "decision", "status", "post", "track"]     # track: 빈칸·core | seasonal
 PERF_COLS = ["post", "checkpoint", "date", "views", "visitors", "search_in", "search_kw", "home_in", "avg_time",
              "likes", "comments", "link_clicks", "threads_in", "flag", "grade",
              "thumb_changed_at", "title_changed", "impressions", "ctr", "body_changed_at", "change_kind"]     # 대표사진 효과 기록. 노출수가 없으면 클릭률을 쓰지 않는다
@@ -68,7 +68,9 @@ SCOPE = re.compile(r"연말정산|세액공제|소득공제|세금|연금|노후
 FAMILY_MONEY = re.compile(r"부모|자녀|배우자|맞벌이|가족|직장인|월급|급여|연봉|퇴사|이직|생활비|공제|환급|지원|수당|보험료|월세|연말정산")
 OFF_TOPIC = re.compile(r"드라마|예능|연예|아이돌|가수|배우 |스포츠|축구|야구|결말|사건|사고|맛집|여행|게임")
 ACCEPT_AT, HOLD_AT = 75, 60
-CHECKPOINTS = {"24h": 1, "7d": 7, "28d": 28, "30d": 30}
+CHECKPOINTS = {"24h": 1, "7d": 7, "14d": 14, "28d": 28, "30d": 30}
+SEASON_FIT = re.compile(r"난방|관리비|공과금|전기요금|가스요금|직구|블랙프라이데이|할인|소비|생활비|장보기|물가|절약|환율|관세")
+TRACK_TARGET = {"core": 0.80, "seasonal": 0.20}     # 2026-11-09 노션 계획의 내부 실험값. 네이버 노출 기준이 아니다
 GRACE_DAYS = 3
 BOILER_MIN = 5             # 같은 문단이 이만큼 글에 그대로 있으면 템플릿 고정 문구로 본다(복사한 문단이 면제되지 않게 크게 잡는다)
 SIM_TITLE, SIM_BODY, SIM_Q = 0.70, 0.60, 0.70
@@ -308,12 +310,44 @@ def to_int(x, default=0):
         return default
 
 
+def score_seasonal(c: dict, titles: dict, today) -> tuple:
+    """시즌 후보 → (점수, 항목별, 결정). 브랜드 30·관측 수요 25·고유 가치 25·시의성 10·제작 가능성 10.
+    관측 수요가 비어 있으면 숫자로 포장하지 않고 점수 없이 HOLD다(2026-11-09 노션 계획)."""
+    kw = c["keyword"]
+    if OFF_TOPIC.search(kw):
+        return 0, {"주제 무관": 0}, "REJECTED"
+    if not (c["volume"] or c["serp_fresh"] or c["geo_cited"]):
+        return "", {"수요 근거": "미확인"}, "HOLD"
+    parts = {"브랜드": 30 if SEASON_FIT.search(kw) or FAMILY_MONEY.search(kw) or SCOPE.search(kw) else 0, "수요": 25,
+             "고유가치": 25 if c["diff"] == "1" else 0, "시의성": 10 if str(today.month) in c["season"].split("|") else 0,
+             "제작": 10 if c["official"] == "1" else 0}
+    total = sum(parts.values())
+    if total < ACCEPT_AT:
+        return total, parts, "HOLD" if total >= HOLD_AT else "REJECTED"
+    cover = max((contain(kw, t) for t in titles.values()), default=0)
+    return total, parts, "UPDATE_EXISTING" if cover >= 0.70 else "CREATE_NEW"
+
+
+def track_counts(rows: list, n: int = 10) -> dict:
+    """최근 n편 → {core: 편수, seasonal: 편수}. 원고의 `- 콘텐츠 트랙:`을 읽고, 없으면 core다."""
+    out = {"core": 0, "seasonal": 0}
+    for r in rows[-n:]:
+        try:
+            md = post_file(r["post"]).read_text(encoding="utf-8")
+        except (SystemExit, OSError):
+            continue
+        out["seasonal" if (memo_line(md, "콘텐츠 트랙") or "").strip() == "seasonal" else "core"] += 1
+    return out
+
+
 def score_one(c: dict, ledger_rows: list, titles: dict, today) -> tuple:
     """후보 한 줄 → (점수 100점, 항목별, 결정). 사람 판단 항목(official·diff)은 CSV 값을 그대로 읽는다.
 
     결정: REJECTED · HOLD · UPDATE_EXISTING(의도 70% 이상 겹침) · EXPAND_HUB(허브와 60~70%) ·
     CREATE_SUPPORTING_POST(클러스터 spoke) · CREATE_NEW. 뒤의 둘만 `start`할 수 있다(상태 IDEA).
     """
+    if c.get("track") == "seasonal":
+        return score_seasonal(c, titles, today)
     kw = c["keyword"]
     if OFF_TOPIC.search(kw):
         return 0, {"주제 무관": 0}, "REJECTED"
@@ -362,7 +396,7 @@ def cmd_score(args, today=None):
         c["score"], c["decision"] = str(total), decision
         if "--register" in args or not c["status"]:
             c["status"] = "IDEA" if decision in STARTABLE else decision
-        print(f"{c['id']:<8}{total:>3}점 {decision:<23}{c['keyword']}  " + " ".join(f"{k}{v}" for k, v in parts.items()))
+        print(f"{c['id']:<8}{total:>3}{'점' if total != '' else '  '} {decision:<23}{c['keyword']}  " + " ".join(f"{k}{v}" for k, v in parts.items()))
     write_csv(CANDS, CAND_COLS, rows)
 
 
@@ -521,6 +555,9 @@ def cmd_list(_args=None):
         print(f"  {k}: {n}편" + (f" ({n / len(new):.0%})" if new else ""))
     if new and sum(r["portfolio"] == "수익" for r in new) / len(new) > PORTFOLIO["수익"]:
         print("  ⚠ 수익형이 10%를 넘었다")
+    tc = track_counts(rows)
+    print(f"\n최근 {sum(tc.values())}편 트랙: core {tc['core']} / seasonal {tc['seasonal']} "
+          f"(내부 실험값 core 80 / seasonal 20 — 네이버 노출 기준이 아니다. 맞는 시즌 주제가 없으면 채우지 않는다)")
 
 
 # ---- 내부링크 -------------------------------------------------------------
@@ -890,6 +927,13 @@ def selftest():
     assert score_one(good, led, half, today)[2] == "EXPAND_HUB"
     assert score_one(good, led, {"12": "국민연금 받는 부모님 결과"}, today)[2] == "CREATE_SUPPORTING_POST"   # 공통어만 겹침
     # T4 인기 있지만 무관한 키워드
+    # 시즌 후보 — 관측 수요가 없으면 점수 없이 보류, 있으면 시즌 가중치로 채점
+    sea = {c: "" for c in CAND_COLS}
+    sea.update(id="hs-01", keyword="난방비 절약 외출모드", track="seasonal", diff="1", official="1", season=str(today.month))
+    assert score_one(sea, led, {}, today)[:3:2] == ("", "HOLD"), "수요 근거 미확인은 숫자로 포장하지 않는다"
+    got = score_one({**sea, "serp_fresh": "7"}, led, {}, today)
+    assert got[0] == 100 and got[2] == "CREATE_NEW", got
+    assert score_one({**sea, "serp_fresh": "7", "keyword": "인기 드라마 결말"}, led, {}, today)[2] == "REJECTED"
     s4, _, d4 = score_one({**short, "keyword": "인기 드라마 결말"}, led, {}, today)
     assert s4 < HOLD_AT and d4 == "REJECTED"
     assert ALIASES["READY_FOR_APPROVAL"] == "HUMAN_REVIEW" and set(ALIASES.values()) <= set(ALLOWED) | {"RESEARCHING"}

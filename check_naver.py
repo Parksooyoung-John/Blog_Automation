@@ -373,7 +373,7 @@ CLICK_RE = re.compile(r'광고.{0,8}(클릭|눌러)|클릭해 주세요')
 HYPOTHETICAL_RE = re.compile(r'가상|예시|계산 예|가정')
 # V2(2026-10-31, 30편부터) — 최신성·제목. 명세 NAVER_BLOG_HARNESS_TOPIC_FRESHNESS_TITLE_CA_V2.md. 29편이 열린 서비스를 "열리기 전"으로 썼다.
 V2_FROM = 30
-V2_THUMBS = ("number", "compare", "action", "headline")      # 코드 렌더. scene은 현재 운영에서 비활성화했다(시안에만 쓴다)
+V2_THUMBS = ("number", "compare", "action", "headline", "photo_question", "photo_compare")      # 코드 렌더. scene은 현재 운영에서 비활성화했다(시안에만 쓴다)
 CATEGORY_COLORS = {"tax": "#006064", "pension": "#2e7d32", "support": "#5b2c6f", "warning": "#a0461a", "card": "#1a3c6e"}
 MASCOT_POSES = ("face", "point_left", "point_up", "calculator", "document", "phone", "laptop", "thinking", "surprised", "check", "coin", "family")
 MAX_SCENE_IN_9 = 3
@@ -530,6 +530,36 @@ def unit_nums(s: str) -> set:
             if not (m.group(2) == '년' and re.fullmatch(r'20\d\d', m.group(1)))}
 
 
+SEASONAL_CATEGORY = "생활비·소비"     # 2026-11-09 사용자 결정. 블로그 카테고리 추가는 사용자가 한다
+
+
+def seasonal_issues(md: str, today=None) -> tuple:
+    """`- 콘텐츠 트랙: seasonal` 원고 → (실패, 경고). 없는 수요를 만들지 않고, 다른 안내문과 다른 한 가지를 먼저 적게 한다.
+    트랙 메모가 없는 원고는 core라 아무것도 보지 않는다(2026-11-09 노션 계획)."""
+    import datetime
+    track = (memo_value(md, '콘텐츠 트랙') or 'core').strip()
+    if track not in ('core', 'seasonal'):
+        return [f'`- 콘텐츠 트랙:`이 core·seasonal 중 하나가 아니다: {track}'], []
+    if track == 'core':
+        return [], []
+    fails, warns = [], []
+    demand = [x.strip() for x in (memo_value(md, '수요 근거') or '').split('|')]
+    if len(demand) < 4 or not all(demand[:4]):
+        fails.append('시즌 글은 `- 수요 근거: 출처 | 조회일 | 기간 | 원본 값`이 있어야 한다 — 없는 검색량을 만들지 않는다')
+    if not (memo_value(md, '고유 가치') or '').strip():
+        fails.append('시즌 글은 `- 고유 가치:` 한 문장(다른 안내문을 읽은 독자도 새로 얻는 것)이 있어야 한다')
+    if (memo_value(md, '카테고리') or '').strip() != SEASONAL_CATEGORY:
+        fails.append(f'시즌 글의 `- 카테고리:`는 {SEASONAL_CATEGORY}다')
+    if (memo_value(md, '썸네일 유형') or '') not in ('photo_question', 'photo_compare'):
+        fails.append('시즌 글의 `- 썸네일 유형:`은 photo_question·photo_compare다(돼지 틀을 쓰지 않는다)')
+    until = (memo_value(md, '유효기간') or '').strip()
+    if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', until):
+        warns.append('시즌 글에 `- 유효기간: YYYY-MM-DD`가 없다 — 지난 뒤 업데이트 대상으로 잡지 못한다')
+    elif datetime.date.fromisoformat(until) < (today or datetime.date.today()):
+        warns.append(f'유효기간 {until}이 지났다 — 업데이트하거나 내용이 지난 것임을 밝힌다')
+    return fails, warns
+
+
 def year_warns(title: str, text: str) -> list:
     """제목 연도와 본문의 `X년 귀속`이 다르면 경고. 연말정산은 2026년 귀속을 2027년 1월에 신고해 제목 연도가 어느 쪽인지 갈린다."""
     # 세금 신고 글만 본다. 31편(건강보험료)은 2026년 보험료에 2025년 귀속 소득을 쓰는 게 맞는 내용이라 걸렸다
@@ -556,6 +586,9 @@ def v2_issues(md: str, body: str, text: str) -> tuple:
     if m := YEAR_MIX_RE.search(text):
         issues.append(f'귀속연도와 신고연도가 섞였다: {m.group(0)[:30]}')
     warns += year_warns(title, text)
+    sf, sw = seasonal_issues(md)
+    issues += sf
+    warns += sw
 
     intent = memo_value(md, '검색 의도')
     if intent not in INTENTS:
@@ -1094,6 +1127,17 @@ def selftest():
     vfails("| 수령나이 | 63세 | 국민연금법 |", "| 신청 기간 | 63세 | 더데일리이코노미 기사 |", "일정 근거가 기사")    # 29편의 기간 근거
     vfails("63세 기준으로 계산", "63세 기준 7년 계산", "제목의 7년")                                                # 2년/2개월 충돌
     vfails("조건이 있습니다.", "2026년 귀속은 2026년 1월에 정산합니다.", "귀속연도")
+    # 시즌 트랙 — 메모가 없으면 core, seasonal이면 수요 근거·고유 가치·카테고리·사진 틀을 요구한다
+    sdoc = vdoc.replace("- 고유 근거:", "- 콘텐츠 트랙: seasonal\n- 고유 근거:").replace("- 썸네일 유형: headline", "- 썸네일 유형: photo_question")
+    got = seasonal_issues(sdoc)[0]
+    assert any("수요 근거" in i for i in got) and any("고유 가치" in i for i in got) and any("카테고리" in i for i in got), got
+    full = sdoc.replace("- 콘텐츠 트랙: seasonal", "- 콘텐츠 트랙: seasonal\n- 수요 근거: 블로그 탭 | 2026-11-09 | 최근 21일 | 최근 글 7/10\n"
+                        "- 고유 가치: 집·기기 조건별 확인표\n- 유효기간: 2027-02-28")
+    full = re.sub(r"^- 카테고리:.*$", "- 카테고리: 생활비·소비", full, flags=re.M) if re.search(r"^- 카테고리:", full, re.M) else full + "\n- 카테고리: 생활비·소비\n"
+    assert seasonal_issues(full) == ([], []), seasonal_issues(full)
+    assert any("돼지 틀" in i for i in seasonal_issues(full.replace("- 썸네일 유형: photo_question", "- 썸네일 유형: headline"))[0])
+    assert any("지났다" in w for w in seasonal_issues(full, __import__("datetime").date(2027, 3, 1))[1])
+    assert seasonal_issues(vdoc) == ([], []), "트랙 메모가 없는 기존 원고는 core"
     assert year_warns("2026 연말정산 환급", "2025년 귀속분을 올해 2월에 정산했습니다.") and not year_warns("2026 연말정산", "2026년 귀속분입니다.") and not year_warns("2026 건강보험료 11월 조정", "2025년 귀속 소득"), "작성 연도·귀속 연도 불일치(세금 신고 글만)"
     with tempfile.TemporaryDirectory() as d:
         p_ = os.path.join(d, "30_t.md")

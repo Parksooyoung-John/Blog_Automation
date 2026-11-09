@@ -247,6 +247,7 @@ def canva_selftest():
     for eol in ("\n", "\r\n"):     # 시안 원고(26·27편)가 CRLF라 `## 작성 메모\n`을 못 찾고 배지가 조용히 빠졌다
         m = set_memo(set_memo(f"본문{eol}## 작성 메모{eol}{eol}- 썸네일 문구: a | b{eol}", "썸네일 배지", "새 배지"), "썸네일 문구", "c | d")
         assert "- 썸네일 배지: 새 배지" in m and "- 썸네일 문구: c | d" in m and "a | b" not in m, repr(m)
+    assert post_is_live("31", [{"post": "31", "status": "PUBLISHED"}]) and not post_is_live("38", [{"post": "38", "status": "DRAFT", "published": ""}]) and post_is_live("37", [{"post": "37", "status": "HUMAN_REVIEW", "published": "2026-11-08 12:20"}]), "발행 글 대표사진은 --thumb가 다시 그리지 않는다"
     assert published_cards(["61_경정청구_수정신고", "75_경정청구_처리일정"], [{"post": "28", "status": "PUBLISHED"}]) == ["61_경정청구_수정신고"], "발행 글 카드는 --card가 다시 그리지 않는다"
     n = number_thumb_html("총급여의 25%", "나는 넘겼을까?", "배지")
     assert ">총급여의<" in n and ">25%<" in n and "class='card'" not in n.split("</style>")[1] and "class='band'" not in n
@@ -532,7 +533,56 @@ def question_thumb_html(main: str, sub: str, badge: str, highlight: str = "", pi
     return _thumb_page(body, css)
 
 
-def shoot_thumb(page, html: str, out: Path) -> tuple:
+def photo_thumb_html(layout: str, photo: Path, main: str, sub: str, badge: str, cards: list = (), focus: str = "center",
+                     card_alpha: float = 0.78, blur: int = 8) -> str:     # 2026-11-09 사용자 선택: 카드 78% + 흐림 8px(사진이 비치게)
+    """시즌 글 대표사진: 실사 사진 + 코드로 그린 크림 카드. 돼지·AI 인물·가짜 화면은 쓰지 않는다(2026-11-09 노션 계획).
+    photo가 없으면 회색 자리 표시로 그려 틀 승인용 시안만 만든다. 오른쪽 아래 160×90 보호 영역은 카드가 피한다."""
+    import base64
+    import html as html_lib
+    from thumb_gate import card_amount
+    e = html_lib.escape
+    if photo:
+        mime = {".jpg": "jpeg", ".jpeg": "jpeg", ".png": "png", ".webp": "webp"}[photo.suffix.lower()]
+        bg = (f"<img class='photo' src='data:image/{mime};base64,{base64.b64encode(photo.read_bytes()).decode()}' "
+              f"style='object-position:{e(focus)}'>")
+    else:
+        bg = "<div class='photo ph'><span>사진 자리</span></div>"
+    css = f".t{{--card:rgba(254,252,245,{card_alpha});--blur:{blur}px}}" + """.photo{position:absolute;inset:0;width:1080px;height:1080px;object-fit:cover}
+.ph{background:repeating-linear-gradient(45deg,#cfd3cf 0 40px,#c4c9c4 40px 80px);display:flex;align-items:flex-start;justify-content:flex-end}
+.ph span{margin:90px 90px 0 0;font-size:44px;color:#7a807a}
+.shade{position:absolute;left:0;right:0;bottom:0;height:560px;background:linear-gradient(transparent,rgba(20,30,22,.35))}
+.qcard{position:absolute;left:65px;width:770px;bottom:80px;background:var(--card);backdrop-filter:blur(var(--blur));border-radius:36px;padding:40px 48px 44px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.qcard .topbadge{position:static;display:inline-block;height:76px;line-height:74px;padding:0 34px;font-size:46px;margin-bottom:22px}
+.qcard .main{display:block;color:#116530;font-size:104px;line-height:1.14;letter-spacing:-2px}
+.qcard .sub,.qband .sub{position:static;display:block;width:auto;text-align:left;margin-top:14px;color:#1d2b21;font-size:58px;line-height:1.1}
+.cmphead{position:absolute;left:65px;width:950px;top:65px}
+.cmphead .topbadge{position:static;display:inline-block;height:76px;line-height:74px;padding:0 34px;font-size:46px;margin-bottom:18px}
+.cmphead .qband{background:var(--card);backdrop-filter:blur(var(--blur));border-radius:30px;padding:22px 36px;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.cmphead .main{display:block;color:#116530;font-size:92px;line-height:1.12;letter-spacing:-2px}
+.pcard{position:absolute;bottom:110px;height:330px;background:var(--card);backdrop-filter:blur(var(--blur));border-radius:32px;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center}
+.pcard .pill{position:absolute;left:22px;right:22px;top:20px;height:78px;line-height:76px;background:#116530;color:#fff;border-radius:39px;font-size:46px}
+.pcard .num{position:absolute;left:20px;right:20px;top:120px;color:#116530;font-size:118px;line-height:1;letter-spacing:-2px}
+.pcard .body{position:absolute;left:20px;right:20px;top:124px;color:#1d2b21;font-size:54px;line-height:1.22}
+"""
+    if layout == "photo_question":
+        lines = "".join(f"<span class='main fit'>{e(x.strip())}</span>" for x in main.split("/"))
+        body = (f"<div class='qcard'>" + (f"<span class='topbadge fit'>{e(badge)}</span>" if badge else "") + lines
+                + (f"<span class='sub fit'>{e(sub)}</span>" if sub else "") + "</div>")
+    else:
+        head = (f"<div class='cmphead'>" + (f"<span class='topbadge fit'>{e(badge)}</span>" if badge else "")
+                + "<div class='qband'>" + "".join(f"<span class='main fit'>{e(x.strip())}</span>" for x in main.split("/"))
+                + (f"<span class='sub fit'>{e(sub)}</span>" if sub else "") + "</div></div>")
+        tags = []
+        for left, title, val in ((65, cards[0], cards[1]), (545, cards[2], cards[3])):
+            amt = card_amount(val)
+            inner = (f"<div class='num fit'>{e(val)}</div>" if amt else
+                     "<div class='body'>" + "".join(f"<div class='fit'>{e(x.strip())}</div>" for x in val.split("/") if x.strip()) + "</div>")
+            tags.append(f"<div class='pcard' style='left:{left}px;width:410px'><div class='pill fit'>{e(title)}</div>{inner}</div>")
+        body = head + "".join(tags)
+    return _thumb_page(bg + "<div class='shade'></div>" + body, css)
+
+
+def shoot_thumb(page, html: str, out: Path, margin: bool = False) -> tuple:
     """렌더 → (QC 실패 목록, 돼지 비율, 축소본 목록). 글자가 넘치면 정해진 하한까지만 줄이고 실패 사유를 낸다. 재시도하지 않는다."""
     from thumb_gate import OUT_SIZE, THUMB as T, mobile_qc, save_previews
     page.set_viewport_size({"width": OUT_SIZE, "height": OUT_SIZE})
@@ -545,12 +595,13 @@ def shoot_thumb(page, html: str, out: Path) -> tuple:
         const px = q => { const els = [...document.querySelectorAll(q)]; return els.length ? Math.min(...els.map(el => parseFloat(el.style.fontSize || getComputedStyle(el).fontSize))) : 0; };
         const rect = el => { const r = document.createRange(); r.selectNodeContents(el); const b = r.getBoundingClientRect();
                              return {left: b.left, right: b.right, top: b.top, bottom: b.bottom}; };
-        const ms = document.querySelector('.mascot').getBoundingClientRect();
+        const msEl = document.querySelector('.mascot'); const ms = msEl ? msEl.getBoundingClientRect() : {left: 0, right: 0, top: 0, bottom: 0};
         const bandEl = document.querySelector('.band'); const band = bandEl ? bandEl.getBoundingClientRect().top : 1080;
         const texts = [...document.querySelectorAll('.fit')].map(rect);
         const pig = {left: ms.left, right: Math.min(ms.right, 1080), top: ms.top, bottom: Math.min(ms.bottom, band)};
         const hit = texts.some(t => t.right > pig.left && t.left < pig.right && t.bottom > pig.top && t.top < pig.bottom);
-        return {main: px('.main'), sub: px('.sub'), badge: px('.btext'), title: px('.pill'), num: px('.num'), body: px('.body .fit'), focus: px('.focus'), top: px('.topbadge'), big: px('.big'), texts, pig, hit};
+        const edge = texts.filter(t => t.right > t.left && (t.left < 64.8 || t.top < 64.8 || t.right > 1015.2 || t.bottom > 1015.2)).length;
+        return {main: px('.main'), sub: px('.sub'), badge: px('.btext'), title: px('.pill'), num: px('.num'), body: px('.body .fit'), focus: px('.focus'), top: px('.topbadge'), big: px('.big'), texts, pig, hit, edge};
     }""")
     k = T / OUT_SIZE
     scale = lambda r: {a: v * k for a, v in r.items()}
@@ -564,6 +615,8 @@ def shoot_thumb(page, html: str, out: Path) -> tuple:
         fail.append(f"BLOCKED_MOBILE_READABILITY — {'·'.join(small_card)}가 작아진다. 내용을 줄이거나 headline으로 바꾼다")
     if m["hit"]:
         fail.append("BLOCKED_MOBILE_READABILITY — 글자가 돼지와 겹친다")
+    if margin and m["edge"]:      # 사진 틀만 본다. 돼지 판들은 이 규칙 전에 승인돼 왼쪽 44px에 글자가 있다
+        fail.append(f"BLOCKED_MOBILE_READABILITY — 글자 {m['edge']}곳이 사방 6% 안전 여백을 넘는다")
     page.query_selector(".t").screenshot(path=str(out))
     return fail, ratio, save_previews(out)
 
@@ -580,11 +633,59 @@ def thumb_html(md: str, layout: str, full: Path, bust: Path) -> str:
     return question_thumb_html(main, sub, badge, (memo_value(md, "썸네일 강조 구절") or "").strip(), full)
 
 
+def seasonal_thumb_cmd(num: str, md: str) -> int:
+    """시즌 글 대표사진. 돼지 판으로 대체하지 않고, 사진·라이선스가 없으면 시안만 만든다. manifest는 core와 따로 표시한다."""
+    from thumb_gate import (APPROVED_LAYOUTS, LAYOUT, copy_of, manual_reasons, parts_text, photo_status, review_copy, select_template,
+                            thumb_cards, trim_copy, write_manifest, PHOTO_LEDGER)
+    import csv
+    blocks, warns = review_copy(md, parts_text(md))
+    requested, template, reason = select_template(md)
+    pblocks, photo = photo_status(md, parts_text(md))
+    layout = LAYOUT[template]
+    approved = layout in APPROVED_LAYOUTS
+    final = approved and not pblocks
+    out = OUT / f"{num}_썸네일.png" if final else Path(__file__).parent / "_workspace" / "naver" / f"{num}_{layout}_미리보기.png"
+    fail, previews = [], []
+    if not blocks:
+        main, sub, badge = trim_copy(*copy_of(md))
+        html = photo_thumb_html(layout, photo if not pblocks else None, main, sub, badge, thumb_cards(md),
+                                memo_value(md, "썸네일 사진 초점") or "center")
+        with sync_playwright() as pw:
+            b = pw.chromium.launch(headless=True)
+            fail, _, previews = shoot_thumb(b.new_page(device_scale_factor=1), html, out, margin=True)
+            b.close()
+    blocks += pblocks + fail
+    lic = {}
+    if photo and PHOTO_LEDGER.exists():
+        lic = next((r for r in csv.DictReader(open(PHOTO_LEDGER, encoding="utf-8-sig", newline="")) if r.get("file") == photo.name), {})
+    manual = manual_reasons(md, template) + (["자동 검사 차단을 해결해야 한다"] if blocks else [])
+    state = "BLOCKED" if blocks else ("OK" if approved else "PENDING_LAYOUT_APPROVAL")
+    manifest = write_manifest(num, md, state, None, 0.0, not blocks, out, previews[0] if previews else out, "", "", "code", template, {
+        "content_track": "seasonal", "requested_template": requested, "actual_template": template, "template_fallback_reason": reason,
+        "layout": layout, "layout_approved": approved, "operating_layout": layout if final else "",
+        "photo_file": photo.name if photo else "", "photo_license": lic,
+        "blocks": blocks, "warnings": warns, "manual_review_required": bool(manual), "manual_review_reasons": manual,
+        "previews": [str(p) for p in previews],
+        "fact_note": "사진 이용 권한의 진위는 출처 페이지를 사람이 확인한다. 코드는 원장 기록과 파일 해시만 본다"})
+    print(f"  시즌 글 · 틀: {template}" + ("" if approved else " (승인 전 — 시안만)") + (f" ({reason})" if reason else ""))
+    for w in warns:
+        print("  경고:", w)
+    for x in blocks:
+        print("  ⚠ 차단:", x)
+    for x in manual:
+        print("  사람 확인:", x)
+    print(out)
+    print(manifest)
+    return 0 if state == "OK" else 1
+
+
 def info_thumb_cmd(num: str, md: str, kind: str) -> int:
     """30편~ 대표사진. 카피 → 틀 선택 → 돼지 → 렌더·QC → manifest.
     고른 틀의 판이 승인 전이면 그 판은 미리보기(_workspace)로만 만들고, 운영 대표사진은 승인된 headline_v2로 만든다."""
     from thumb_gate import (APPROVED_LAYOUTS, LAYOUT, SAMPLE_EVERY, asset_info, card_mascot, choose_pose, manual_reasons, mascot_status,
-                            operating_layout, parts_text, recent_poses, recent_templates, review_copy, select_template, write_manifest)
+                            operating_layout, parts_text, recent_poses, recent_templates, review_copy, select_template, track_of, write_manifest)
+    if track_of(md) == "seasonal":
+        return seasonal_thumb_cmd(num, md)
     blocks, warns = review_copy(md, parts_text(md))
     recent = recent_templates(num)
     requested, template, reason = select_template(md, recent)
@@ -650,6 +751,8 @@ def coins_missing(md: str) -> bool:
 def set_memo(md: str, key: str, value: str) -> str:
     """작성 메모의 `- key:` 줄을 바꾸거나 추가한다(시안용, 파일은 바꾸지 않는다)."""
     line = f"- {key}: {value}"
+    if not value:      # 빈 값은 그 메모 줄을 지운다(시안에서 돼지 메모를 빼는 데 쓴다)
+        return re.sub(rf"^- {re.escape(key)}:.*\r?\n", "", md, flags=re.M)
     if re.search(rf"^- {re.escape(key)}:.*$", md, re.M):
         return re.sub(rf"^- {re.escape(key)}:.*$", lambda _: line, md, count=1, flags=re.M)
     return re.sub(r"^## 작성 메모[^\n]*\n", lambda m: m.group(0) + line + "\n", md, count=1, flags=re.M)     # 원고가 CRLF여도 들어가게 줄 끝까지 잡는다
@@ -660,13 +763,20 @@ THUMB_SAMPLES = [     # (판, 원고 번호, 메모 덮어쓰기) — 2026-11-04
     ("number", "27", {"돼지 자세": "calculator", "카테고리 색": "tax", "썸네일 후보": "총급여의 25% | 카드공제 문턱 | 25% 넘겼나", "썸네일 선택 이유": "시안", "썸네일 유형": "number", "썸네일 문구": "총급여의 25% | 나는 넘겼을까?", "썸네일 배지": "연말정산 카드공제"}),
     ("headline_v2", "26", {"돼지 자세": "thinking", "카테고리 색": "tax", "썸네일 후보": "따로 사는 부모님 | 공제될까 | 조건", "썸네일 선택 이유": "시안", "썸네일 유형": "headline", "썸네일 문구": "따로 사는 / 부모님도 / 공제될까? | 나이·소득 조건 확인",
                            "썸네일 배지": "연말정산 인적공제", "썸네일 강조 구절": "공제될까?"}),
+    ("photo_question", "27", {"콘텐츠 트랙": "seasonal", "카테고리 색": "tax", "썸네일 후보": "외출모드 켜둘까 | 난방비 | 설정", "썸네일 선택 이유": "시안",
+                              "썸네일 유형": "photo_question", "썸네일 문구": "외출모드 / 켜둘까? | 난방비 설정 체크", "썸네일 배지": "겨울 난방비",
+                              "돼지 자세": "", "돼지 주제": ""}),
+    ("photo_compare", "27", {"콘텐츠 트랙": "seasonal", "카테고리 색": "tax", "썸네일 후보": "직구가 더 쌀까 | 총비용 | 배송비", "썸네일 선택 이유": "시안",
+                             "썸네일 유형": "photo_compare", "썸네일 문구": "직구가 더 쌀까? | 배송비·관세까지 비교", "썸네일 배지": "블랙프라이데이",
+                             "썸네일 카드": "국내 구매 | 표시가 / 그대로 | 해외 직구 | 배송비 / 관세 더함", "돼지 자세": "", "돼지 주제": ""}),
 ]
 
 
 def thumb_samples_cmd() -> int:
-    """compare·number·headline_v2 시안을 같은 조건으로 그리고 160px 세 장을 나란히 붙인다. 원고·운영 파일은 바꾸지 않는다."""
+    """compare·number·headline_v2와 시즌 photo 두 틀 시안을 그리고 160px 축소본을 나란히 붙인다. 원고·운영 파일은 바꾸지 않는다.
+    photo 틀은 사진 없이 회색 자리 표시로 그린다(틀 승인용)."""
     from PIL import Image
-    from thumb_gate import card_mascot, choose_pose, parts_text, review_copy
+    from thumb_gate import card_mascot, choose_pose, copy_of, parts_text, review_copy, thumb_cards, trim_copy
     dest = Path(__file__).parent / "_workspace" / "naver" / "thumb_samples"
     dest.mkdir(parents=True, exist_ok=True)
     smalls, bad = [], 0
@@ -678,9 +788,13 @@ def thumb_samples_cmd() -> int:
             for k, v in memo.items():
                 md = set_memo(md, k, v)
             blocks, warns = review_copy(md, parts_text(md))
-            pose, status, full, _ = choose_pose(md)
-            bust = card_mascot(pose, full)[1] if status == "OK" else full
-            fail, ratio, previews = shoot_thumb(page, thumb_html(md, layout, full, bust), dest / f"{layout}.png")
+            if layout.startswith("photo_"):
+                html, pose = photo_thumb_html(layout, None, *trim_copy(*copy_of(md)), thumb_cards(md)), "없음"
+            else:
+                pose, status, full, _ = choose_pose(md)
+                bust = card_mascot(pose, full)[1] if status == "OK" else full
+                html = thumb_html(md, layout, full, bust)
+            fail, ratio, previews = shoot_thumb(page, html, dest / f"{layout}.png", margin=layout.startswith("photo_"))
             bad += bool(blocks or fail)
             print(f"{layout} ({num}편 본문, 돼지 {pose} {ratio:.1%})")
             for x in blocks + fail:
@@ -690,7 +804,7 @@ def thumb_samples_cmd() -> int:
             smalls.append(Image.open(previews[0]))
         b.close()
     gap = 16
-    sheet = Image.new("RGB", (160 * 3 + gap * 4, 160 + gap * 2), "#dddddd")
+    sheet = Image.new("RGB", (160 * len(smalls) + gap * (len(smalls) + 1), 160 + gap * 2), "#dddddd")
     for i, im in enumerate(smalls):
         sheet.paste(im, (gap + i * (160 + gap), gap))
     sheet.save(dest / "compare_160.png")
@@ -1484,7 +1598,7 @@ def unreferenced(names) -> list:
 def published_cards(names, ledger=None) -> list:
     """이미 발행된 글(장부 LIVE)이 쓰는 카드. `--card 경정청구_`가 35편 카드를 만들면서 28편(발행)의 61번까지 다시 그렸다(2026-11-06)."""
     from pipeline import LEDGER, LEDGER_COLS, LIVE, read_csv
-    live = {r["post"] for r in (ledger if ledger is not None else read_csv(LEDGER, LEDGER_COLS)) if r["status"] in LIVE}
+    live = {r["post"] for r in (ledger if ledger is not None else read_csv(LEDGER, LEDGER_COLS)) if r["status"] in LIVE or r.get("published")}
     texts = {p.name[:2]: p.read_text(encoding="utf-8") for p in (Path(__file__).parent / "content" / "naver").glob("[0-9][0-9]_*.md")}
     return [n for n in names if any(f"{n}.png" in t for k, t in texts.items() if k in live)]
 
@@ -1557,7 +1671,18 @@ def gen_cmd(num: str) -> int:
     return 0
 
 
+def post_is_live(num: str, ledger=None) -> bool:
+    """장부에서 발행된(LIVE) 글인가. 발행 글의 대표사진을 다시 그리면 라이브 이미지와 저장소 파일이 어긋난다."""
+    from pipeline import LEDGER, LEDGER_COLS, LIVE, num_of, read_csv
+    return any(num_of(r["post"]) == int(num) and (r["status"] in LIVE or r.get("published"))     # 상태 기록 전이어도 sync가 발행 시각을 채운다
+               for r in (ledger if ledger is not None else read_csv(LEDGER, LEDGER_COLS)))
+
+
 def thumb_cmd(num: str) -> int:
+    if post_is_live(num) and "--force" not in sys.argv:
+        # 회귀 확인으로 `--thumb 31`을 돌렸다가 발행된 31편 대표사진이 지금 판(headline_v2)으로 덮어써졌다(2026-11-09)
+        print(f"{num}편은 발행된 글이라 대표사진을 다시 그리지 않는다(라이브 이미지와 어긋난다). 고칠 때만 --force")
+        return 1
     md = draft_md(num)
     text, kind = thumb_text(md), memo_value(md, "썸네일 유형")
     if int(num) >= V2_FROM and kind in V2_THUMBS + ("scene",):

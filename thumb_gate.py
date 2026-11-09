@@ -31,9 +31,9 @@ MAIN_MIN_QC, SUB_MIN_QC = 12, 7.5              # 160px 축소본에서 읽히는
 MASCOT_RATIO = (0.13, 0.25)                    # 2026-11-01 사용자 확정 시안의 돼지가 13.5%라 하한을 13%로 낮췄다
 BADGE_ZONE = (160 * THUMB / OUT_SIZE, 90 * THUMB / OUT_SIZE)     # 내부 AI 표시 안전영역(오른쪽 아래, 1080 기준 160×90). 네이버 공식 크기가 아니다. 실제 표시는 게시 화면에서 본다
 MAX_MAIN, MAX_SUB, MAX_BADGE, MIN_CANDIDATES = 16, 14, 14, 3     # 공백 제외. 후보는 내부에서 3개 만들어 1개를 고른다
-MAX_LINES = {"compare": 2, "number": 2, "headline_v2": 3}     # 판별 메인 줄 수. 질문형만 상황·대상·질문 3줄을 쓴다
-LAYOUT = {"compare": "compare", "number": "number", "headline": "headline_v2"}     # 틀마다 지금 판
-APPROVED_LAYOUTS = {"compare", "number", "headline_v2"}   # 사용자가 미리보기를 승인한 판(compare 2026-11-01, number·headline_v2 2026-11-04). 승인 전 판은 미리보기만 만들고 운영은 headline_v2로 한다
+MAX_LINES = {"compare": 2, "number": 2, "headline_v2": 3, "photo_question": 2, "photo_compare": 2}     # 판별 메인 줄 수. 질문형만 상황·대상·질문 3줄을 쓴다
+LAYOUT = {"compare": "compare", "number": "number", "headline": "headline_v2", "photo_question": "photo_question", "photo_compare": "photo_compare"}     # 틀마다 지금 판
+APPROVED_LAYOUTS = {"compare", "number", "headline_v2", "photo_question", "photo_compare"}   # 사용자가 미리보기를 승인한 판(compare 2026-11-01, number·headline_v2 2026-11-04, photo 두 틀 2026-11-09 카드 78%). 승인 전 판은 미리보기만 만들고 운영은 headline_v2로 한다(사진 틀은 대체 없음)
 SAMPLE_EVERY = 5                               # 안정화된 틀은 5편마다 1편 축소본을 표본 확인한다(발행을 기다리게 하지 않는다)
 
 NUM_RE = re.compile(r"(\d+(?:[.,]\d+)*)\s*(만원|억원|만|억|%|개월|년|원)?")
@@ -224,11 +224,52 @@ def template_fit(md: str) -> dict:
             "headline": ""}
 
 
+PHOTO_TEMPLATES = ("photo_question", "photo_compare")     # 시즌 글 전용(2026-11-09 노션 계획). 돼지 없이 실사 사진 + 코드 카드
+PHOTOS = ROOT / "assets" / "photos"
+PHOTO_LEDGER = PHOTOS / "_licenses.csv"
+PHOTO_COLS = ["file", "sha256", "source_url", "creator", "provider", "license", "license_url", "checked_at",
+              "commercial_ok", "edit_ok", "attribution", "crop_note", "use"]
+
+
+def track_of(md: str) -> str:
+    """`- 콘텐츠 트랙:` core | seasonal. 메모가 없는 기존 원고는 core다."""
+    return (memo_value(md, "콘텐츠 트랙") or "core").strip()
+
+
+def photo_status(md: str, text: str, ledger: Path = None) -> tuple:
+    """시즌 대표사진 → (차단 목록, 사진 경로). 검색 결과에 보인다는 것은 이용 허락이 아니라서 원장 기록이 있어야 쓴다."""
+    import csv
+    rel = (memo_value(md, "썸네일 사진") or "").strip()
+    if not rel:
+        return ["PHOTO_REQUIRED — `- 썸네일 사진: assets/photos/파일`이 없다. suggest_cover.py 후보에서 골라 사용자가 내려받는다"], None
+    path = ROOT / rel
+    if not path.exists():
+        return [f"PHOTO_REQUIRED — 사진 파일이 없다: {rel}"], None
+    ledger = ledger or PHOTO_LEDGER
+    rows = list(csv.DictReader(open(ledger, encoding="utf-8-sig", newline=""))) if ledger.exists() else []
+    row = next((r for r in rows if r.get("file") == path.name), None)
+    if not row:
+        return [f"BLOCKED_PHOTO_LICENSE — 라이선스 원장({ledger.name})에 {path.name}이 없다"], path
+    blocks = [f"BLOCKED_PHOTO_LICENSE — {path.name}: {k}가 Y가 아니다" for k in ("commercial_ok", "edit_ok") if row.get(k) != "Y"]
+    blocks += [f"BLOCKED_PHOTO_LICENSE — {path.name}: {k}가 비어 있다" for k in ("source_url", "license", "checked_at") if not row.get(k)]
+    if row.get("sha256") != _sha(path):
+        blocks.append(f"BLOCKED_PHOTO_LICENSE — {path.name}이 원장에 기록한 파일과 다르다(해시 불일치)")
+    if row.get("attribution") and _plain(row["attribution"]) not in _plain(text):
+        blocks.append(f"BLOCKED_PHOTO_LICENSE — 출처 표기 의무가 있는데 본문에 없다: {row['attribution']}")
+    return blocks, path
+
+
 def select_template(md: str, recent=()) -> tuple:
     """→ (요청한 틀, 실제 틀, 이유). 지정한 틀이 맞으면 그대로, 안 맞으면 headline으로 바꾸고 이유를 남긴다.
     지정이 없으면 맞는 틀 중에서 고르고, 맞는 틀이 둘 이상일 때만 최근 글의 틀을 피한다."""
     kind = memo_value(md, "썸네일 유형") or ""
     fit = template_fit(md)
+    if track_of(md) == "seasonal":     # 시즌 글은 돼지 틀로 대체하지 않는다
+        if kind == "photo_compare" and fit["compare"]:
+            return kind, "photo_question", fit["compare"]
+        if kind in PHOTO_TEMPLATES:
+            return kind, kind, ""
+        return kind, "photo_question" if fit["compare"] else "photo_compare", "자동: 시즌 글은 사진 틀"
     if kind == "scene":
         return kind, "headline", "scene은 현재 운영에서 비활성화했다"
     if kind in fit:
@@ -259,9 +300,14 @@ def review_copy(md: str, text: str) -> tuple:
     if len(b_) > MAX_BADGE:
         blocks.append(f"하단 배지 {len(b_)}자 ({MAX_BADGE}자 이내) — 문구를 줄이거나 생략한다")
     template = select_template(md)[1]
-    limit = MAX_LINES[operating_layout(template)]
+    lay = operating_layout(template) or LAYOUT.get(template, template)
+    limit = MAX_LINES[lay]
     if main.count("/") + 1 > limit:
-        blocks.append(f"메인 카피는 {operating_layout(template)}에서 {limit}줄까지다")
+        blocks.append(f"메인 카피는 {lay}에서 {limit}줄까지다")
+    if track_of(md) == "seasonal" and any(memo_value(md, k) for k in ("돼지 자세", "돼지 주제", "썸네일 소품")):
+        blocks.append("시즌 글 대표사진에는 돼지·소품을 쓰지 않는다 — `- 돼지 자세:`·`- 돼지 주제:`·`- 썸네일 소품:`을 지운다")
+    if track_of(md) != "seasonal" and (memo_value(md, "썸네일 유형") or "") in PHOTO_TEMPLATES:
+        blocks.append("photo 틀은 시즌 글(`- 콘텐츠 트랙: seasonal`)에만 쓴다")
     phrase = (memo_value(md, "썸네일 강조 구절") or "").strip()
     if phrase and not any(phrase in x.strip() for x in main.split("/")):
         blocks.append(f"`- 썸네일 강조 구절:`이 메인 한 줄 안에 그대로 없다: {phrase}")
@@ -312,7 +358,9 @@ def manual_reasons(md: str, template: str) -> list:
     main, sub, _ = copy_of(md)
     out = []
     if LAYOUT.get(template, template) not in APPROVED_LAYOUTS:
-        out.append(f"새 판 {LAYOUT.get(template, template)}: 미리보기 승인 전이다 — 운영 대표사진은 {operating_layout(template)}로 만들었다")
+        op = operating_layout(template)
+        out.append(f"새 판 {LAYOUT.get(template, template)}: 미리보기 승인 전이다 — "
+                   + (f"운영 대표사진은 {op}로 만들었다" if op else "운영 대표사진은 만들지 않았다"))
     if "?" in main + sub and not evidence_quotes(md):
         out.append("질문의 답이 본문 어디인지 `- 썸네일 근거:`가 없어 미검증이다")
     return out
@@ -334,9 +382,11 @@ def number_evidence(md: str, text: str) -> list:
 
 
 def operating_layout(template: str) -> str:
-    """운영 대표사진에 쓰는 판. 지금 판이 승인 전이면 승인된 headline_v2."""
+    """운영 대표사진에 쓰는 판. 지금 판이 승인 전이면 승인된 headline_v2. 사진 틀은 돼지 판으로 대체하지 않아 빈 문자열."""
     layout = LAYOUT.get(template, template)
-    return layout if layout in APPROVED_LAYOUTS else "headline_v2"
+    if layout in APPROVED_LAYOUTS:
+        return layout
+    return "" if layout in PHOTO_TEMPLATES else "headline_v2"
 
 
 def recent_templates(num: str, count: int = AVOID_RECENT) -> list:
@@ -669,6 +719,51 @@ def selftest():
     assert any("강조 구절" in w for w in review_copy(hl(), text)[1])
     assert not any("강조 구절" in w for w in review_copy(hl("- 썸네일 강조 구절: 공제될까?"), text)[1])
     assert any("강조 구절" in i for i in copy_issues(hl("- 썸네일 강조 구절: 부모님도 공제"), text)), "줄을 넘는 구절은 막는다"
+
+    # 시즌 트랙 — 사진 틀, 돼지 금지, 라이선스 원장 (2026-11-09 노션 계획)
+    sea = lambda extra="": doc("외출모드 / 켜둘까?", "난방비 설정 체크", "", "- 콘텐츠 트랙: seasonal\n" + extra).replace("- 돼지 자세: calculator\n", "")
+    assert track_of(doc()) == "core" and track_of(sea()) == "seasonal", "트랙 메모가 없으면 core"
+    assert select_template(sea())[1] == "photo_question" and select_template(sea(card))[1] == "photo_compare", "시즌 글은 돼지 틀로 가지 않는다"
+    assert operating_layout("photo_question") == "photo_question" and not any("새 판" in r for r in manual_reasons(sea(), "photo_question")), "사진 두 틀은 2026-11-09 승인"
+    global APPROVED_LAYOUTS
+    keep_layouts, APPROVED_LAYOUTS = APPROVED_LAYOUTS, APPROVED_LAYOUTS - {"photo_question"}
+    try:
+        assert operating_layout("photo_question") == "" and any("만들지 않았다" in x for x in manual_reasons(sea(), "photo_question")), "승인 전 사진 틀은 돼지 판으로 대체하지 않는다"
+    finally:
+        APPROVED_LAYOUTS = keep_layouts
+    assert any("돼지" in i for i in copy_issues(sea("- 돼지 주제: warning"), text)), "시즌 글에 돼지 메모는 차단"
+    assert any("시즌 글" in i for i in copy_issues(doc().replace("- 썸네일 유형: compare", "- 썸네일 유형: photo_question"), text)), "core에 사진 틀은 차단"
+    with tempfile.TemporaryDirectory() as d:
+        import csv as _csv
+        from PIL import Image
+        global ROOT
+        keep_root, ROOT = ROOT, Path(d)
+        try:
+            (ROOT / "assets" / "photos").mkdir(parents=True)
+            led = ROOT / "assets" / "photos" / "_licenses.csv"
+            assert "PHOTO_REQUIRED" in photo_status(sea(), text, led)[0][0], "사진이 없으면 확보 요청으로 멈춘다"
+            ph = "- 썸네일 사진: assets/photos/heat.jpg\n"
+            Image.new("RGB", (20, 20), "white").save(ROOT / "assets" / "photos" / "heat.jpg")
+            assert "원장" in photo_status(sea(ph), text, led)[0][0], "원장에 없으면 차단"
+            row = {c: "" for c in PHOTO_COLS}
+            row.update(file="heat.jpg", sha256=_sha(ROOT / "assets" / "photos" / "heat.jpg"), source_url="https://www.pexels.com/photo/1",
+                       license="Pexels License", checked_at="2026-11-09", commercial_ok="Y", edit_ok="Y")
+            def save(r):
+                with open(led, "w", encoding="utf-8-sig", newline="") as f:
+                    w = _csv.DictWriter(f, PHOTO_COLS)
+                    w.writeheader()
+                    w.writerow(r)
+            save(row)
+            assert photo_status(sea(ph), text, led)[0] == [], "원장·해시·허용이 맞으면 통과"
+            save({**row, "commercial_ok": "N"})
+            assert any("commercial_ok" in b for b in photo_status(sea(ph), text, led)[0])
+            save({**row, "attribution": "Photo by Kim"})
+            assert any("출처 표기" in b for b in photo_status(sea(ph), text, led)[0])
+            save(row)
+            Image.new("RGB", (21, 21), "white").save(ROOT / "assets" / "photos" / "heat.jpg")
+            assert any("해시" in b for b in photo_status(sea(ph), text, led)[0]), "원장 기록 뒤 바뀐 파일은 차단"
+        finally:
+            ROOT = keep_root
 
     # TEST-THUMB-MASCOT-002: 등록 안 된 돼지·승인 없이 바뀐 파일은 쓰지 않는다. 승인한 새 버전은 쓴다
     from PIL import Image

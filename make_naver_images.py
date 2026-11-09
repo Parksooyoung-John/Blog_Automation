@@ -242,6 +242,8 @@ def canva_selftest():
     assert "class='plus'" not in plain and "class='coin'" not in plain and "class='spark'" not in plain, "단순 비교에는 더하기·동전을 넣지 않는다"
     words = cards_thumb_html("메인?", "보조", "", ["연금저축", "한도 넘긴/돈은", "IRP", "남은"])
     assert "class='coin'" not in words and "class='plus'" not in words and ">한도 넘긴<" in words and "btext" not in words.split("</style>")[1], "하단은 생략할 수 있다"
+    assert "AI 활용 이미지" in photo_thumb_html("photo_question", None, "질문?", "", "", ai=True) and \
+        "AI 활용" not in photo_thumb_html("photo_question", None, "질문?", "", ""), "AI 배경이면 대표사진에 표시"
     q = question_thumb_html("따로 사는 / 부모님도 / 공제될까?", "", "배지", "공제될까?")
     assert q.count("class='main fit'") == 3 and q.count("class='hl'") == 1 and "class='band'" not in q and "class='qsub" not in q.split("</style>")[1]
     for eol in ("\n", "\r\n"):     # 시안 원고(26·27편)가 CRLF라 `## 작성 메모\n`을 못 찾고 배지가 조용히 빠졌다
@@ -534,7 +536,7 @@ def question_thumb_html(main: str, sub: str, badge: str, highlight: str = "", pi
 
 
 def photo_thumb_html(layout: str, photo: Path, main: str, sub: str, badge: str, cards: list = (), focus: str = "center",
-                     card_alpha: float = 0.78, blur: int = 8) -> str:     # 2026-11-09 사용자 선택: 카드 78% + 흐림 8px(사진이 비치게)
+                     card_alpha: float = 0.78, blur: int = 8, ai: bool = False) -> str:     # 2026-11-09 사용자 선택: 카드 78% + 흐림 8px(사진이 비치게)
     """시즌 글 대표사진: 실사 사진 + 코드로 그린 크림 카드. 돼지·AI 인물·가짜 화면은 쓰지 않는다(2026-11-09 노션 계획).
     photo가 없으면 회색 자리 표시로 그려 틀 승인용 시안만 만든다. 오른쪽 아래 160×90 보호 영역은 카드가 피한다."""
     import base64
@@ -559,6 +561,7 @@ def photo_thumb_html(layout: str, photo: Path, main: str, sub: str, badge: str, 
 .cmphead .topbadge{position:static;display:inline-block;height:76px;line-height:74px;padding:0 34px;font-size:46px;margin-bottom:18px}
 .cmphead .qband{background:var(--card);backdrop-filter:blur(var(--blur));border-radius:30px;padding:22px 36px;box-shadow:0 8px 24px rgba(0,0,0,.22)}
 .cmphead .main{display:block;color:#116530;font-size:92px;line-height:1.12;letter-spacing:-2px}
+.ailabel{position:absolute;right:65px;top:65px;height:52px;line-height:52px;padding:0 22px;border-radius:26px;background:rgba(29,43,33,.72);color:#fff;font-size:30px}
 .pcard{position:absolute;bottom:110px;height:330px;background:var(--card);backdrop-filter:blur(var(--blur));border-radius:32px;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center}
 .pcard .pill{position:absolute;left:22px;right:22px;top:20px;height:78px;line-height:76px;background:#116530;color:#fff;border-radius:39px;font-size:46px}
 .pcard .num{position:absolute;left:20px;right:20px;top:120px;color:#116530;font-size:118px;line-height:1;letter-spacing:-2px}
@@ -579,7 +582,8 @@ def photo_thumb_html(layout: str, photo: Path, main: str, sub: str, badge: str, 
                      "<div class='body'>" + "".join(f"<div class='fit'>{e(x.strip())}</div>" for x in val.split("/") if x.strip()) + "</div>")
             tags.append(f"<div class='pcard' style='left:{left}px;width:410px'><div class='pill fit'>{e(title)}</div>{inner}</div>")
         body = head + "".join(tags)
-    return _thumb_page(bg + "<div class='shade'></div>" + body, css)
+    label = "<span class='ailabel'>AI 활용 이미지</span>" if ai else ""      # AI 배경은 숨기지 않는다(2026-11-09). 오른쪽 아래 보호 영역을 피해 오른쪽 위
+    return _thumb_page(bg + "<div class='shade'></div>" + body + label, css)
 
 
 def shoot_thumb(page, html: str, out: Path, margin: bool = False) -> tuple:
@@ -646,18 +650,18 @@ def seasonal_thumb_cmd(num: str, md: str) -> int:
     final = approved and not pblocks
     out = OUT / f"{num}_썸네일.png" if final else Path(__file__).parent / "_workspace" / "naver" / f"{num}_{layout}_미리보기.png"
     fail, previews = [], []
+    lic = {}
+    if photo and PHOTO_LEDGER.exists():
+        lic = next((r for r in csv.DictReader(open(PHOTO_LEDGER, encoding="utf-8-sig", newline="")) if r.get("file") == photo.name), {})
     if not blocks:
         main, sub, badge = trim_copy(*copy_of(md))
         html = photo_thumb_html(layout, photo if not pblocks else None, main, sub, badge, thumb_cards(md),
-                                memo_value(md, "썸네일 사진 초점") or "center")
+                                memo_value(md, "썸네일 사진 초점") or "center", ai=lic.get("provider") == "AI")
         with sync_playwright() as pw:
             b = pw.chromium.launch(headless=True)
             fail, _, previews = shoot_thumb(b.new_page(device_scale_factor=1), html, out, margin=True)
             b.close()
     blocks += pblocks + fail
-    lic = {}
-    if photo and PHOTO_LEDGER.exists():
-        lic = next((r for r in csv.DictReader(open(PHOTO_LEDGER, encoding="utf-8-sig", newline="")) if r.get("file") == photo.name), {})
     manual = manual_reasons(md, template) + (["자동 검사 차단을 해결해야 한다"] if blocks else [])
     state = "BLOCKED" if blocks else ("OK" if approved else "PENDING_LAYOUT_APPROVAL")
     manifest = write_manifest(num, md, state, None, 0.0, not blocks, out, previews[0] if previews else out, "", "", "code", template, {

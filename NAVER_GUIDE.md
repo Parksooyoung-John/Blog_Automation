@@ -672,8 +672,13 @@ python -X utf8 suggest_cover.py content/naver/04_실업급여-신청방법.md
 3. 이미지 검색 결과에 보인다는 것은 이용 허락이 아니다. 최종 파일의 원본 페이지와 라이선스를 확인한다.
 4. 기사·다른 블로그·쇼핑몰 사진을 쓰지 않는다.
 5. 기관·브랜드 이미지도 각각의 이용 조건을 확인한다.
-6. 맞는 사진이 없으면 시안 단계에서 멈추고 사진 확보를 요청한다. AI 사진으로 몰래 대체하지 않는다.
-7. 원장 열: file, sha256, source_url, creator, provider, license, license_url, checked_at, commercial_ok, edit_ok, attribution, crop_note, use.
+6. 맞는 사진이 없으면 AI 생성 배경을 쓸 수 있다(2026-11-09 사용자 허용). 몰래 쓰지 않고 다음을 지킨다.
+   - 글자·숫자·사람·손·얼굴·로고 없이 배경만 생성한다(`make_naver_images.py`의 GEN_MODEL).
+   - 대표사진 오른쪽 위에 「AI 활용 이미지」를 표시한다(코드가 자동으로 넣는다).
+   - 본문에 "대표 이미지는 AI로 만든 배경입니다"처럼 밝힌다.
+   - 원장에 provider=AI, creator=모델, checked_at=생성일, prompt, use=AI 생성 배경(상황 설명용)을 쓴다. 출처 URL은 비운다.
+   - 실제 우리 집·실제 구매 장면처럼 쓰지 않는다. 생성된 그림에 글자가 섞였는지 확대해 사람이 확인한다.
+7. 원장 열: file, sha256, source_url, creator, provider, license, license_url, checked_at, commercial_ok, edit_ok, attribution, crop_note, use, prompt.
 
 `thumb_gate.photo_status`가 막는 경우는 다음과 같다.
 
@@ -683,6 +688,7 @@ python -X utf8 suggest_cover.py content/naver/04_실업급여-신청방법.md
 - 출처·라이선스·확인일이 비어 있다
 - 원장 기록 뒤 파일이 바뀌었다
 - 출처 표기 의무가 있는데 본문에 없다
+- AI 생성 배경인데 모델·생성일·프롬프트·use가 비었거나, 본문에 AI 활용 표시가 없다
 
 라이선스의 진위는 사람이 출처 페이지에서 확인한다.
 

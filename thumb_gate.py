@@ -228,7 +228,9 @@ PHOTO_TEMPLATES = ("photo_question", "photo_compare")     # 시즌 글 전용(20
 PHOTOS = ROOT / "assets" / "photos"
 PHOTO_LEDGER = PHOTOS / "_licenses.csv"
 PHOTO_COLS = ["file", "sha256", "source_url", "creator", "provider", "license", "license_url", "checked_at",
-              "commercial_ok", "edit_ok", "attribution", "crop_note", "use"]
+              "commercial_ok", "edit_ok", "attribution", "crop_note", "use", "prompt"]
+AI_PROVIDER = "AI"      # 2026-11-09 사용자가 AI 생성 배경을 정식 출처로 허용했다. 숨기지 않고 표시한다
+AI_DISCLOSE_RE = re.compile(r"AI(?:로 만든| 활용| 생성)")
 
 
 def track_of(md: str) -> str:
@@ -251,7 +253,14 @@ def photo_status(md: str, text: str, ledger: Path = None) -> tuple:
     if not row:
         return [f"BLOCKED_PHOTO_LICENSE — 라이선스 원장({ledger.name})에 {path.name}이 없다"], path
     blocks = [f"BLOCKED_PHOTO_LICENSE — {path.name}: {k}가 Y가 아니다" for k in ("commercial_ok", "edit_ok") if row.get(k) != "Y"]
-    blocks += [f"BLOCKED_PHOTO_LICENSE — {path.name}: {k}가 비어 있다" for k in ("source_url", "license", "checked_at") if not row.get(k)]
+    if row.get("provider") == AI_PROVIDER:     # AI 배경: 출처 URL 대신 모델·생성일·프롬프트, 상황 설명용 표시, 본문 공개
+        blocks += [f"BLOCKED_PHOTO_LICENSE — {path.name}(AI 생성): {k}가 비어 있다" for k in ("creator", "checked_at", "prompt") if not row.get(k)]
+        if "AI" not in row.get("use", ""):
+            blocks.append(f"BLOCKED_PHOTO_LICENSE — {path.name}: use에 'AI 생성 배경(상황 설명용)'이라고 적는다")
+        if not AI_DISCLOSE_RE.search(text):
+            blocks.append("BLOCKED_PHOTO_LICENSE — AI로 만든 대표사진인데 본문에 AI 활용 표시가 없다(예: 대표 이미지는 AI로 만든 배경입니다)")
+    else:
+        blocks += [f"BLOCKED_PHOTO_LICENSE — {path.name}: {k}가 비어 있다" for k in ("source_url", "license", "checked_at") if not row.get(k)]
     if row.get("sha256") != _sha(path):
         blocks.append(f"BLOCKED_PHOTO_LICENSE — {path.name}이 원장에 기록한 파일과 다르다(해시 불일치)")
     if row.get("attribution") and _plain(row["attribution"]) not in _plain(text):
@@ -759,6 +768,13 @@ def selftest():
             assert any("commercial_ok" in b for b in photo_status(sea(ph), text, led)[0])
             save({**row, "attribution": "Photo by Kim"})
             assert any("출처 표기" in b for b in photo_status(sea(ph), text, led)[0])
+            ai = {**row, "source_url": "", "license": "AI 생성", "provider": "AI", "creator": "gpt-image-2.5-flare",
+                  "use": "AI 생성 배경(상황 설명용)", "prompt": "thermostat, no text"}
+            save(ai)
+            assert any("AI 활용 표시" in b for b in photo_status(sea(ph), text, led)[0]), "AI 배경은 본문에 공개해야 한다"
+            assert photo_status(sea(ph), text + " 대표 이미지는 AI로 만든 배경입니다.", led)[0] == [], "AI 행은 출처 URL 없이 모델·프롬프트로 통과"
+            save({**ai, "prompt": ""})
+            assert any("prompt" in b for b in photo_status(sea(ph), text + " AI 활용", led)[0])
             save(row)
             Image.new("RGB", (21, 21), "white").save(ROOT / "assets" / "photos" / "heat.jpg")
             assert any("해시" in b for b in photo_status(sea(ph), text, led)[0]), "원장 기록 뒤 바뀐 파일은 차단"

@@ -1,0 +1,25 @@
+{
+  "purpose": "같은 카드 사용액 2,000만원이 결제수단 구성에 따라 카드 소득공제액이 달라지는 계산 (회귀 검증용, 2026-11-20 작성 — 발행 글은 고치지 않음)",
+  "center_question": "카드 소득공제는 얼마부터, 얼마나 되나",
+  "assumptions": ["총급여 5,000만원", "전통시장·대중교통·문화체육 사용분 없음", "자녀 없음(한도 300만원)"],
+  "scenarios": {
+    "credit_only": {"inputs": {"total_pay": 50000000, "credit_use": 20000000}, "meaning": "신용카드만 2,000만원"},
+    "mixed": {"inputs": {"total_pay": 50000000, "credit_use": 15000000, "debit_use": 5000000}, "meaning": "신용 1,500만원 + 체크 500만원"}
+  },
+  "steps": [
+    {"concept": "카드공제", "function": "card_deduction", "rule": "조세특례제한법 제126조의2 제2항 제6호·제10항"}
+  ],
+  "constants": [7500000, 12500000, 17500000, 30000000, 70000000, 3500000, 4000000, 2500000, 2750000, 2000000, 3000000],
+  "outputs": [
+    {"id": "credit_only", "expr": "credit_only.카드공제", "value": 1125000, "unit": "원",
+     "concept": "카드 소득공제액(신용카드만)", "scope": "소득공제액(세금 아님)", "example": true, "condition": "총급여 5,000만원, 신용카드만 2,000만원",
+     "title_condition": "2,000만원", "must_say": ["신용카드", "공제"], "must_not_say": ["세금이", "환급"]},
+    {"id": "mixed", "expr": "mixed.카드공제", "value": 1875000, "unit": "원",
+     "concept": "카드 소득공제액(신용 1,500만원 + 체크 500만원)", "scope": "소득공제액(세금 아님)", "example": true, "condition": "총급여 5,000만원",
+     "title_condition": "2,000만원", "must_say": ["체크카드", "공제"], "must_not_say": ["세금이", "환급"]}
+  ],
+  "sources": [
+    {"rule": "신용카드 등 소득공제", "url": "https://www.law.go.kr/법령/조세특례제한법/제126조의2", "checked": "2026-11-20", "effective": "2028-12-31 사용분까지", "applies_to": "근로소득자(일용 제외)", "exceptions": "국외 사용분 제외, 전통시장 등 별도 공제율", "used_in": "5절 표"}
+  ],
+  "cannot_claim": ["카드 소득공제액이 곧 줄어드는 세금이라는 주장"]
+}

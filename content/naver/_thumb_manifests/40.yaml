@@ -1,0 +1,49 @@
+thumbnail_id: "TH-20261114-40"
+status: "OK"
+seo_title: "퇴직금 중간정산 조건｜전세는 한 회사 1번, 의료비는 12.5% 초과"
+template_type: "headline"
+main_copy: "퇴직금 중간정산 / 나도 될까?"
+sub_copy: "인정 사유는 9가지뿐"
+bottom_badge: "퇴직금 미리 받기"
+copy_candidates: ["퇴직금 중간정산 / 나도 될까?", "퇴직금 미리 / 받을 수 있나?", "의료비 12.5% / 넘어야"]
+selection_reason: "중간정산을 알아보는 독자의 첫 질문(나도 되나)을 메인으로 두고, 1절이 사유 9가지로 답한다"
+verified_number: ""
+verified_rows: ""
+verified_source_url: "https://www.moel.go.kr/faq/faqView.do?seqRepeat=111"
+verified_at: "2026-11-14 00:10"
+category: "warning"
+color_code: "warning_brown"
+mascot_asset: "pig_check.png"
+mascot_pose: "check"
+mascot_pose_reason: "주제 checklist"
+renderer: "code"
+template_id: "headline"
+card_copy: ""
+mascot_area_ratio: 0.153
+mascot_position: "lower_right_safe"
+ai_mark_safe_zone_clear: true
+auto_qc_passed: true
+auto_fact_checks_passed: true
+number_evidence: ["9: 사유 수 / 본문 9행"]
+output_original: "40_썸네일.png"
+output_mobile_preview: "40_썸네일_160.png"
+requested_template: "headline"
+actual_template: "headline"
+template_fallback_reason: ""
+layout: "headline_v2"
+layout_approved: true
+operating_layout: "headline_v2"
+recent_templates: ["headline", "photo_editorial", "number"]
+highlight_phrase: "나도 될까?"
+preview_layout_output: ""
+preview_layout_qc: []
+asset_version: 1
+asset_hash: "7c25a4f8fbc9d2b60412dee86260830834edff47d5d74c759f2d8737a993de9b"
+asset_status: "approved"
+blocks: []
+warnings: []
+manual_review_required: false
+manual_review_reasons: []
+sample_check_due: true
+previews: ["C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\40_썸네일_160.png", "C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\40_썸네일_320.png"]
+fact_note: "자동 검사 통과는 사실 정확성 보장이 아니다. 의미 일치는 근거 문장과 사람이 본다"

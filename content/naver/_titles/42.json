@@ -1,0 +1,193 @@
+{
+  "primary_query": "온풍기 전기세",
+  "secondary_queries": [
+    "전기히터 전기세 계산",
+    "전기히터전기세한달얼마"
+  ],
+  "primary_intent": "calculation",
+  "reader_problem": "온풍기나 전기히터를 겨울 내내 켜면 한 달 전기세가 얼마나 늘어나는지, 왜 집마다 다른지 알고 싶다",
+  "verified_facts": [
+    "주택용 저압 200kWh·400kWh 누진 구간",
+    "전력량요금 120.0원·214.6원·307.3원",
+    "기본요금 910원·1,600원·7,300원",
+    "12~2월 1,000kWh 초과 736.2원",
+    "부가세 10%"
+  ],
+  "unique_value": [
+    "원래 사용량별 늘어나는 요금 비교",
+    "구간별 1시간 요금 환산"
+  ],
+  "serp_repeated_terms": [
+    "한 달 얼마",
+    "하루 4시간",
+    "라디에이터",
+    "비교",
+    "폭탄"
+  ],
+  "serp_gaps": [
+    "구간별 1시간 요금",
+    "동계 슈퍼유저요금"
+  ],
+  "serp_titles": [
+    "가정용 온풍기 전기세, 하루 4시간면 한 달 얼마 나올까 (라디에이터·전기히터 비교)",
+    "온풍기 전기세, 같은 2000W 4시간인데 5만7천원 vs 8만8천원 갈리는 이유",
+    "전기온풍기 틀다 \"전기세 25만원 폭탄\" 안 맞으려면 | 소비전력·누진세·라디에이터·히터 비교",
+    "온풍기 전기세 계산, 하루 몇 시간 사용하면 전기요금 얼마나 나올까요",
+    "온풍기 전기세 한 달 얼마｜전기장판·라디에이터 요금 비교",
+    "온풍기 전기세, 1500W 30분이면 얼마?",
+    "온풍기 전기세 얼마나 나올까? 1000W, 2000W 계산해 봤습니다",
+    "온풍기 전기세, 하루 4시간이면 얼마나 나올까? 500W·1500W 한 달 사용 비교",
+    "온풍기 전기세 얼마나 나올까, 와트 확인부터 시간 곱하는 계산 순서",
+    "온풍기 전기세 라디에이터·전기히터 비교, 방 크기별 고르기"
+  ],
+  "publication_date": "2026-11-19",
+  "candidates": [
+    {
+      "title": "온풍기 전기세 계산｜같은 히터도 누진 구간 따라 한 달 요금이 다른 이유",
+      "intent": 22,
+      "clarity": 13,
+      "specificity": 9,
+      "differentiation": 4,
+      "why": "핵심은 맞지만 상위 2번 제목과 같은 각도다"
+    },
+    {
+      "title": "온풍기 전기세｜같은 1시간이 240원에서 614.6원까지, 누진 구간 계산",
+      "intent": 22,
+      "clarity": 12,
+      "specificity": 14,
+      "differentiation": 9,
+      "why": "상위 글에 없는 구간별 1시간 요금을 숫자로 보여 준다. 1단계와 3단계를 정확히 대비한다"
+    },
+    {
+      "title": "온풍기 전기세 한 달 얼마｜우리 집 kWh부터 봐야 하는 이유",
+      "intent": 22,
+      "clarity": 13,
+      "specificity": 9,
+      "differentiation": 7,
+      "why": "행동(고지서 확인)을 약속하지만 숫자가 없다"
+    },
+    {
+      "title": "온풍기 전기세 계산｜2kW 하루 4시간이면 240kWh, 요금은 집마다 다르다",
+      "intent": 22,
+      "clarity": 12,
+      "specificity": 13,
+      "differentiation": 6,
+      "why": "계산 출발점이 보이지만 길다"
+    },
+    {
+      "title": "전기히터 전기세 한 달 얼마｜누진 구간별 요금 계산",
+      "intent": 20,
+      "clarity": 13,
+      "specificity": 9,
+      "differentiation": 5,
+      "why": "대표 키워드가 다르다"
+    },
+    {
+      "title": "온풍기 전기세 폭탄 피하려면｜200kWh·400kWh 구간부터",
+      "intent": 20,
+      "clarity": 12,
+      "specificity": 12,
+      "differentiation": 7,
+      "why": "폭탄은 상위 글 반복어다"
+    },
+    {
+      "title": "온풍기 전기세｜겨울 1,000kWh 넘으면 kWh당 736.2원",
+      "intent": 18,
+      "clarity": 12,
+      "specificity": 13,
+      "differentiation": 8,
+      "why": "해당 독자가 적은 예외 조건이다"
+    },
+    {
+      "title": "온풍기 전기세 계산 순서｜소비전력·시간·누진 구간 세 가지",
+      "intent": 21,
+      "clarity": 13,
+      "specificity": 9,
+      "differentiation": 4,
+      "why": "상위 9번과 구조가 같다"
+    }
+  ],
+  "results": [
+    {
+      "title": "온풍기 전기세｜같은 1시간이 240원에서 614.6원까지, 누진 구간 계산",
+      "score": 88,
+      "status": "FINAL",
+      "reasons": [
+        "숫자가 핵심 기준 2개를 넘는다"
+      ]
+    },
+    {
+      "title": "온풍기 전기세 한 달 얼마｜우리 집 kWh부터 봐야 하는 이유",
+      "score": 86,
+      "status": "FINAL",
+      "reasons": []
+    },
+    {
+      "title": "온풍기 전기세｜겨울 1,000kWh 넘으면 kWh당 736.2원",
+      "score": 86,
+      "status": "FINAL",
+      "reasons": []
+    },
+    {
+      "title": "온풍기 전기세 계산｜2kW 하루 4시간이면 240kWh, 요금은 집마다 다르다",
+      "score": 84,
+      "status": "REWORK",
+      "reasons": [
+        "숫자가 핵심 기준 2개를 넘는다"
+      ]
+    },
+    {
+      "title": "온풍기 전기세 계산｜같은 히터도 누진 구간 따라 한 달 요금이 다른 이유",
+      "score": 83,
+      "status": "REWORK",
+      "reasons": []
+    },
+    {
+      "title": "온풍기 전기세 계산 순서｜소비전력·시간·누진 구간 세 가지",
+      "score": 82,
+      "status": "REWORK",
+      "reasons": []
+    },
+    {
+      "title": "전기히터 전기세 한 달 얼마｜누진 구간별 요금 계산",
+      "score": 70,
+      "status": "DISCARD",
+      "reasons": []
+    },
+    {
+      "title": "온풍기 전기세 폭탄 피하려면｜200kWh·400kWh 구간부터",
+      "score": 0,
+      "status": "REJECT_BANNED",
+      "reasons": [
+        "금지 표현: 폭탄"
+      ]
+    }
+  ],
+  "selected_title": "온풍기 전기세｜같은 1시간이 240원에서 614.6원까지, 누진 구간 계산",
+  "score": 88,
+  "alternatives": [
+    {
+      "title": "온풍기 전기세 한 달 얼마｜우리 집 kWh부터 봐야 하는 이유",
+      "score": 86
+    },
+    {
+      "title": "온풍기 전기세｜겨울 1,000kWh 넘으면 kWh당 736.2원",
+      "score": 86
+    }
+  ],
+  "rejected": [
+    {
+      "title": "전기히터 전기세 한 달 얼마｜누진 구간별 요금 계산",
+      "reason": "DISCARD",
+      "detail": []
+    },
+    {
+      "title": "온풍기 전기세 폭탄 피하려면｜200kWh·400kWh 구간부터",
+      "reason": "REJECT_BANNED",
+      "detail": [
+        "금지 표현: 폭탄"
+      ]
+    }
+  ],
+  "verified_at": "2026-11-16T23:29"
+}

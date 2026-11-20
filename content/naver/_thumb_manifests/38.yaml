@@ -1,0 +1,48 @@
+thumbnail_id: "TH-20261109-38"
+status: "OK"
+seo_title: "블랙프라이데이 직구 면세한도｜200달러 넘으면 배송비까지 세금 붙는 계산"
+template_type: "photo_editorial"
+main_copy: "직구가 / 더 쌀까?"
+sub_copy: "배송비·세금까지 비교"
+bottom_badge: "블랙프라이데이"
+copy_candidates: ["직구가 / 더 쌀까?", "200달러 / 넘으면?", "배송비도 / 세금?"]
+selection_reason: "할인율을 보고 망설이는 독자의 질문을 그대로 두고, 2절 계산표가 답한다"
+verified_number: ""
+verified_rows: ""
+verified_source_url: "https://www.korea.kr/news/policyNewsView.do?newsId=148957712"
+verified_at: "2026-11-09 23:38"
+category: "card"
+color_code: "card_navy"
+mascot_asset: ""
+mascot_pose: ""
+mascot_pose_reason: ""
+renderer: "code"
+template_id: "photo_editorial"
+card_copy: ""
+mascot_area_ratio: 0.0
+mascot_position: "none"
+ai_mark_safe_zone_clear: true
+auto_qc_passed: true
+auto_fact_checks_passed: true
+number_evidence: []
+output_original: "38_썸네일.png"
+output_mobile_preview: "38_썸네일_160.png"
+content_track: "seasonal"
+requested_template: "photo_editorial"
+actual_template: "photo_editorial"
+template_fallback_reason: ""
+layout: "photo_editorial"
+layout_approved: true
+operating_layout: "photo_editorial"
+photo_file: "bf_01_ai_bg.png"
+photo_license: {"file": "bf_01_ai_bg.png", "sha256": "9023c7397656d6f93587d73febf667b65ede230a0ebb40b470fb634ae9bb4590", "source_url": "", "creator": "gpt-image-2.5-flare", "provider": "AI", "license": "자체 생성(OpenAI 이미지 API)", "license_url": "", "checked_at": "2026-11-09", "commercial_ok": "Y", "edit_ok": "Y", "attribution": "", "crop_note": "1080 정사각 원본, 왼쪽 글자 자리", "use": "AI 생성 배경(상황 설명용) — 38편 대표사진", "prompt": "Editorial product-style photo, square. On the right half: a plain matte black paper shopping bag with rope handles and an unbranded kraft cardboard shipping box, dramatic low-key lighting with a subtle warm red rim light. The left half and top of the frame are a deep charcoal near-black background, smooth and empty, so large white text can be placed over it. Minimal, premium, no clutter. No receipts, no price tags, no labels. Absolutely no text, letters, numbers, digits, symbols on any screen, no logos, no brand names, no watermarks, no people, no hands, no faces. Realistic photograph, natural materials and light, realistic perspective, no glossy plastic look, no exaggerated effects."}
+background_source: "C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\assets\\photos\\bf_01_ai_bg.png"
+palette: "shopping"
+placement: "left"
+font: "Jalnan2TTF.ttf"
+blocks: []
+warnings: []
+manual_review_required: false
+manual_review_reasons: []
+previews: ["C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\38_썸네일_160.png", "C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\38_썸네일_320.png"]
+fact_note: "사진 이용 권한의 진위는 출처 페이지를 사람이 확인한다. 코드는 원장 기록과 파일 해시만 본다"

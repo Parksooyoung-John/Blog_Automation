@@ -1,0 +1,49 @@
+thumbnail_id: "TH-20261117-43"
+status: "OK"
+seo_title: "2026 고향사랑기부제 세액공제｜20만원이면 국세 130,909원 계산"
+template_type: "headline"
+main_copy: "고향사랑기부 / 나도 공제될까?"
+sub_copy: "낼 세금이 있어야 돼요"
+bottom_badge: "고향사랑기부제"
+copy_candidates: ["고향사랑기부 / 나도 공제될까?", "20만원이면 / 130,909원", "고향사랑기부 / 올해 얼마 돌아올까?", "10만원 넘어도 / 40% 공제"]
+selection_reason: "제목이 금액을 답하므로 대표사진은 '나도 받나'를 묻고, 상위 글이 빠뜨린 결정세액 조건을 보조 줄에 둔다. 4절이 답한다"
+verified_number: ""
+verified_rows: ""
+verified_source_url: "https://www.law.go.kr/법령/조세특례제한법/제58조"
+verified_at: "2026-11-17 19:06"
+category: "tax"
+color_code: "tax_teal"
+mascot_asset: "pig_calculator.png"
+mascot_pose: "calculator"
+mascot_pose_reason: "주제 tax_calculation"
+renderer: "code"
+template_id: "headline"
+card_copy: ""
+mascot_area_ratio: 0.16
+mascot_position: "lower_right_safe"
+ai_mark_safe_zone_clear: true
+auto_qc_passed: true
+auto_fact_checks_passed: true
+number_evidence: []
+output_original: "43_썸네일.png"
+output_mobile_preview: "43_썸네일_160.png"
+requested_template: "headline"
+actual_template: "headline"
+template_fallback_reason: ""
+layout: "headline_v2"
+layout_approved: true
+operating_layout: "headline_v2"
+recent_templates: ["photo_editorial", "compare", "headline"]
+highlight_phrase: "공제될까?"
+preview_layout_output: ""
+preview_layout_qc: []
+asset_version: 1
+asset_hash: "c0376db60c43522bc073709bb12f2a47769954e97a847301229ebafd6c28f8aa"
+asset_status: "approved"
+blocks: []
+warnings: []
+manual_review_required: false
+manual_review_reasons: []
+sample_check_due: false
+previews: ["C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\43_썸네일_160.png", "C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\43_썸네일_320.png"]
+fact_note: "자동 검사 통과는 사실 정확성 보장이 아니다. 의미 일치는 근거 문장과 사람이 본다"

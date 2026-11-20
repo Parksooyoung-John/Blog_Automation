@@ -1,0 +1,80 @@
+{
+  "purpose": "성과급을 받은 해에 근로소득세가 개념별로 얼마나 늘어나는지 보인다(국세 소득세만)",
+  "center_question": "성과급 달에 왜 세금을 많이 떼고, 1년 동안 실제로 얼마를 더 내나",
+  "assumptions": [
+    "근로소득만 있다",
+    "근로소득공제 외 소득공제 합계 775만원(인적공제·연금보험료 등)은 성과급 전후 같다 — 1,175만원 사례도 같다",
+    "근로소득세액공제 외 세액공제는 전후 같다(0원으로 둔다)",
+    "카드 사례는 신용카드만 2,000만원 쓴 경우다",
+    "지방소득세·4대 보험료는 계산하지 않는다"
+  ],
+  "scenarios": {
+    "before": {"inputs": {"total_pay": 50000000, "other_deductions": 7750000}, "meaning": "총급여 5천만원"},
+    "after": {"inputs": {"total_pay": 60000000, "other_deductions": 7750000}, "meaning": "성과급 1,000만원을 받아 6천만원"},
+    "before_card": {"inputs": {"total_pay": 50000000, "other_deductions": 7750000, "credit_use": 20000000}, "meaning": "총급여 5천만원, 신용카드 2,000만원"},
+    "after_card": {"inputs": {"total_pay": 60000000, "other_deductions": 7750000, "credit_use": 20000000}, "meaning": "6천만원, 신용카드 2,000만원"},
+    "before_high": {"inputs": {"total_pay": 70000000, "other_deductions": 11750000}, "meaning": "총급여 7천만원"},
+    "after_high": {"inputs": {"total_pay": 80000000, "other_deductions": 11750000}, "meaning": "성과급 1,000만원을 받아 8천만원"}
+  },
+  "steps": [
+    {"concept": "근로소득공제", "function": "earned_income_deduction", "rule": "소득세법 제47조"},
+    {"concept": "근로소득금액", "function": "총급여 − 근로소득공제", "rule": "소득세법 제20조·제47조"},
+    {"concept": "카드공제", "function": "card_deduction", "rule": "조세특례제한법 제126조의2"},
+    {"concept": "과세표준", "function": "근로소득금액 − 기타소득공제 − 카드공제", "rule": "소득세법 제14조(원문 미확인, 정의만 사용)"},
+    {"concept": "산출세액", "function": "income_tax", "rule": "소득세법 제55조"},
+    {"concept": "근로소득세액공제", "function": "earned_income_credit", "rule": "소득세법 제59조"},
+    {"concept": "결정세액", "function": "산출세액 − 근로소득세액공제 − 기타세액공제", "rule": "정의"}
+  ],
+  "constants": [10000000, 12500000, 15000000, 14000000, 50000000, 88000000, 45000000, 660000, 500000, 20000000],
+  "outputs": [
+    {"id": "earned_up", "expr": "after.근로소득금액 - before.근로소득금액", "value": 9500000, "unit": "원",
+     "concept": "근로소득금액 증가", "scope": "국세 계산 단계", "example": true, "condition": "총급여 5천만원→6천만원",
+     "title_condition": "총급여 5천만원", "must_say": ["근로소득금액"], "must_not_say": ["세금이", "소득세"]},
+    {"id": "taxable_up", "expr": "after.과세표준 - before.과세표준", "value": 9500000, "unit": "원",
+     "concept": "과세표준 증가", "scope": "국세 계산 단계", "example": true, "condition": "총급여 5천만원→6천만원, 다른 소득공제 그대로",
+     "title_condition": "다른 공제", "must_say": ["과세표준"], "must_say_also": ["그대로", "같다면", "같으면", "변화가 없"], "must_not_say": ["최종"]},
+    {"id": "calc_up", "expr": "after.산출세액 - before.산출세액", "value": 1425000, "unit": "원",
+     "concept": "산출세액 증가", "scope": "국세 산출세액", "example": true, "condition": "총급여 5천만원→6천만원, 다른 소득공제 그대로",
+     "title_condition": "총급여 5천만원", "must_say": ["산출세액"], "must_not_say": ["최종", "실수령", "남는", "환급"]},
+    {"id": "decided_up", "expr": "after.결정세액 - before.결정세액", "value": 1425000, "unit": "원",
+     "concept": "결정세액 증가", "scope": "국세 결정세액", "example": true, "condition": "위 조건 + 다른 세액공제 그대로",
+     "title_condition": "총급여 5천만원", "must_say": ["결정세액"], "must_not_say": ["실수령", "남는", "지방소득세 포함"]},
+    {"id": "decided_before", "expr": "before.결정세액", "value": 2580000, "unit": "원",
+     "concept": "결정세액(성과급 전)", "scope": "국세 결정세액", "example": true, "condition": "총급여 5천만원",
+     "title_condition": "총급여 5천만원", "must_say": ["결정세액"], "must_not_say": ["실수령"]},
+    {"id": "decided_after", "expr": "after.결정세액", "value": 4005000, "unit": "원",
+     "concept": "결정세액(성과급 후)", "scope": "국세 결정세액", "example": true, "condition": "총급여 6천만원",
+     "title_condition": "총급여 5천만원", "must_say": ["결정세액"], "must_not_say": ["실수령"]},
+    {"id": "taxable_up_card", "expr": "after_card.과세표준 - before_card.과세표준", "value": 9875000, "unit": "원",
+     "concept": "과세표준 증가(카드 공제 감소 포함)", "scope": "국세 계산 단계", "example": true, "condition": "신용카드 2,000만원",
+     "title_condition": "신용카드", "must_say": ["과세표준"], "must_not_say": ["최종"]},
+    {"id": "calc_up_card", "expr": "after_card.산출세액 - before_card.산출세액", "value": 1481250, "unit": "원",
+     "concept": "산출세액 증가(카드 공제 감소 포함)", "scope": "국세 산출세액", "example": true, "condition": "신용카드 2,000만원",
+     "title_condition": "신용카드", "must_say": ["산출세액"], "must_not_say": ["최종", "실수령", "남는"]},
+    {"id": "calc_up_high", "expr": "after_high.산출세액 - before_high.산출세액", "value": 1830000, "unit": "원",
+     "concept": "산출세액 증가(15%→24% 구간 넘음)", "scope": "국세 산출세액", "example": true, "condition": "총급여 7천만원→8천만원, 과세표준 4,500만원→5,450만원",
+     "title_condition": "7천만원", "must_say": ["산출세액"], "must_not_say": ["최종", "실수령", "남는"]},
+    {"id": "decided_up_high", "expr": "after_high.결정세액 - before_high.결정세액", "value": 1990000, "unit": "원",
+     "concept": "결정세액 증가(근로소득세액공제 한도 66만원→50만원)", "scope": "국세 결정세액", "example": true, "condition": "총급여 7천만원→8천만원",
+     "title_condition": "7천만원", "must_say": ["결정세액"], "must_not_say": ["실수령", "남는"]},
+    {"id": "taxable_high_before", "expr": "before_high.과세표준", "value": 45000000, "unit": "원",
+     "concept": "과세표준(7천만원 사례 전)", "scope": "국세 계산 단계", "example": true, "condition": "총급여 7천만원",
+     "title_condition": "7천만원", "must_say": ["과세표준"], "must_not_say": []},
+    {"id": "taxable_high_after", "expr": "after_high.과세표준", "value": 54500000, "unit": "원",
+     "concept": "과세표준(7천만원 사례 후)", "scope": "국세 계산 단계", "example": true, "condition": "총급여 8천만원",
+     "title_condition": "7천만원", "must_say": ["과세표준"], "must_not_say": []}
+  ],
+  "sources": [
+    {"rule": "상여 원천징수(지급대상기간)", "url": "https://www.law.go.kr/법령/소득세법/제136조", "checked": "2026-11-19", "effective": "2026-07-01 시행 소득세법", "applies_to": "상여를 지급하는 원천징수의무자", "exceptions": "잉여금 처분 상여는 대통령령(제2항)", "used_in": "1절"},
+    {"rule": "근로소득공제", "url": "https://casenote.kr/법령/소득세법/제47조", "checked": "2026-11-19", "effective": "2026 귀속", "applies_to": "근로소득자(일용 제외)", "exceptions": "상한 2천만원", "used_in": "3절 표"},
+    {"rule": "종합소득세율", "url": "https://casenote.kr/법령/소득세법/제55조", "checked": "2026-11-18", "effective": "2026 귀속", "applies_to": "종합소득과세표준", "exceptions": "1억5천만원 초과 구간은 확인 전", "used_in": "3·4절"},
+    {"rule": "근로소득세액공제와 한도", "url": "https://casenote.kr/법령/소득세법/제59조", "checked": "2026-11-20", "effective": "2023-01-01 시행", "applies_to": "근로소득이 있는 거주자", "exceptions": "일용근로자 55%(제3항)", "used_in": "3·4절"},
+    {"rule": "신용카드 소득공제 최저사용금액·공제율·한도", "url": "https://www.law.go.kr/법령/조세특례제한법/제126조의2", "checked": "2026-11-20", "effective": "2028-12-31 사용분까지", "applies_to": "근로소득자(일용 제외)", "exceptions": "체크카드·전통시장 등은 공제율이 다름", "used_in": "4절"}
+  ],
+  "cannot_claim": [
+    "성과급 달에 실제로 원천징수되는 금액(간이세액표 미구현)",
+    "지방소득세·4대 보험료를 뺀 실수령액",
+    "다른 소득공제·세액공제가 바뀌는 사람의 결과",
+    "모든 성과급 1,000만원에 과세표준이 950만원 는다는 일반 규칙"
+  ]
+}

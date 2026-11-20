@@ -31,9 +31,9 @@ MAIN_MIN_QC, SUB_MIN_QC = 12, 7.5              # 160px 축소본에서 읽히는
 MASCOT_RATIO = (0.13, 0.25)                    # 2026-11-01 사용자 확정 시안의 돼지가 13.5%라 하한을 13%로 낮췄다
 BADGE_ZONE = (160 * THUMB / OUT_SIZE, 90 * THUMB / OUT_SIZE)     # 내부 AI 표시 안전영역(오른쪽 아래, 1080 기준 160×90). 네이버 공식 크기가 아니다. 실제 표시는 게시 화면에서 본다
 MAX_MAIN, MAX_SUB, MAX_BADGE, MIN_CANDIDATES = 16, 14, 14, 3     # 공백 제외. 후보는 내부에서 3개 만들어 1개를 고른다
-MAX_LINES = {"compare": 2, "number": 2, "headline_v2": 3, "photo_question": 2, "photo_compare": 2}     # 판별 메인 줄 수. 질문형만 상황·대상·질문 3줄을 쓴다
-LAYOUT = {"compare": "compare", "number": "number", "headline": "headline_v2", "photo_question": "photo_question", "photo_compare": "photo_compare"}     # 틀마다 지금 판
-APPROVED_LAYOUTS = {"compare", "number", "headline_v2", "photo_question", "photo_compare"}   # 사용자가 미리보기를 승인한 판(compare 2026-11-01, number·headline_v2 2026-11-04, photo 두 틀 2026-11-09 카드 78%). 승인 전 판은 미리보기만 만들고 운영은 headline_v2로 한다(사진 틀은 대체 없음)
+MAX_LINES = {"compare": 2, "number": 2, "headline_v2": 3, "photo_question": 2, "photo_compare": 2, "photo_editorial": 2}     # 판별 메인 줄 수. 질문형만 상황·대상·질문 3줄을 쓴다
+LAYOUT = {"compare": "compare", "number": "number", "headline": "headline_v2", "photo_question": "photo_question", "photo_compare": "photo_compare", "photo_editorial": "photo_editorial"}     # 틀마다 지금 판
+APPROVED_LAYOUTS = {"compare", "number", "headline_v2", "photo_question", "photo_compare", "photo_editorial"}   # 사용자가 미리보기를 승인한 판(compare 2026-11-01, number·headline_v2 2026-11-04, photo 두 틀 2026-11-09 카드 78%, photo_editorial 2026-11-09). 승인 전 판은 미리보기만 만들고 운영은 headline_v2로 한다(사진 틀은 대체 없음)
 SAMPLE_EVERY = 5                               # 안정화된 틀은 5편마다 1편 축소본을 표본 확인한다(발행을 기다리게 하지 않는다)
 
 NUM_RE = re.compile(r"(\d+(?:[.,]\d+)*)\s*(만원|억원|만|억|%|개월|년|원)?")
@@ -224,7 +224,7 @@ def template_fit(md: str) -> dict:
             "headline": ""}
 
 
-PHOTO_TEMPLATES = ("photo_question", "photo_compare")     # 시즌 글 전용(2026-11-09 노션 계획). 돼지 없이 실사 사진 + 코드 카드
+PHOTO_TEMPLATES = ("photo_question", "photo_compare", "photo_editorial")     # photo_editorial: AI 배경 + 큰 글자 직접(2026-11-09 승인)     # 시즌 글 전용(2026-11-09 노션 계획). 돼지 없이 실사 사진 + 코드 카드
 PHOTOS = ROOT / "assets" / "photos"
 PHOTO_LEDGER = PHOTOS / "_licenses.csv"
 PHOTO_COLS = ["file", "sha256", "source_url", "creator", "provider", "license", "license_url", "checked_at",

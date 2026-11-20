@@ -367,13 +367,14 @@ ORIGINALITY = ("primary_source_comparison", "verified_calculation", "verified_sc
 FIRST_PERSON_RE = re.compile(r'(?<![가-힣])(저는|제가|저도|저희|나는|내가)(?![가-힣])|직접 (신청|사용|받아|해) ?보|해 ?보니|더라고요|더라구요'
                              r'|실제로 환급받았|담당자에게 (확인|물어) ?보니|세무서에 문의해 ?보니')
 PRIMARY_DOMAINS = ("nts.go.kr", "hometax.go.kr", "law.go.kr", "korea.kr", "gov.kr", "bokjiro.go.kr", "nps.or.kr",
-                   "nhis.or.kr", "ei.go.kr", "work24.go.kr", "moel.go.kr", "mohw.go.kr", "moef.go.kr", "comwel.or.kr")
+                   "nhis.or.kr", "ei.go.kr", "work24.go.kr", "moel.go.kr", "mohw.go.kr", "moef.go.kr", "comwel.or.kr",
+                   "kepco.co.kr")     # kepco: 전기요금표 원 기관(2026-11-16 시즌 eh-01)
 GUARANTEE_RE = re.compile(r'무조건 (받|환급|돌려)|100% (환급|받|돌려)|반드시 (받|환급)을? 수|확실히 (받|환급)')
 CLICK_RE = re.compile(r'광고.{0,8}(클릭|눌러)|클릭해 주세요')
 HYPOTHETICAL_RE = re.compile(r'가상|예시|계산 예|가정')
 # V2(2026-10-31, 30편부터) — 최신성·제목. 명세 NAVER_BLOG_HARNESS_TOPIC_FRESHNESS_TITLE_CA_V2.md. 29편이 열린 서비스를 "열리기 전"으로 썼다.
 V2_FROM = 30
-V2_THUMBS = ("number", "compare", "action", "headline", "photo_question", "photo_compare")      # 코드 렌더. scene은 현재 운영에서 비활성화했다(시안에만 쓴다)
+V2_THUMBS = ("number", "compare", "action", "headline", "photo_question", "photo_compare", "photo_editorial")      # 코드 렌더. scene은 현재 운영에서 비활성화했다(시안에만 쓴다)
 CATEGORY_COLORS = {"tax": "#006064", "pension": "#2e7d32", "support": "#5b2c6f", "warning": "#a0461a", "card": "#1a3c6e"}
 MASCOT_POSES = ("face", "point_left", "point_up", "calculator", "document", "phone", "laptop", "thinking", "surprised", "check", "coin", "family")
 MAX_SCENE_IN_9 = 3
@@ -530,6 +531,131 @@ def unit_nums(s: str) -> set:
             if not (m.group(2) == '년' and re.fullmatch(r'20\d\d', m.group(1)))}
 
 
+CALC_FROM = 46           # 계산 명세 필수·기획 메모(중심 질문·다루지 않을 범위) 필수 — 45편 오류로 2026-11-20 도입
+MOBILE_FROM = 45         # 모바일 경고(체크리스트·표 머리글 길이). 44편까지는 발행 당시 기준
+MONEY_RE = re.compile(r'(\d[\d,]*(?:\.\d+)?)\s*(억|만)?\s*원')
+MONEY_COMPOSITE = re.compile(r'(\d[\d,]*)만\s+(\d[\d,]*)원')      # 18편 표기 `112만 5,000원`
+TAX_CALC_RE = re.compile(r'과세표준|산출세액|결정세액|세율|소득세')
+
+
+def money_values(text: str) -> set:
+    """`142.5만원`·`1,425,000원`·`1억원` → 원 단위 정수 집합."""
+    mult = {'억': 100_000_000, '만': 10_000, '': 1}
+    out = {int(a.replace(',', '')) * 10_000 + int(b.replace(',', '')) for a, b in MONEY_COMPOSITE.findall(text)}
+    rest = MONEY_COMPOSITE.sub(' ', text)
+    return out | {int(round(float(n.replace(',', '')) * mult[u])) for n, u in MONEY_RE.findall(rest)}
+
+
+def calc_spec_issues(md: str, body: str, nn: int) -> tuple:
+    """계산 명세(content/naver/_calc/NN.json)와 원고 대조 → (실패, 경고). 45편 오류의 네 갈래를 막는다:
+    ① 가정 사례 숫자를 제목·썸네일에서 일반 규칙처럼 씀 ② 숫자를 다른 개념(과세표준·최종 세금)으로 부름
+    ③ 계산 표·카드에 모델이 내지 않은 숫자 ④ 명세 재계산 불일치. 문제마다 위치와 고칠 방향을 붙인다."""
+    import json
+    from tax_calc import CALC_DIR, run_spec, spec_issues
+    fails, warns = [], []
+    title = re.search(r'^제목: (.+)$', md, re.M).group(1).strip()
+    if nn >= CALC_FROM:
+        fails += [f'작성 메모 `- {k}:`가 없다 — 원고 전에 기획서로 정한다' for k in ('중심 질문', '다루지 않을 범위')
+                  if not (memo_value(md, k) or '').strip()]
+    p = CALC_DIR / f'{nn}.json'
+    if not p.exists():
+        if nn >= CALC_FROM and (memo_value(md, '글 유형') or '') == '계산·실수령형' and TAX_CALC_RE.search(body):
+            fails.append(f'세금 계산 글인데 계산 명세가 없다: {p.name} — 입력·가정·개념별 결과를 먼저 쓰고 `tax_calc.py spec {nn}`')
+        return fails, warns
+    spec = json.loads(p.read_text(encoding='utf-8'))
+    fails += spec_issues(str(nn))
+    thumb = memo_value(md, '썸네일 문구') or ''
+    units = [('제목', title), ('썸네일', thumb)]
+    for blk in (x.strip() for x in re.split(r'\n\s*\n', body) if x.strip()):
+        if is_table(blk):
+            head, *rows_ = table_rows(blk)      # 머리글이 개념을 밝히는 표도 있다 — 칸마다 머리글을 붙여 본다
+            units += [('표', ' | '.join(head) + ' || ' + ' | '.join(r)) for r in rows_]
+        elif is_box(blk):
+            units += [('박스', ln) for ln in box_lines(blk)]
+        elif not blk.startswith('['):
+            units += [('본문', s) for s in split_sentences(re.sub(r'^[>\-✔ ]+', '', blk, flags=re.M))]
+    outs = spec['outputs']
+    # 법 조문 경계값·입력값과 같은 숫자는 개념을 판정하지 않는다 — `총급여 4,500만원 초과분`의 4,500만원이 과세표준 사례값과 겹쳤다
+    fixed = {int(x) for x in spec.get('constants', [])} | {v for sc in spec['scenarios'].values() for v in sc['inputs'].values()}
+    for where, text in units:
+        vals = money_values(text) - fixed
+        for v in sorted(vals):
+            cands = [o for o in outs if o['value'] == v]
+            if not cands:
+                continue
+            ok = [o for o in cands if any(w in text for w in o.get('must_say', []))
+                  and (not o.get('must_say_also') or any(w in text for w in o['must_say_also']))
+                  and not any(w in text for w in o.get('must_not_say', []))]
+            if not ok:
+                o = cands[0]
+                bad = [w for w in o.get('must_not_say', []) if w in text]
+                fails.append(f'BLOCK_CONCEPT [{where}] "{text[:50]}" — {v:,}원은 {o["concept"]}({o["scope"]})다. '
+                             + (f'"{"·".join(bad)}"라고 부르지 않는다' if bad else f'문장에 "{"/".join(o.get("must_say", []))}"를 밝힌다'))
+            if where in ('제목', '썸네일'):
+                for o in cands:
+                    if o.get('example') and o.get('title_condition', '') not in text:
+                        fails.append(f'BLOCK_GENERALIZED [{where}] {v:,}원은 가정 사례({o["condition"]}) 결과다 — '
+                                     f'조건 "{o.get("title_condition") or "(없음)"}"을 함께 쓰거나 숫자를 본문으로 내린다')
+    res = {k: v for sc in run_spec_all(spec).values() for k, v in sc.items()}
+    pool = {o['value'] for o in outs} | set(res.values()) | {int(x) for x in spec.get('constants', [])}
+    pool |= {v for sc in spec['scenarios'].values() for v in sc['inputs'].values()}
+    for where, text in units:
+        if where != '표':
+            continue
+        vals = money_values(text)
+        if vals & pool and vals - pool:
+            fails.append(f'BLOCK_UNMODELED [표] "{text[:50]}" — {", ".join(f"{v:,}원" for v in sorted(vals - pool))}은 명세가 계산하지 않은 값이다')
+    for name, nums in card_money(body).items():
+        if nums & pool and nums - pool:
+            fails.append(f'BLOCK_UNMODELED [카드 {name}] {", ".join(f"{v:,}원" for v in sorted(nums - pool))}은 명세가 계산하지 않은 값이다')
+    for o in outs:
+        n = sum(o['value'] in money_values(t) for _, t in units)
+        if n >= 4:
+            warns.append(f'같은 값 {o["value"]:,}원({o["concept"]})이 {n}번 나온다 — 본문·표·카드·FAQ 중 역할이 겹치는 곳을 줄인다')
+    fails = list(dict.fromkeys(fails))
+    if any('국세' in o['scope'] for o in outs) and '국세' not in body:
+        warns.append('명세는 국세만 계산했는데 본문에 "국세" 범위 표시가 없다 — 전체 세금·실수령액으로 읽히지 않게 밝힌다')
+    return fails, warns
+
+
+def run_spec_all(spec: dict) -> dict:
+    from tax_calc import year_tax
+    return {k: year_tax(**sc['inputs']) for k, sc in spec['scenarios'].items()}
+
+
+def card_money(body: str) -> dict:
+    """원고가 참조한 카드의 원 단위 숫자 — 카드 출처 줄까지 포함(가정이 거기 있다)."""
+    names = [n for n in re.findall(r'assets/naver_img/(\d+_[^`\s\]]+?)\.png', body) if '썸네일' not in n]
+    if not names:
+        return {}
+    from make_naver_images import CARDS
+    out = {}
+    for n in names:
+        c = CARDS.get(n)
+        if c is None:
+            continue
+        flat = [y for a in c.args[1:] for y in (a if isinstance(a, (list, tuple)) else [a])]
+        flat = [z for y in flat for z in (y if isinstance(y, tuple) else [y]) if isinstance(z, str)]
+        txt = ' '.join(flat)
+        if TAX_CALC_RE.search(txt) or '세금' in txt:
+            out[n] = money_values(txt)
+    return out
+
+
+def mobile_warns(body: str) -> list:
+    """모바일 폭에서 한두 글자만 다음 줄로 넘어가기 쉬운 곳. 플랫폼 레이아웃은 못 보니 경고만 한다."""
+    warns = []
+    for ln in re.findall(r'^- ✔ (.+)$', body, re.M):
+        if len(ln) > 16:
+            warns.append(f'체크리스트 한 줄 {len(ln)}자 (16자 이하): {ln} — 행동 하나로 줄인다')
+    for blk in re.split(r'\n\s*\n', body):
+        if is_table(blk.strip()):
+            for h in table_rows(blk.strip())[0]:
+                if len(h) > 8:
+                    warns.append(f'표 머리글 {len(h)}자 (8자 이하): {h} — 긴 조건은 표 밖으로')
+    return warns
+
+
 SEASONAL_CATEGORY = "생활비·소비"     # 2026-11-09 사용자 결정. 블로그 카테고리 추가는 사용자가 한다
 
 
@@ -550,8 +676,8 @@ def seasonal_issues(md: str, today=None) -> tuple:
         fails.append('시즌 글은 `- 고유 가치:` 한 문장(다른 안내문을 읽은 독자도 새로 얻는 것)이 있어야 한다')
     if (memo_value(md, '카테고리') or '').strip() != SEASONAL_CATEGORY:
         fails.append(f'시즌 글의 `- 카테고리:`는 {SEASONAL_CATEGORY}다')
-    if (memo_value(md, '썸네일 유형') or '') not in ('photo_question', 'photo_compare'):
-        fails.append('시즌 글의 `- 썸네일 유형:`은 photo_question·photo_compare다(돼지 틀을 쓰지 않는다)')
+    if (memo_value(md, '썸네일 유형') or '') not in ('photo_question', 'photo_compare', 'photo_editorial'):
+        fails.append('시즌 글의 `- 썸네일 유형:`은 photo_editorial·photo_question·photo_compare다(돼지 틀을 쓰지 않는다)')
     until = (memo_value(md, '유효기간') or '').strip()
     if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', until):
         warns.append('시즌 글에 `- 유효기간: YYYY-MM-DD`가 없다 — 지난 뒤 업데이트 대상으로 잡지 못한다')
@@ -777,6 +903,9 @@ def measure(path, tistory, volumes=None, bench=frozenset()):
             blocks_, thumb_warns = review_copy(n, c)
             r["warn"] += thumb_warns
             r["format"] += fails_ + title_gate_issue(path, r["title"].strip()) + blocks_
+            calc_f, calc_w = calc_spec_issues(n, b, int(num.group()))
+            r["format"] += calc_f
+            r["warn"] += calc_w + (mobile_warns(b) if int(num.group()) >= MOBILE_FROM else [])
         if int(num.group()) >= COMPOSITION_FROM and r["thumb_type"] == "scene" and r["composition"] not in COMPOSITIONS:
             r["format"].append(f'작성 메모 `- 썸네일 구도:`가 목록에 없다 — {" · ".join(COMPOSITIONS)}')
     elif r["new_format"]:

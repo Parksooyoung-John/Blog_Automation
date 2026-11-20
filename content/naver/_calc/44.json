@@ -1,0 +1,47 @@
+{
+  "purpose": "주택청약 소득공제 120만원이 세율 구간별로 국세 산출세액·결정세액을 얼마나 줄이는지 (회귀 검증용, 2026-11-20 작성 — 발행 글은 고치지 않음)",
+  "center_question": "청약통장 소득공제 120만원을 받으면 세금이 실제로 얼마나 줄어드나",
+  "assumptions": [
+    "근로소득만 있다",
+    "주택청약 공제 120만원 외 다른 공제·세액공제는 전후 같다",
+    "세 사례 모두 공제 전후 과세표준이 같은 세율 구간 안에 머문다(구간을 넘는 사람은 결과가 다르다)"
+  ],
+  "scenarios": {
+    "p15_before": {"inputs": {"total_pay": 50000000, "other_deductions": 7750000}, "meaning": "과세표준 3,000만원(15% 구간)"},
+    "p15_after": {"inputs": {"total_pay": 50000000, "other_deductions": 8950000}, "meaning": "주택청약 공제 120만원 추가"},
+    "p6_before": {"inputs": {"total_pay": 20000000, "other_deductions": 1750000}, "meaning": "과세표준 1,000만원(6% 구간)"},
+    "p6_after": {"inputs": {"total_pay": 20000000, "other_deductions": 2950000}, "meaning": "공제 120만원 추가"},
+    "p24_before": {"inputs": {"total_pay": 70000000, "other_deductions": 1750000}, "meaning": "과세표준 5,500만원(24% 구간)"},
+    "p24_after": {"inputs": {"total_pay": 70000000, "other_deductions": 2950000}, "meaning": "공제 120만원 추가"}
+  },
+  "steps": [
+    {"concept": "주택청약 소득공제", "function": "min(납입액, 300만원) × 40%", "rule": "조세특례제한법 제87조 제2항"},
+    {"concept": "과세표준", "function": "근로소득금액 − 기타소득공제(주택청약 공제 포함)", "rule": "정의"},
+    {"concept": "산출세액", "function": "income_tax", "rule": "소득세법 제55조"},
+    {"concept": "결정세액", "function": "산출세액 − 근로소득세액공제", "rule": "소득세법 제59조"}
+  ],
+  "constants": [3000000, 1200000, 4000000, 2800000, 480000, 250000, 100000, 70000000, 14000000, 50000000, 88000000, 540000, 9000000],
+  "outputs": [
+    {"id": "d15", "expr": "p15_before.산출세액 - p15_after.산출세액", "value": 180000, "unit": "원",
+     "concept": "산출세액 감소(15% 구간 안)", "scope": "국세 산출세액", "example": true, "condition": "과세표준이 공제 전후 15% 구간 안",
+     "title_condition": "15% 구간", "must_say": ["산출세액"], "must_not_say": ["실수령", "환급"]},
+    {"id": "d15_decided", "expr": "p15_before.결정세액 - p15_after.결정세액", "value": 180000, "unit": "원",
+     "concept": "결정세액 감소(15% 구간 안, 근로소득세액공제 한도 66만원 그대로)", "scope": "국세 결정세액", "example": true, "condition": "과세표준이 공제 전후 15% 구간 안",
+     "title_condition": "15% 구간", "must_say": ["결정세액"], "must_not_say": ["실수령"]},
+    {"id": "d6", "expr": "p6_before.산출세액 - p6_after.산출세액", "value": 72000, "unit": "원",
+     "concept": "산출세액 감소(6% 구간 안)", "scope": "국세 산출세액", "example": true, "condition": "과세표준이 공제 전후 6% 구간 안",
+     "title_condition": "6% 구간", "must_say": ["산출세액"], "must_not_say": ["실수령", "환급"]},
+    {"id": "d24", "expr": "p24_before.산출세액 - p24_after.산출세액", "value": 288000, "unit": "원",
+     "concept": "산출세액 감소(24% 구간 안)", "scope": "국세 산출세액", "example": true, "condition": "과세표준이 공제 전후 24% 구간 안",
+     "title_condition": "24% 구간", "must_say": ["산출세액"], "must_not_say": ["실수령", "환급"]}
+  ],
+  "sources": [
+    {"rule": "주택청약종합저축 소득공제", "url": "https://www.law.go.kr/법령/조세특례제한법/제87조", "checked": "2026-11-18", "effective": "2028-12-31 납입분까지", "applies_to": "총급여 7천만원 이하 무주택 세대주·배우자", "exceptions": "5년 내 해지 추징(제7항)", "used_in": "2·3절"},
+    {"rule": "종합소득세율", "url": "https://casenote.kr/법령/소득세법/제55조", "checked": "2026-11-18", "effective": "2026 귀속", "applies_to": "과세표준", "exceptions": "구간을 넘는 감소는 한 세율 곱이 아니다", "used_in": "3절 표"}
+  ],
+  "cannot_claim": [
+    "모든 사람이 120만원 공제로 18만원을 아낀다는 일반 규칙",
+    "공제 전후 세율 구간이 바뀌는 사람의 감소액",
+    "지방소득세를 포함한 감소액"
+  ]
+}

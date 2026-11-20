@@ -108,6 +108,12 @@ CHECKLIST = """■ PC에서 끝낸 뒤 임시저장 (서식은 PC 에디터에�
 · 태그 입력(26편까지 10개, 27편부터 3~5개) — 1편에서 빠뜨렸던 항목이다. 발행 설정 창에서 확인
 · 발행 설정: 카테고리 / 주제 비즈니스·경제 / 전체공개 / 검색허용 체크"""
 
+CHECKLIST_LINK_OLD = html.escape("""· [내부 링크] 소개 문장 하나만 남기고, 줄을 바꾼 뒤 주소 붙여넣기 → 카드 생성
+             ⚠ 문장 중간에 붙여넣으면 문장이 카드 앞뒤로 쪼개진다""")
+CHECKLIST_LINK_NEW = html.escape("""· [내부 링크] 소개 문장 하나만 남기기 — 문장에 이미 링크가 걸려 있다. 주소를 따로 붙여넣지 않는다(본문 중간 카드 금지, 45편~)
+             카드가 꼭 필요하면 글 끝(근거 자료 아래)에 1개만""")
+assert CHECKLIST_LINK_OLD in html.escape(CHECKLIST), "체크리스트 문구가 바뀌어 글자 링크 안내로 바꿔 끼우지 못한다"
+
 PAGE = """<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>붙여넣기용 — {title}</title>
@@ -144,6 +150,26 @@ function copyRich(b) {{
 OPTIONS_RE = re.compile(r"\[(경험 한 줄|내부 링크)([^|\]]*)\|([^\]]+)\]")
 
 
+# 45편부터 문단 단위(2026-11-20 사용자 결정): 문장마다 빈 줄을 두던 방식(10-09)이 폰에서 큰 공백을 만들었다 — 45편 라이브에서
+# 한 문단이 빈 줄 2~3개로 쪼개졌다. 이제 문장 사이는 줄바꿈만, 빈 줄은 문단 사이에만 둔다. 19px는 그대로.
+# 본문 중간 관련 글도 카드 대신 글자 링크(소개 문장 자체에 주소)로 낸다. 카드는 흐름을 끊었다.
+PARA_FROM = 45
+LINK_MARK = "@@LINK "
+PLACE_RE = re.compile(r"\[(이미지|경험 한 줄|내부 링크)")
+
+
+def _link_options(m) -> str:
+    """문단 단위 모드의 [내부 링크]: 후보 문장마다 주소를 단 글자 링크. 주소를 따로 붙여넣지 않으니 카드가 생기지 않는다."""
+    items = [x.strip() for x in m.group(3).split("|")]
+    url = next((x for x in items if x.startswith("http")), "")
+    lines = [f"[내부 링크{m.group(2).rstrip()} — 문장 하나만 남기세요. 문장에 링크가 걸려 있습니다]"]
+    for it in items:
+        if not it.startswith("http"):
+            label, _, sentence = it.partition(": ")
+            lines += [f"▶ {label}", f"{LINK_MARK}{url} {sentence}"]
+    return "\n".join(lines)
+
+
 def _options(m) -> str:
     kind, items = m.group(1), [x.strip() for x in m.group(3).split("|")]
     what = "문장" if kind == "경험 한 줄" else "소개 문장"
@@ -157,8 +183,9 @@ def _options(m) -> str:
     return "\n".join(lines)
 
 
-def parts(md: str) -> tuple:
-    """→ (제목, 본문 마크다운, 태그 줄). 본문은 소제목·목록 표기를 바꾸고 문장마다 줄을 나눈 상태다."""
+def parts(md: str, paragraph: bool = False) -> tuple:
+    """→ (제목, 본문 마크다운, 태그 줄). 본문은 소제목·목록 표기를 바꾸고 문장마다 줄을 나눈 상태다.
+    paragraph: 문장은 같은 덩어리 안에서 줄만 바꾸고, 덩어리(=원고 문단) 사이에만 빈 줄을 둔다(45편~)."""
     body = md.split("## 작성 메모")[0]
     title = re.search(r"^제목: (.+)$", body, re.M).group(1).strip()
     m = TAG_RE.search(body)
@@ -174,7 +201,7 @@ def parts(md: str) -> tuple:
     body = re.sub(r"^- ✔", "✔", body, flags=re.M)        # 살림 체크 줄은 ✔만(15편 발행 모양) — "· ✔"로 겹치지 않게
     body = re.sub(r"^(> ?)?- ", r"\1· ", body, flags=re.M)
     body = body.replace("`", "")
-    body = OPTIONS_RE.sub(_options, body)
+    body = OPTIONS_RE.sub(lambda m: _link_options(m) if paragraph and m.group(1) == "내부 링크" else _options(m), body)
     body = re.sub(r"\n{3,}", "\n\n", body).strip()
 
     assert "##" not in body, "소제목 변환 실패"
@@ -186,7 +213,10 @@ def parts(md: str) -> tuple:
     blocks = []
     for blk in body.split("\n\n"):
         plain_para = not is_table(blk) and not re.match(r"(\[|· |\d+\. |>|※|🪙)", blk)
-        blocks += split_sentences(blk) if plain_para else [blk]
+        if plain_para and paragraph:
+            blocks.append("\n".join(split_sentences(blk)))
+        else:
+            blocks += split_sentences(blk) if plain_para else [blk]
     return title, "\n\n".join(blocks), tags
 
 
@@ -196,17 +226,27 @@ def _rich(text: str, color: str = "") -> str:
     return re.sub(r"\*\*(.+?)\*\*", sub, html.escape(text))
 
 
-def convert(md: str) -> str:
+def convert(md: str, paragraph: bool = False) -> str:
     """일반 텍스트(볼드 없음) — 서식을 받지 못하는 곳에 붙일 때 쓰이는 쪽. 표는 `a — b` 줄로 낸다."""
-    _, body, _ = parts(md)
+    _, body, _ = parts(md, paragraph)
     blocks = ["\n".join(" — ".join(r) for r in table_rows(b)) if is_table(b)
               else "\n".join(box_lines(b)) if is_box(b) else b for b in body.split("\n\n")]
-    return "\n\n".join(blocks).replace("**", "")
+    text = "\n\n".join(blocks).replace("**", "")
+    return re.sub(rf"^{LINK_MARK}(\S+) (.+)$", r"\2 (\1)", text, flags=re.M)
 
 
-def to_html(md: str, tone: int = 0, template: bool = False, px: int = TEMPLATE_PX) -> str:
-    """template: 15편부터의 서식 — 본문·표·박스 px, 표 가운데 정렬, 살림 소제목 띠·근거 자료 박스."""
-    title, body, tags = parts(md)
+def _line(line: str, color: str) -> str:
+    """본문 한 줄. 글자 링크 표시(@@LINK 주소 문장)는 문장 자체에 주소를 단다."""
+    m = re.match(rf"{LINK_MARK}(\S+) (.+)$", line)
+    if m:
+        return _p(f'<a href="{html.escape(m.group(1))}">{_rich(m.group(2))}</a>')
+    return _p(_rich(line, "" if line.startswith("※") else color), WARN if line.startswith("※") else "")
+
+
+def to_html(md: str, tone: int = 0, template: bool = False, px: int = TEMPLATE_PX, paragraph: bool = False) -> str:
+    """template: 15편부터의 서식 — 본문·표·박스 px, 표 가운데 정렬, 살림 소제목 띠·근거 자료 박스.
+    paragraph: 45편부터 문단 단위 — 문장 사이 빈 줄 없음, 번호 소제목 바로 뒤 빈 줄 없음."""
+    title, body, tags = parts(md, paragraph)
     MAIN, HEAD, FIRST, BOX, Q_CELL = _tone(tone)
     tint = PALETTE[tone % len(PALETTE)][2]
     if template:
@@ -243,16 +283,19 @@ def to_html(md: str, tone: int = 0, template: bool = False, px: int = TEMPLATE_P
         else:
             # 글자 크기와 폰트를 실어 보낸다 — 에디터 기본값이 바뀌어도 같은 모양으로 들어가게.
             # `※`로 시작하는 줄은 표·문단에 딸린 주석이다(기준 연도·예외).
-            paras += [_p(_rich(line, "" if line.startswith("※") else MAIN), WARN if line.startswith("※") else "")
-                      for line in blk.split("\n")]
-        paras.append(BLANK)          # 덩어리 사이 빈 줄
+            paras += [_line(line, MAIN) for line in blk.split("\n")]
+        # 덩어리 사이 빈 줄. 문단 모드에서는 소제목 바로 뒤, 그리고 사용자가 지우거나 바꿔 끼우는 자리([이미지]·[경험]·[내부 링크]) 뒤에는
+        # 두지 않는다 — 45편 라이브에서 그 자리를 지운 뒤 앞뒤 빈 줄이 겹쳐 연속 빈 문단 5곳이 생겼다(2026-11-20 라이브 HTML 분석)
+        if not (paragraph and (blk.startswith("[큰제목] ") or PLACE_RE.match(blk))):
+            paras.append(BLANK)
     assert "**" not in "".join(paras), "닫히지 않은 볼드 표시가 남았다"
     out = "\n".join(paras[:-1])
+    assert f"{BLANK}\n{BLANK}" not in out, "빈 줄이 연달아 들어갔다 — 폰에서 큰 공백이 된다"
     if template:      # ponytail: SPAN·BLANK에 박힌 15px를 통째로 바꾼다. 크기를 글마다 따로 고르게 되면 _p에 인자로 넘긴다
         out = out.replace(f"font-size:{BODY_PX}px", f"font-size:{px}px")
     return PAGE.format(title=html.escape(title), body=out, tags=html.escape(tags),
                        checklist=html.escape(CHECKLIST),
-                       plain=json.dumps(convert(md), ensure_ascii=False).replace("</", "<\\/"))
+                       plain=json.dumps(convert(md, paragraph), ensure_ascii=False).replace("</", "<\\/"))
 
 
 def selftest():
@@ -364,6 +407,22 @@ def selftest():
     fresh = with_freshness(CHECKLIST, "- 최신성 재확인: 2026-10-31 14:00 | q | s\n")
     assert "최신성 재확인 10-31 14:00" in fresh and with_freshness(CHECKLIST, "메모") == CHECKLIST
     assert parts(md.replace(" #태그넷 #태그다섯", ""))[2] == "#태그하나 #태그둘 #태그셋"        # 27편부터 태그 3개도 읽는다
+
+    # 45편~ 문단 단위: 같은 문단의 문장은 빈 줄 없이 이어지고, 빈 줄은 문단 사이에만. 번호 소제목 바로 뒤에는 빈 줄이 없다
+    pmd = omd.replace("## 첫 소제목", "## 1. 첫 결론입니다\n\n둘째 문단입니다. 이어지는 문장입니다.")
+    ppage, ptext = to_html(pmd, paragraph=True), convert(pmd, paragraph=True)
+    assert f"{P}도입부입니다.{E}\n{P}보험료율은" in ppage, "문단 안 문장 사이에 빈 줄이 들어갔다"
+    assert f"{E}\n{BLANK}\n{P}보험료율은" not in ppage
+    assert BIG_HEAD.format(color=MAIN, text="1. 첫 결론입니다") + f"\n{P}둘째 문단입니다.{E}\n{P}이어지는 문장입니다." in ppage
+    assert f"{BLANK}\n{BLANK}" not in ppage
+    # 관련 글은 소개 문장에 주소를 단 글자 링크 — 주소만 따로 있는 줄(카드가 되는 줄)이 없다
+    assert '<a href="https://blog.naver.com/x/1">조건은 이 글에 있어요.</a>' in ppage
+    assert f"{P}https://blog.naver.com/x/1{E}" not in ppage and "조건은 이 글에 있어요. (https://blog.naver.com/x/1)" in ptext
+    # 지우거나 바꿔 끼우는 자리 뒤에는 빈 줄이 없다 — 지운 뒤 앞뒤 빈 줄이 겹치지 않게
+    assert f"{P}저도 그랬어요.{E}\n{BLANK}" not in ppage and f"{P}저도 그랬어요.{E}\n{P}" in ppage
+    assert f"{P}[이미지 ②: assets/x.png — 제작 완료]{E}\n{BLANK}" not in ppage
+    assert f"{P}도입부입니다.{E}\n{BLANK}\n{P}보험료율은" in to_html(md)                                 # 44편까지는 그대로
+    assert CHECKLIST_LINK_NEW not in to_html(md)
     print("selftest ok")
 
 
@@ -386,7 +445,11 @@ def page_for(src: Path, tone: int = None) -> str:
     template = bool(num) and int(num.group()) >= TEMPLATE_FROM
     px = PX_BY_POST.get(int(num.group()), TEMPLATE_PX) if num else TEMPLATE_PX
     md = src.read_text(encoding="utf-8")
-    return with_freshness(to_html(md, tone_of(src) if tone is None else tone, template, px), md)
+    paragraph = bool(num) and int(num.group()) >= PARA_FROM
+    page = to_html(md, tone_of(src) if tone is None else tone, template, px, paragraph)
+    if paragraph:
+        page = page.replace(CHECKLIST_LINK_OLD, CHECKLIST_LINK_NEW)
+    return with_freshness(page, md)
 
 
 if __name__ == "__main__":

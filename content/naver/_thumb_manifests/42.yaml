@@ -1,0 +1,48 @@
+thumbnail_id: "TH-20261116-42"
+status: "OK"
+seo_title: "온풍기 전기세｜같은 1시간이 240원에서 614.6원까지, 누진 구간 계산"
+template_type: "photo_editorial"
+main_copy: "히터 전기세 / 한 달 얼마?"
+sub_copy: "우리 집 사용량 따라 달라요"
+bottom_badge: "겨울 전기요금"
+copy_candidates: ["히터 전기세 / 한 달 얼마?", "같은 히터 / 요금은 두 배?", "400kWh / 넘기면?"]
+selection_reason: "독자의 첫 질문(한 달 얼마)을 그대로 두고, 답이 사용량에 달렸다는 점을 보조 줄로 알린다. 3절 표가 답한다"
+verified_number: ""
+verified_rows: ""
+verified_source_url: "https://cyber.kepco.co.kr/ckepco/front/jsp/CY/E/E/CYEEHP00101.jsp"
+verified_at: "2026-11-16 23:30"
+category: "card"
+color_code: "card_navy"
+mascot_asset: ""
+mascot_pose: ""
+mascot_pose_reason: ""
+renderer: "code"
+template_id: "photo_editorial"
+card_copy: ""
+mascot_area_ratio: 0.0
+mascot_position: "none"
+ai_mark_safe_zone_clear: true
+auto_qc_passed: true
+auto_fact_checks_passed: true
+number_evidence: []
+output_original: "42_썸네일.png"
+output_mobile_preview: "42_썸네일_160.png"
+content_track: "seasonal"
+requested_template: "photo_editorial"
+actual_template: "photo_editorial"
+template_fallback_reason: ""
+layout: "photo_editorial"
+layout_approved: true
+operating_layout: "photo_editorial"
+photo_file: "eh_01_ai_bg.png"
+photo_license: {"file": "eh_01_ai_bg.png", "sha256": "52ff6e4d7204311dfa6fa313009ed3ae8e72a4be92ccb6d0a05199c64b57779e", "source_url": "", "creator": "gpt-image-2.5-flare", "provider": "AI", "license": "자체 생성(OpenAI 이미지 API)", "license_url": "", "checked_at": "2026-11-09", "commercial_ok": "Y", "edit_ok": "Y", "attribution": "", "crop_note": "생성본(bg_eh_2)을 72%로 줄여 오른쪽 아래에 두고 왼쪽·위를 벽 색으로 채움(글자 대비)", "use": "AI 생성 배경(상황 설명용) — 42편 대표사진", "prompt": "Editorial photo, square. On the right half: a plain unbranded white portable electric fan heater on a light wooden floor, its heating element glowing warm orange, a cozy knitted blanket draped nearby, warm amber light falling on the floor. The left half and top of the frame are a smooth dark deep navy blue wall in shadow, empty and simple, so large white text can be placed over it. Winter evening mood, cold blue versus warm orange contrast. No control panels with markings. Absolutely no text, letters, numbers, digits, symbols on any screen, no logos, no brand names, no watermarks, no people, no hands, no faces. Realistic photograph, natural materials and light, realistic perspective, no glossy plastic look, no exaggerated effects."}
+background_source: "C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\assets\\photos\\eh_01_ai_bg.png"
+palette: "winter"
+placement: "left"
+font: "Jalnan2TTF.ttf"
+blocks: []
+warnings: []
+manual_review_required: false
+manual_review_reasons: []
+previews: ["C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\42_썸네일_160.png", "C:\\Users\\swims\\OneDrive\\Claude_code\\블로그\\블로그자동화\\_workspace\\naver\\42_썸네일_320.png"]
+fact_note: "사진 이용 권한의 진위는 출처 페이지를 사람이 확인한다. 코드는 원장 기록과 파일 해시만 본다"

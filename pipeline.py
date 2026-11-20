@@ -63,13 +63,13 @@ MAX_PER_WEEK = 3           # 최근 7일 발행 수 (YAML publishing.max_posts_p
 LIVE_MATCH_MIN = 0.35      # 발행 때 고친 제목을 같은 글로 볼 2글자 조각 겹침 (27편 원고·라이브가 이 근처다)
 PORTFOLIO = {"검색": 0.70, "홈피드": 0.20, "수익": 0.10}
 RULES_FROM = 25            # 클러스터·유사도·출처 기록 규칙을 판정에 넣는 첫 편 (24편까지는 발행됨)
-SCOPE = re.compile(r"연말정산|세액공제|소득공제|세금|연금|노후|장려금|지원금|실업급여|건강보험|고용보험|부양가족|인적공제")
+SCOPE = re.compile(r"연말정산|세액공제|소득공제|세금|연금|노후|장려금|지원금|실업급여|건강보험|고용보험|부양가족|인적공제|퇴직금|퇴직급여|소득세")
 # Topic Authority(품질 강화 문서 7절, 100점): 직장인 가족 돈 문제 30 · 세금·연금·지원금 25 · 내부 링크 20 · 공식 근거 15 · 고유 사례 10
-FAMILY_MONEY = re.compile(r"부모|자녀|배우자|맞벌이|가족|직장인|월급|급여|연봉|퇴사|이직|생활비|공제|환급|지원|수당|보험료|월세|연말정산")
+FAMILY_MONEY = re.compile(r"부모|자녀|배우자|맞벌이|가족|직장인|월급|급여|연봉|퇴사|퇴직금|이직|생활비|공제|환급|지원|수당|보험료|월세|연말정산")
 OFF_TOPIC = re.compile(r"드라마|예능|연예|아이돌|가수|배우 |스포츠|축구|야구|결말|사건|사고|맛집|여행|게임")
 ACCEPT_AT, HOLD_AT = 75, 60
 CHECKPOINTS = {"24h": 1, "7d": 7, "14d": 14, "28d": 28, "30d": 30}
-SEASON_FIT = re.compile(r"난방|관리비|공과금|전기요금|가스요금|직구|블랙프라이데이|할인|소비|생활비|장보기|물가|절약|환율|관세")
+SEASON_FIT = re.compile(r"난방|관리비|공과금|전기\s?요금|전기세|가스\s?요금|통신비|알뜰폰|직구|블랙프라이데이|할인|소비|생활비|장보기|물가|절약|환율|관세")     # 검색어 표기 그대로(전기세·도시가스 요금 띄어쓰기). 2026-11-09 eh-01·gs-01이 브랜드 0점을 받았다
 TRACK_TARGET = {"core": 0.80, "seasonal": 0.20}     # 2026-11-09 노션 계획의 내부 실험값. 네이버 노출 기준이 아니다
 GRACE_DAYS = 3
 BOILER_MIN = 5             # 같은 문단이 이만큼 글에 그대로 있으면 템플릿 고정 문구로 본다(복사한 문단이 면제되지 않게 크게 잡는다)
@@ -340,6 +340,12 @@ def track_counts(rows: list, n: int = 10) -> dict:
     return out
 
 
+def published_topics(ledger_rows: list) -> set:
+    """발행한 글의 목표 키워드 첫 낱말(퇴직금·국민연금·실업급여…). 2글자 이상만."""
+    return {r["primary_kw"].split()[0] for r in ledger_rows
+            if r.get("status") in LIVE and r.get("primary_kw") and len(r["primary_kw"].split()[0]) >= 2}
+
+
 def score_one(c: dict, ledger_rows: list, titles: dict, today) -> tuple:
     """후보 한 줄 → (점수 100점, 항목별, 결정). 사람 판단 항목(official·diff)은 CSV 값을 그대로 읽는다.
 
@@ -352,10 +358,13 @@ def score_one(c: dict, ledger_rows: list, titles: dict, today) -> tuple:
     if OFF_TOPIC.search(kw):
         return 0, {"주제 무관": 0}, "REJECTED"
     live = any(r["cluster"] == c["cluster"] and r["status"] in LIVE for r in ledger_rows) if c["cluster"] else False
+    # 이미 발행한 글의 주제 낱말도 범위다. 정규식에 낱말을 하나씩 더하다 같은 누락이 네 번 났다
+    # (전기세 11-09 · 퇴직금 11-12 · 소득세 11-17 · 연봉 실수령 11-19) — 발행 글이 곧 범위의 증거다
+    in_scope = bool(SCOPE.search(kw)) or kw.split()[0] in published_topics(ledger_rows)
     parts = {
         # SCOPE도 본다 — FAMILY_MONEY만 봤더니 근로장려금·퇴직금 세금 후보가 50점으로 폐기됐다(2026-10-30)
-        "가족돈": 30 if c["cluster"] or FAMILY_MONEY.search(kw) or SCOPE.search(kw) else 0,
-        "세금연금": 25 if SCOPE.search(kw) else 0,
+        "가족돈": 30 if c["cluster"] or FAMILY_MONEY.search(kw) or in_scope else 0,
+        "세금연금": 25 if in_scope else 0,
         "링크": 20 if live else 10 if c["cluster"] else 0,
         "공식": 15 if c["official"] == "1" else 0,
         "차별": 10 if c["diff"] == "1" else 0,
@@ -544,8 +553,27 @@ def paste_gate(nn: int):
         fresh_gate(post_file(nn).read_text(encoding="utf-8"), datetime.datetime.now())
 
 
+def portfolio_from_memo(rows: list) -> list:
+    """원고의 `- 포트폴리오:` 메모를 장부에 맞춘다 → 바뀐 편 목록. `start`가 늘 '검색'으로 적어
+    홈피드형 45편이 검색으로 집계됐다(2026-11-19). 원고 메모가 기준이다."""
+    changed = []
+    for r in rows:
+        try:
+            memo = (memo_line(post_file(r["post"]).read_text(encoding="utf-8"), "포트폴리오") or "").strip()
+        except (SystemExit, OSError):
+            continue
+        if memo in PORTFOLIO and memo != r["portfolio"]:
+            changed.append(f"{r['post']}편 {r['portfolio'] or '-'}→{memo}")
+            r["portfolio"] = memo
+    return changed
+
+
 def cmd_list(_args=None):
     rows = read_csv(LEDGER, LEDGER_COLS)
+    fixed = portfolio_from_memo(rows)
+    if fixed:
+        write_csv(LEDGER, LEDGER_COLS, rows)
+        print("포트폴리오를 원고 메모에 맞췄다: " + ", ".join(fixed))
     for r in rows[-12:]:
         print(f"{r['post']}  {r['status']:<20}{r['portfolio']:<4}{r['cluster']:<14}{r['primary_kw']}")
     new = [r for r in rows if num_of(r["post"]) >= RULES_FROM]
@@ -934,6 +962,19 @@ def selftest():
     got = score_one({**sea, "serp_fresh": "7"}, led, {}, today)
     assert got[0] == 100 and got[2] == "CREATE_NEW", got
     assert score_one({**sea, "serp_fresh": "7", "keyword": "인기 드라마 결말"}, led, {}, today)[2] == "REJECTED"
+    for kw in ("온풍기 전기히터 전기세 계산", "도시가스 요금 계산", "알뜰폰 번호이동 제한 3개월"):
+        assert score_one({**sea, "serp_fresh": "7", "keyword": kw}, led, {}, today)[1]["브랜드"] == 30, kw
+    # 퇴직금은 32편을 쓴 범위인데 rp-01 "퇴직금 지급일 14일 넘기면"이 25점 REJECTED를 받았다(2026-11-12)
+    got = score_one({**short, "keyword": "퇴직금 지급일 14일 넘기면"}, led, {}, today)[1]
+    assert got["가족돈"] == 30 and got["세금연금"] == 25, got
+    assert score_one({**short, "keyword": "중소기업 취업자 소득세 감면"}, led, {}, today)[1]["세금연금"] == 25, "소득세 감면은 범위다(2026-11-17 sm-01이 55점 탈락)"
+    # 패턴 자체: 정규식에 없는 낱말도 발행한 글의 주제 첫 낱말이면 범위다(네 번째 누락 '연봉 실수령'으로 고정)
+    pub = led + [{"post": "50", "cluster": "", "status": "PUBLISHED", "role": "", "primary_kw": "연봉 실수령액 계산"}]
+    assert score_one({**short, "keyword": "연봉 실수령액 2026"}, pub, {}, today)[1]["세금연금"] == 25
+    assert score_one({**short, "keyword": "연봉 실수령액 2026"}, led, {}, today)[1]["세금연금"] == 0       # 발행 전에는 사람이 판단
+    # 원고 메모가 장부 포트폴리오의 기준이다 — 45편 원고는 홈피드인데 start가 '검색'으로 적었다
+    rows45 = [{"post": "45", "portfolio": "검색"}]
+    assert portfolio_from_memo(rows45) == ["45편 검색→홈피드"] and rows45[0]["portfolio"] == "홈피드"
     s4, _, d4 = score_one({**short, "keyword": "인기 드라마 결말"}, led, {}, today)
     assert s4 < HOLD_AT and d4 == "REJECTED"
     assert ALIASES["READY_FOR_APPROVAL"] == "HUMAN_REVIEW" and set(ALIASES.values()) <= set(ALLOWED) | {"RESEARCHING"}

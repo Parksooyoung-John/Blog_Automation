@@ -244,6 +244,8 @@ def canva_selftest():
     assert "class='coin'" not in words and "class='plus'" not in words and ">한도 넘긴<" in words and "btext" not in words.split("</style>")[1], "하단은 생략할 수 있다"
     assert "AI 활용 이미지" in photo_thumb_html("photo_question", None, "질문?", "", "", ai=True) and \
         "AI 활용" not in photo_thumb_html("photo_question", None, "질문?", "", ""), "AI 배경이면 대표사진에 표시"
+    ed = editorial_thumb_html(None, "외출모드 / 켜둘까?", "집 비울 때 설정 체크", "난방비 절약", "winter", "left", "", True)
+    assert ed.count("class='main fit") == 2 and "main fit acc" in ed and "돈살림표 · AI 활용 이미지" in ed and "card" not in ed.split("</style>")[1], "편집형: 둘째 줄만 강조, 브랜드·AI 표시, 카드 없음"
     q = question_thumb_html("따로 사는 / 부모님도 / 공제될까?", "", "배지", "공제될까?")
     assert q.count("class='main fit'") == 3 and q.count("class='hl'") == 1 and "class='band'" not in q and "class='qsub" not in q.split("</style>")[1]
     for eol in ("\n", "\r\n"):     # 시안 원고(26·27편)가 CRLF라 `## 작성 메모\n`을 못 찾고 배지가 조용히 빠졌다
@@ -535,6 +537,75 @@ def question_thumb_html(main: str, sub: str, badge: str, highlight: str = "", pi
     return _thumb_page(body, css)
 
 
+EDITORIAL_PALETTES = {     # 시즌 편집형 썸네일 색(2026-11-09). 한 장에 주조색 하나 + 강조색 하나. 초록·크림 고정은 시즌 글에서 풀었다
+    # light: 사진 밝기, fade: 그라데이션이 진하게 유지되는 끝(%)·완전히 사라지는 지점(%). 피사체가 글자 옆에 붙으면 fade를 좁힌다
+    "winter": {"bg": "#0b1a33", "accent": "#ffc93c", "light": 1.35, "fade": (54, 72)},    # 난방·겨울: 딥 네이비 + 흰색 + 따뜻한 노랑
+    "shopping": {"bg": "#18181b", "accent": "#ff6b57", "light": 1.45, "fade": (55, 76)},  # 소비·직구: 차콜 + 흰색 + 코랄. 검은 쇼핑백이 묻혀 밝게 올린다
+}
+
+
+def editorial_thumb_html(photo: Path, main: str, sub: str, label: str, palette: str = "winter", side: str = "left",
+                         chip: str = "", ai: bool = False) -> str:
+    """시즌 편집형: AI(또는 실사) 배경 위에 글자를 바로 얹는다. 카드로 덮지 않고, 글자 쪽만 국소 그라데이션.
+    메인 2줄 중 둘째 줄만 강조색. 위계는 메인 질문 → 피사체 → 보조 → 작은 브랜드 표기."""
+    import base64
+    import html as html_lib
+    e = html_lib.escape
+    pal = EDITORIAL_PALETTES[palette]
+    if photo:
+        mime = {".jpg": "jpeg", ".jpeg": "jpeg", ".png": "png", ".webp": "webp"}[photo.suffix.lower()]
+        bg = f"<img class='photo' src='data:image/{mime};base64,{base64.b64encode(photo.read_bytes()).decode()}'>"
+    else:
+        bg = "<div class='photo ph'></div>"
+    to = {"left": "to right", "right": "to left", "top": "to bottom"}[side]
+    box = {"left": "left:65px;top:120px;width:660px", "right": "right:65px;top:120px;width:660px;text-align:right",
+           "top": "left:65px;top:80px;width:950px"}[side]
+    css = f""".photo{{position:absolute;inset:0;width:1080px;height:1080px;object-fit:cover;filter:brightness({pal['light']})}}
+.ph{{background:{pal['bg']}}}
+.grad{{position:absolute;inset:0;background:linear-gradient({to},{pal['bg']}f2 0%,{pal['bg']}eb {pal['fade'][0]}%,{pal['bg']}00 {pal['fade'][1]}%)}}
+.txt{{position:absolute;{box};color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.45)}}
+.lab{{display:block;font-size:76px;line-height:1.1;margin-bottom:24px}}
+.lab i{{display:inline-block;width:120px;height:8px;margin:0 0 18px 22px;vertical-align:middle;background:{pal['accent']}}}
+.txt .main{{display:block;font-size:156px;line-height:1.08;letter-spacing:-5px}}
+.txt .main.acc{{color:{pal['accent']}}}
+.chip{{display:inline-block;margin-top:34px;padding:6px 22px;border:3px solid #fff;font-size:44px;line-height:1.2}}
+.txt .sub{{position:static;display:block;width:auto;text-align:inherit;margin-top:22px;color:#fff;font-size:58px;line-height:1.15}}
+.brand{{position:absolute;left:65px;bottom:68px;color:#ffffffcc;font-size:30px;text-shadow:0 1px 6px rgba(0,0,0,.6)}}"""
+    lines = [x.strip() for x in main.split("/")]
+    mains = "".join(f"<span class='main fit{' acc' if i == len(lines) - 1 and len(lines) > 1 else ''}'>{e(x)}</span>" for i, x in enumerate(lines))
+    body = ("<div class='grad'></div><div class='txt'>"
+            + (f"<span class='lab fit'>{e(label)}<i></i></span>" if label else "") + mains
+            + (f"<span class='chip'>{e(chip)}</span>" if chip else "")
+            + (f"<span class='sub fit'>{e(sub)}</span>" if sub else "") + "</div>"
+            + "<span class='brand'>돈살림표" + (" · AI 활용 이미지" if ai else "") + "</span>")
+    return _thumb_page(bg + body, css)
+
+
+def text_contrast(page, html: str) -> list:
+    """글자 뒤 배경 대비 → [(class, 색, 대비)]. 글자를 숨긴 화면에서 각 글자 상자의 가장 밝은 10% 픽셀과 비교한다
+    (흰 글자는 뒤가 가장 밝은 곳에서 가장 안 읽힌다). 평균으로 보면 밝은 부분이 가려진다."""
+    import io as _io
+    from PIL import Image
+    from thumb_gate import contrast
+    page.set_content(html)
+    page.evaluate("() => document.fonts.ready")
+    boxes = page.evaluate("""() => [...document.querySelectorAll('.txt .main, .txt .sub, .txt .lab')].map(el => {
+        const g = document.createRange(); g.selectNodeContents(el); const r = g.getBoundingClientRect(); return {cls: el.className, color: getComputedStyle(el).color,
+        x: r.left, y: r.top, w: r.width, h: r.height}; })""")
+    page.add_style_tag(content=".txt, .brand{visibility:hidden}")
+    shot = Image.open(_io.BytesIO(page.query_selector(".t").screenshot())).convert("RGB")
+    out = []
+    for b in boxes:
+        rgb = tuple(int(v) for v in b["color"].replace("rgba(", "").replace("rgb(", "").rstrip(")").split(",")[:3])
+        crop = shot.crop((int(b["x"]), int(b["y"]), int(b["x"] + b["w"]), int(b["y"] + b["h"])))
+        px = sorted(crop.getdata(), key=lambda p: 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2])
+        light = sum(rgb) > 382
+        sample = px[-max(1, len(px) // 10):] if light else px[:max(1, len(px) // 10)]
+        avg = tuple(sum(p[i] for p in sample) // len(sample) for i in range(3))
+        out.append((b["cls"].split()[0], "#%02x%02x%02x" % rgb, round(contrast("#%02x%02x%02x" % rgb, "#%02x%02x%02x" % avg), 1)))
+    return out
+
+
 def photo_thumb_html(layout: str, photo: Path, main: str, sub: str, badge: str, cards: list = (), focus: str = "center",
                      card_alpha: float = 0.78, blur: int = 8, ai: bool = False) -> str:     # 2026-11-09 사용자 선택: 카드 78% + 흐림 8px(사진이 비치게)
     """시즌 글 대표사진: 실사 사진 + 코드로 그린 크림 카드. 돼지·AI 인물·가짜 화면은 쓰지 않는다(2026-11-09 노션 계획).
@@ -655,11 +726,22 @@ def seasonal_thumb_cmd(num: str, md: str) -> int:
         lic = next((r for r in csv.DictReader(open(PHOTO_LEDGER, encoding="utf-8-sig", newline="")) if r.get("file") == photo.name), {})
     if not blocks:
         main, sub, badge = trim_copy(*copy_of(md))
-        html = photo_thumb_html(layout, photo if not pblocks else None, main, sub, badge, thumb_cards(md),
-                                memo_value(md, "썸네일 사진 초점") or "center", ai=lic.get("provider") == "AI")
+        ai = lic.get("provider") == "AI"
+        if layout == "photo_editorial":
+            html = editorial_thumb_html(photo if not pblocks else None, main, sub, badge, memo_value(md, "썸네일 색") or "winter",
+                                        memo_value(md, "썸네일 배치") or "left", memo_value(md, "썸네일 칩") or "", ai)
+        else:
+            html = photo_thumb_html(layout, photo if not pblocks else None, main, sub, badge, thumb_cards(md),
+                                    memo_value(md, "썸네일 사진 초점") or "center", ai=ai)
         with sync_playwright() as pw:
             b = pw.chromium.launch(headless=True)
-            fail, _, previews = shoot_thumb(b.new_page(device_scale_factor=1), html, out, margin=True)
+            page = b.new_page(device_scale_factor=1)
+            fail, _, previews = shoot_thumb(page, html, out, margin=True)
+            if layout == "photo_editorial":
+                contrasts = text_contrast(page, html)
+                fail += [f"BLOCKED_MOBILE_READABILITY — 메인 글자 대비 {c}:1 (4.5 이상). 배경 여백을 더 어둡게 만든다"
+                         for k, _, c in contrasts if k == "main" and c < 4.5]
+                warns += [f"{k} 글자 대비 {c}:1 (4.5 미만)" for k, _, c in contrasts if k != "main" and c < 4.5]
             b.close()
     blocks += pblocks + fail
     manual = manual_reasons(md, template) + (["자동 검사 차단을 해결해야 한다"] if blocks else [])
@@ -667,7 +749,8 @@ def seasonal_thumb_cmd(num: str, md: str) -> int:
     manifest = write_manifest(num, md, state, None, 0.0, not blocks, out, previews[0] if previews else out, "", "", "code", template, {
         "content_track": "seasonal", "requested_template": requested, "actual_template": template, "template_fallback_reason": reason,
         "layout": layout, "layout_approved": approved, "operating_layout": layout if final else "",
-        "photo_file": photo.name if photo else "", "photo_license": lic,
+        "photo_file": photo.name if photo else "", "photo_license": lic, "background_source": str(photo) if photo else "",
+        "palette": memo_value(md, "썸네일 색") or "", "placement": memo_value(md, "썸네일 배치") or "", "font": thumb_font().name,
         "blocks": blocks, "warnings": warns, "manual_review_required": bool(manual), "manual_review_reasons": manual,
         "previews": [str(p) for p in previews],
         "fact_note": "사진 이용 권한의 진위는 출처 페이지를 사람이 확인한다. 코드는 원장 기록과 파일 해시만 본다"})
@@ -1450,10 +1533,102 @@ CARDS = {
         post_look(37), "임의가입 최소 월 보험료", "국민연금공단 안내 · 2026년 4월~2027년 3월",
         "96,235", "원", "중위수 기준소득월액 101.3만원 × 보험료율 9.5%",
         "최소 금액으로 1년이면 1,154,820원입니다."),
+    "81_직구_면세기준": checklist_card(
+        post_look(38), "직구 면세 기준은 물건값", "관세청 안내 · 자가사용 물품",
+        [("미국에서 보내는 물품", "물건값 200달러 이하"), ("그 밖의 나라", "물건값 150달러 이하"),
+         ("국제 배송비·보험료", "명확히 구분되면 물건값에서 뺍니다")],
+        "넘으면 배송비까지 더한 금액에 관세·부가세가 붙습니다."),
+    "82_직구_한도초과_계산": bar_card(
+        post_look(38), "한도 위아래 총비용 (가상 계산)", "미국 · 배송비 25달러 · 환율 1,400원 · 관세 8% 가정",
+        [("물건 190달러 (면세)", "301,000원", 71), ("물건 230달러 (과세)", "424,116원", 100)],
+        "물건값 차이는 56,000원, 총비용 차이는 123,116원입니다."),
+    "83_직구_결제전_체크": checklist_card(
+        post_look(38), "직구 결제 전 체크", "국내가와 같은 조건으로 비교",
+        [("물건값과 국제 배송비", "결제 화면에서 따로 적기"), ("카드 해외 이용 수수료", "카드사 상품설명서"),
+         ("반품 국제 배송비", "판매자 반품 정책")],
+        "같은 모델, 같은 구성의 국내가와 총비용으로 비교합니다."),
+    "84_퇴직금_지급기한": timeline_card(
+        post_look(39), "퇴직금 지급 기한", "근로자퇴직급여 보장법 제9조 · 근로기준법 제37조",
+        [("퇴직한 날", "지급 사유 발생", "여기서부터 날을 셉니다"), ("14일 안", "퇴직금 지급", "합의하면 늦출 수 있음"),
+         ("그다음 날부터", "연 20% 지연이자", "늦은 날수만큼"), ("계속 안 주면", "노동포털 진정", "처리기간 25일")],
+        "55세 전 퇴직이면 IRP 계좌로 받는 것이 원칙입니다."),
+    "85_퇴직금_지연이자": hero_card(
+        post_look(39), "퇴직금 지연이자 (가상 계산)", "퇴직금 1,000만원 · 30일 늦음 · 연 20%",
+        "164,383", "원", "1,000만원 × 20% × 30일 ÷ 365일",
+        "실제 금액은 늦어진 날수와 퇴직금으로 다시 계산하세요."),
+    "86_중간정산_의료비기준": hero_card(
+        post_look(40), "의료비 중간정산 기준 (가상 계산)", "6개월 이상 요양 · 연간 임금총액 4,000만원",
+        "500", "만원 초과", "연간 임금총액 4,000만원 × 12.5%",
+        "근로자가 부담한 의료비가 이 금액을 넘어야 사유가 됩니다."),
+    "87_중간정산_받은뒤": checklist_card(
+        post_look(40), "중간정산 받은 뒤 달라지는 것", "근로자퇴직급여 보장법 제8조 · 소득세법 시행령 제43조",
+        [("근속기간", "정산 시점부터 새로 계산"), ("세금", "받은 날 퇴직으로 보고 퇴직소득세"),
+         ("회사 서류", "퇴직 후 5년까지 보관")],
+        "사유가 맞아도 회사가 반드시 줘야 하는 것은 아닙니다."),
+    "88_중간정산_절차": timeline_card(
+        post_look(40), "퇴직금 중간정산 순서", "퇴직금제도 가입자",
+        [("1", "사유 확인", "시행령 9가지 중 해당하는지"), ("2", "회사에 요구", "증명 서류 제출"),
+         ("3", "회사 승낙·지급", "퇴직소득세 떼고 지급"), ("4", "근속기간 새로", "정산 시점부터 다시 계산")],
+        "원천징수영수증은 나중 퇴직 때까지 보관하세요."),
+    "89_퇴직연금_수령한도": hero_card(
+        post_look(41), "첫해 연금수령한도 (가상 계산)", "연금계좌 평가액 1억원 · 연금수령연차 1년",
+        "1,200", "만원", "1억원 ÷ (11 − 1) × 120%",
+        "한도를 넘겨 꺼낸 금액은 연금외수령으로 봅니다."),
+    "90_퇴직연금_세금비교": bar_card(
+        post_look(41), "받는 방식별 퇴직소득세 (가상 계산)", "미뤄 둔 퇴직소득세 300만원 · 같은 구간에서 받았다고 가정",
+        [("일시금(연금외수령)", "300만원", 100), ("연금 1~10년차", "210만원", 70),
+         ("연금 11~20년차", "180만원", 60), ("연금 20년 초과", "150만원", 50)],
+        "소득세법 제129조 연금수령 원천징수세율 기준입니다."),
+    "91_온풍기_전력량": hero_card(
+        post_look(42), "히터 한 달 전력량 (가상 계산)", "소비전력 2kW · 하루 4시간 · 30일",
+        "240", "kWh", "2kW × 4시간 × 30일",
+        "실제 소비전력은 제품 표시를 확인하세요."),
+    "92_온풍기_사용량별": bar_card(
+        post_look(42), "같은 히터, 늘어나는 요금 (가상 계산)", "240kWh 추가 · 한전 주택용 저압 · 기본요금+전력량요금",
+        [("원래 150kWh → 390kWh", "47,464원", 63), ("원래 350kWh → 590kWh", "74,817원", 100)],
+        "기후환경·연료비조정요금, 부가세, 전력기금은 뺐습니다."),
+    "93_온풍기_1시간": bar_card(
+        post_look(42), "2kW 히터 1시간 전력량요금", "한전 주택용 저압 · 그 kWh가 들어가는 구간",
+        [("200kWh 이하", "240원", 39), ("201~400kWh", "429.2원", 70), ("400kWh 초과", "614.6원", 100)],
+        "400kWh를 넘긴 뒤에는 1단계의 약 2.6배입니다."),
+    "94_고향사랑_공제율": bar_card(
+        post_look(43), "고향사랑기부 세액공제율 (국세)", "조세특례제한법 제58조 · 2026년 1월 1일 이후 기부분",
+        [("10만원 이하", "110분의 100", 100), ("10만원 초과 20만원 이하", "40%", 44), ("20만원 초과 2천만원 이하", "15%", 17)],
+        "지방소득세는 따로 계산됩니다."),
+    "95_고향사랑_20만원": hero_card(
+        post_look(43), "20만원 기부하면 세액공제 (국세)", "10만원 × 110분의 100 + 10만원 × 40%",
+        "130,909", "원", "90,909원 + 40,000원",
+        "답례품은 매회 기부금액의 30% 이내, 최대 6만원입니다."),
+    "96_주택청약_공제액": hero_card(
+        post_look(44), "주택청약 최대 소득공제", "조세특례제한법 제87조 · 총급여 7천만원 이하 무주택 세대주·배우자",
+        "120", "만원", "연 300만원 × 40%",
+        "300만원보다 더 넣어도 공제는 120만원에서 멈춥니다."),
+    "97_주택청약_세율별": bar_card(
+        post_look(44), "120만원 공제로 줄어드는 세금 (국세)", "내 과세표준 구간의 세율 × 120만원",
+        [("6% 구간", "72,000원", 25), ("15% 구간", "180,000원", 63), ("24% 구간", "288,000원", 100)],
+        "지방소득세는 따로 계산됩니다."),
+    "98_주택청약_순서": timeline_card(
+        post_look(44), "주택청약 소득공제 받는 순서", "조세특례제한법 제87조",
+        [("12월 31일까지", "올해 납입", "연 300만원 한도"), ("다음 해 2월 말", "무주택확인서", "청약통장 은행에 제출"),
+         ("연말정산", "소득공제 반영", "40% 공제")],
+        "그해 중간에 해지하면 그해 납입분은 빠집니다(당첨 등 예외)."),
+    "99_성과급_원천징수": timeline_card(
+        post_look(45), "성과급 달 원천징수 순서", "소득세법 제136조 · 지급대상기간이 없는 성과급",
+        [("1", "기간 정하기", "1월부터 지급한 달까지"), ("2", "월평균에 얹기", "성과급 ÷ 월수 + 월평균 급여"),
+         ("3", "간이세액표 × 월수", "높은 칸이 적용된다"), ("4", "이미 낸 세금 빼기", "남은 금액을 성과급 달에 뗀다")],
+        "최종 세금은 연말정산에서 1년 치로 다시 맞춥니다."),
+    # 2026-11-20 수정: 처음엔 '6%·15%·24% 구간 × 950만원'을 '늘어나는 소득세'로 그렸다 — 가정과 맞지 않는 행(6%·24%)과
+    # 산출세액을 최종 세금처럼 부른 오류. 값은 content/naver/_calc/45.json(tax_calc.year_tax)에서만 가져온다
+    "100_성과급_구간별": bar_card(
+        post_look(45), "결정세액 전후 (국세, 가상 계산)", "총급여 5천만원 + 성과급 1,000만원 · 다른 공제·세액공제 그대로",
+        [("성과급 전", "258만원", 64), ("성과급 후", "400.5만원", 100)],
+        "지방소득세·4대 보험료 제외. 실수령액이 아닙니다."),
 }
 
 # 34번(14편)부터는 글 색 + 글자 1.5배다. ACCENT를 습관대로 쓰면 작은 글자·다른 색 카드가 조용히 나온다.
-_old_look = [k for k in CARDS if int(k[:2]) >= 34 and f"zoom:{CARD_ZOOM}" not in CARDS[k]]
+# 번호는 `_` 앞 전체로 읽는다 — k[:2]로 읽어 100번 카드가 '10'으로 읽혀 검사에서 빠졌다(2026-11-20)
+_old_look = [k for k in CARDS if int(k.split("_")[0]) >= 34 and f"zoom:{CARD_ZOOM}" not in CARDS[k]]
+assert int("100_x".split("_")[0]) == 100
 assert not _old_look, f"post_look(편 번호)를 쓰지 않은 카드: {_old_look}"
 
 

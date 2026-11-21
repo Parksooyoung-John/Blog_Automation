@@ -108,11 +108,6 @@ CHECKLIST = """■ PC에서 끝낸 뒤 임시저장 (서식은 PC 에디터에�
 · 태그 입력(26편까지 10개, 27편부터 3~5개) — 1편에서 빠뜨렸던 항목이다. 발행 설정 창에서 확인
 · 발행 설정: 카테고리 / 주제 비즈니스·경제 / 전체공개 / 검색허용 체크"""
 
-CHECKLIST_LINK_OLD = html.escape("""· [내부 링크] 소개 문장 하나만 남기고, 줄을 바꾼 뒤 주소 붙여넣기 → 카드 생성
-             ⚠ 문장 중간에 붙여넣으면 문장이 카드 앞뒤로 쪼개진다""")
-CHECKLIST_LINK_NEW = html.escape("""· [내부 링크] 소개 문장 하나만 남기기 — 문장에 이미 링크가 걸려 있다. 주소를 따로 붙여넣지 않는다(본문 중간 카드 금지, 45편~)
-             카드가 꼭 필요하면 글 끝(근거 자료 아래)에 1개만""")
-assert CHECKLIST_LINK_OLD in html.escape(CHECKLIST), "체크리스트 문구가 바뀌어 글자 링크 안내로 바꿔 끼우지 못한다"
 
 PAGE = """<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -152,22 +147,10 @@ OPTIONS_RE = re.compile(r"\[(경험 한 줄|내부 링크)([^|\]]*)\|([^\]]+)\]"
 
 # 45편부터 문단 단위(2026-11-20 사용자 결정): 문장마다 빈 줄을 두던 방식(10-09)이 폰에서 큰 공백을 만들었다 — 45편 라이브에서
 # 한 문단이 빈 줄 2~3개로 쪼개졌다. 이제 문장 사이는 줄바꿈만, 빈 줄은 문단 사이에만 둔다. 19px는 그대로.
-# 본문 중간 관련 글도 카드 대신 글자 링크(소개 문장 자체에 주소)로 낸다. 카드는 흐름을 끊었다.
+# 내부 링크는 소개 문장 다음 줄에 주소를 그대로 둔다(2026-11-21 사용자 결정). 45편에서 글자 링크(문장 자체에 주소)로
+# 바꿨는데, 46편 붙여넣기 결과에 주소가 안 보여 "내부 링크가 없다"고 보였다.
 PARA_FROM = 45
-LINK_MARK = "@@LINK "
 PLACE_RE = re.compile(r"\[(이미지|경험 한 줄|내부 링크)")
-
-
-def _link_options(m) -> str:
-    """문단 단위 모드의 [내부 링크]: 후보 문장마다 주소를 단 글자 링크. 주소를 따로 붙여넣지 않으니 카드가 생기지 않는다."""
-    items = [x.strip() for x in m.group(3).split("|")]
-    url = next((x for x in items if x.startswith("http")), "")
-    lines = [f"[내부 링크{m.group(2).rstrip()} — 문장 하나만 남기세요. 문장에 링크가 걸려 있습니다]"]
-    for it in items:
-        if not it.startswith("http"):
-            label, _, sentence = it.partition(": ")
-            lines += [f"▶ {label}", f"{LINK_MARK}{url} {sentence}"]
-    return "\n".join(lines)
 
 
 def _options(m) -> str:
@@ -181,6 +164,35 @@ def _options(m) -> str:
             label, _, sentence = it.partition(": ")
             lines += [f"▶ {label}", sentence]
     return "\n".join(lines)
+
+
+# 사용자가 A/B를 미리 고르면(작성 메모 `- 경험 선택: A | B`, `- 내부 링크 선택: A | A` — 원고에 나오는 순서대로)
+# 고른 문장 하나만 낸다. 내부 링크는 문장 다음 줄에 주소를 그대로 둔다 — 46편에서 글자 링크만 내 주소가 안 보였다(2026-11-21).
+CHOICE_KEYS = {"경험 한 줄": "경험 선택", "내부 링크": "내부 링크 선택"}
+
+
+def _choices(md: str) -> dict:
+    out = {}
+    for kind, key in CHOICE_KEYS.items():
+        m = re.search(rf"^- {key}: (.+)$", md, re.M)
+        out[kind] = [x.strip().upper() for x in m.group(1).split("|")] if m else []
+    return out
+
+
+def _chosen(m, pick: str) -> str:
+    # 자리 번호 뒤 표기가 둘이다: `[경험 한 줄 ① | A안…: 문장 | …]`와 `[내부 링크 ①: A안: 문장 | …]`(46편).
+    # 뒤쪽은 첫 후보가 group(2)에 들어가 A안을 못 찾았다 — 자리 번호를 떼고 전체를 나눈다
+    kind = m.group(1)
+    items = [x.strip() for x in re.sub(r"^\s*[①-⑳]?\s*:?\s*", "", m.group(2) + "|" + m.group(3)).split("|") if x.strip()]
+    url = next((x for x in items if x.startswith("http")), "")
+    hit = [s for lab, _, s in (it.partition(": ") for it in items if not it.startswith("http")) if lab.startswith(f"{pick}안")]
+    if len(hit) != 1:
+        raise ValueError(f"[{kind}{m.group(2).rstrip()}]에 {pick}안이 없다 — 작성 메모의 선택을 고친다")
+    if kind == "내부 링크":
+        if not url:
+            raise ValueError(f"[{kind}{m.group(2).rstrip()}]에 주소가 없다")
+        return f"{hit[0]}\n{url}"
+    return hit[0]
 
 
 def parts(md: str, paragraph: bool = False) -> tuple:
@@ -201,7 +213,18 @@ def parts(md: str, paragraph: bool = False) -> tuple:
     body = re.sub(r"^- ✔", "✔", body, flags=re.M)        # 살림 체크 줄은 ✔만(15편 발행 모양) — "· ✔"로 겹치지 않게
     body = re.sub(r"^(> ?)?- ", r"\1· ", body, flags=re.M)
     body = body.replace("`", "")
-    body = OPTIONS_RE.sub(lambda m: _link_options(m) if paragraph and m.group(1) == "내부 링크" else _options(m), body)
+    picks, seen = _choices(md), {k: 0 for k in CHOICE_KEYS}
+
+    def _place(m):
+        kind = m.group(1)
+        i, seen[kind] = seen[kind], seen[kind] + 1
+        if i < len(picks[kind]):
+            return _chosen(m, picks[kind][i])
+        return _options(m)
+    body = OPTIONS_RE.sub(_place, body)
+    for kind, n in seen.items():
+        if picks[kind] and len(picks[kind]) != n:
+            raise ValueError(f"`- {CHOICE_KEYS[kind]}:` 선택이 {len(picks[kind])}개인데 자리는 {n}개다")
     body = re.sub(r"\n{3,}", "\n\n", body).strip()
 
     assert "##" not in body, "소제목 변환 실패"
@@ -231,15 +254,11 @@ def convert(md: str, paragraph: bool = False) -> str:
     _, body, _ = parts(md, paragraph)
     blocks = ["\n".join(" — ".join(r) for r in table_rows(b)) if is_table(b)
               else "\n".join(box_lines(b)) if is_box(b) else b for b in body.split("\n\n")]
-    text = "\n\n".join(blocks).replace("**", "")
-    return re.sub(rf"^{LINK_MARK}(\S+) (.+)$", r"\2 (\1)", text, flags=re.M)
+    return "\n\n".join(blocks).replace("**", "")
 
 
 def _line(line: str, color: str) -> str:
-    """본문 한 줄. 글자 링크 표시(@@LINK 주소 문장)는 문장 자체에 주소를 단다."""
-    m = re.match(rf"{LINK_MARK}(\S+) (.+)$", line)
-    if m:
-        return _p(f'<a href="{html.escape(m.group(1))}">{_rich(m.group(2))}</a>')
+    """본문 한 줄."""
     return _p(_rich(line, "" if line.startswith("※") else color), WARN if line.startswith("※") else "")
 
 
@@ -352,6 +371,27 @@ def selftest():
     assert f"{P}직접 {B('확인')}했어요.{E}\n{P}▶ B안(해당될 때만){E}" in opage
     assert "[경험 한 줄 ②]" in convert(md.replace("## 첫 소제목", "[경험 한 줄 ②]\n\n## 첫 소제목"))   # 후보 없는 옛 표기는 그대로
 
+    # 미리 고르면 고른 문장 하나만, 내부 링크는 문장 다음 줄에 주소(46편: 글자 링크만 내 주소가 안 보였다)
+    cmd = omd + "\n\n## 작성 메모 (발행 시 삭제)\n\n- 경험 선택: B\n- 내부 링크 선택: A\n"
+    for pg in (False, True):
+        ctext = convert(cmd, pg)
+        assert "저도 그랬어요." in ctext and "직접 확인했어요." not in ctext and "▶" not in ctext and "[경험" not in ctext, ctext
+        assert re.search(r"조건은 이 글에 있어요\.\n\n?https://blog\.naver\.com/x/1\n", ctext) and "먼저 이 글을" not in ctext, ctext
+        assert "https://blog.naver.com/x/1" in to_html(cmd, paragraph=pg)
+    # 46편 표기 `[내부 링크 ①: A안: …]` — 첫 후보가 자리 번호 쪽에 붙어도 고를 수 있어야 한다
+    c46 = md.replace("## 첫 소제목", "[내부 링크 ①: A안: 기준은 이 글에. | B안: 먼저 보세요. | https://blog.naver.com/x/2]\n\n## 첫 소제목")
+    t46 = convert(c46 + "\n\n## 작성 메모\n\n- 내부 링크 선택: A\n", True)
+    assert re.search(r"기준은 이 글에\.\nhttps://blog\.naver\.com/x/2", t46) and "먼저 보세요" not in t46 and "A안" not in t46, t46
+    chk = chosen_checklist(html.escape(CHECKLIST), cmd)
+    assert "이미 골랐다(B안)" in chk and "이미 골랐다(A안)" in chk and html.escape(CHECK_EXP_OLD) not in chk
+    assert chosen_checklist(html.escape(CHECKLIST), omd) == html.escape(CHECKLIST)      # 고르지 않은 글은 그대로
+    for bad in ("- 경험 선택: C\n", "- 경험 선택: A | A\n"):
+        try:
+            convert(omd + "\n\n## 작성 메모\n\n" + bad)
+            raise AssertionError(f"잘못된 선택이 통과했다: {bad}")
+        except ValueError:
+            pass
+
     # 박스: 문장으로 쪼개지 않고 배경색 1칸 표 하나로 나간다. 일반 텍스트에는 `>`와 종류 표지가 남지 않는다
     bmd = md.replace("## 첫 소제목", "> [요약] 한눈에 보기\n> - 한도는 **1,000만원**입니다. 예외도 있습니다.\n> - 둘째 줄\n\n## 첫 소제목")
     btext, bpage = convert(bmd), to_html(bmd)
@@ -415,14 +455,12 @@ def selftest():
     assert f"{E}\n{BLANK}\n{P}보험료율은" not in ppage
     assert BIG_HEAD.format(color=MAIN, text="1. 첫 결론입니다") + f"\n{P}둘째 문단입니다.{E}\n{P}이어지는 문장입니다." in ppage
     assert f"{BLANK}\n{BLANK}" not in ppage
-    # 관련 글은 소개 문장에 주소를 단 글자 링크 — 주소만 따로 있는 줄(카드가 되는 줄)이 없다
-    assert '<a href="https://blog.naver.com/x/1">조건은 이 글에 있어요.</a>' in ppage
-    assert f"{P}https://blog.naver.com/x/1{E}" not in ppage and "조건은 이 글에 있어요. (https://blog.naver.com/x/1)" in ptext
+    # 관련 글 주소는 문단 단위에서도 보이는 줄로 남는다 — 46편에서 글자 링크만 내 주소가 안 보였다(2026-11-21)
+    assert f"{P}https://blog.naver.com/x/1{E}" in ppage and "<a href" not in ppage and "https://blog.naver.com/x/1" in ptext
     # 지우거나 바꿔 끼우는 자리 뒤에는 빈 줄이 없다 — 지운 뒤 앞뒤 빈 줄이 겹치지 않게
     assert f"{P}저도 그랬어요.{E}\n{BLANK}" not in ppage and f"{P}저도 그랬어요.{E}\n{P}" in ppage
     assert f"{P}[이미지 ②: assets/x.png — 제작 완료]{E}\n{BLANK}" not in ppage
     assert f"{P}도입부입니다.{E}\n{BLANK}\n{P}보험료율은" in to_html(md)                                 # 44편까지는 그대로
-    assert CHECKLIST_LINK_NEW not in to_html(md)
     print("selftest ok")
 
 
@@ -447,9 +485,24 @@ def page_for(src: Path, tone: int = None) -> str:
     md = src.read_text(encoding="utf-8")
     paragraph = bool(num) and int(num.group()) >= PARA_FROM
     page = to_html(md, tone_of(src) if tone is None else tone, template, px, paragraph)
-    if paragraph:
-        page = page.replace(CHECKLIST_LINK_OLD, CHECKLIST_LINK_NEW)
-    return with_freshness(page, md)
+    return with_freshness(chosen_checklist(page, md), md)
+
+
+CHECK_EXP_OLD = "· [경험 한 줄] 두 곳 — 후보 중 하나만 남기고 [ ] 줄·▶ 줄·나머지 후보 지우기 (가장 중요)"
+CHECK_LINK_OLD = "· [내부 링크] 소개 문장 하나만 남기고, 줄을 바꾼 뒤 주소 붙여넣기 → 카드 생성"
+assert CHECK_EXP_OLD in CHECKLIST and CHECK_LINK_OLD in CHECKLIST, "체크리스트 문구가 바뀌어 선택 안내로 바꿔 끼우지 못한다"
+
+
+def chosen_checklist(page: str, md: str) -> str:
+    """A/B를 미리 고른 글은 '하나만 남기고 지우기' 안내를 '이미 골랐다'로 바꾼다 — 지울 후보가 없는데 지우라고 하지 않게."""
+    picks = _choices(md)
+    if picks["경험 한 줄"]:
+        page = page.replace(html.escape(CHECK_EXP_OLD), html.escape(
+            f"· [경험 한 줄] 이미 골랐다({' | '.join(picks['경험 한 줄'])}안) — 본문에 고른 문장만 있다. 지울 것 없음"))
+    if picks["내부 링크"]:
+        page = page.replace(html.escape(CHECK_LINK_OLD), html.escape(
+            f"· [내부 링크] 이미 골랐다({' | '.join(picks['내부 링크'])}안) — 소개 문장 다음 줄 주소가 카드로 바뀌는지 확인"))
+    return page
 
 
 if __name__ == "__main__":

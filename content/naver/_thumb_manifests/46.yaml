@@ -1,0 +1,54 @@
+thumbnail_id: "TH-20261121-46"
+status: "OK"
+seo_title: "부모님 중복공제｜형제가 정할 땐 의료비도 같이 따라갑니다"
+template_type: "headline"
+main_copy: "부모님 공제 / 형제 둘 다 / 올리면?"
+sub_copy: ""
+bottom_badge: ""
+copy_candidates: ["부모님 공제 / 형제 둘 다 / 올리면?", "형제 중 / 누가 올리나?", "동생이 낸 / 의료비는?"]
+selection_reason: "형제가 실제로 하는 질문을 그대로 묻고, 1·3절이 1명만·의료비로 답한다"
+verified_number: ""
+verified_rows: ""
+verified_source_url: "https://www.law.go.kr/법령/소득세법/제50조"
+verified_at: "2026-11-21 11:00"
+category: "tax"
+color_code: ""
+mascot_asset: ""
+mascot_pose: ""
+mascot_pose_reason: "돼지 없음 — 2026-11-21 사용자 지시로 Canva r3 방식(코드 headline_v2 렌더본을 교체)"
+renderer: "canva"
+template_id: "canva_r3"
+canva_design_id: "DAHbgeV6j3U"
+canva_edit_url: "https://www.canva.com/d/W3R_RI8V2DVBVva"
+canva_base: "45편 r3(DAHbd1RTdvA)를 복제해 배경·문구 교체"
+background: "assets/photos/bp_01_ai_bg.png (AI 생성, _licenses.csv)"
+font: "Source Han Sans KR (글꼴 ID YAFdJtB1Ppk, 45편 r3에서 사용자 화면으로 확인)"
+text_spec: "주제 132 · 질문 172 행간 1.12 · 브랜드 26 (연결 도구 값, 단위 미확인)"
+output_sha256: "1ab91db9306403c888982c2517e90cb85341c2a97d0bd13e6cfa8017bd1805e4"
+card_copy: ""
+mascot_area_ratio: 0
+mascot_position: "none"
+ai_mark_safe_zone_clear: true
+auto_qc_passed: false
+auto_fact_checks_passed: false
+number_evidence: []
+output_original: "46_썸네일.png"
+output_mobile_preview: "_workspace/naver/thumb_lab/bg46/46_canva_v1_160.png"
+requested_template: "headline"
+actual_template: "canva_r3"
+template_fallback_reason: "돼지 없는 대표사진 기준(2026-11-21)에 맞춰 사용자가 Canva r3 방식을 지시"
+layout: "canva_r3"
+layout_approved: false
+operating_layout: "headline_v2"
+recent_templates: ["headline", "headline", "headline"]
+highlight_phrase: ""
+asset_version: 0
+asset_hash: ""
+asset_status: ""
+blocks: []
+warnings: ["Canva 대표사진은 thumb_gate 자동 QC를 거치지 않았다 — 160px 확인과 사용자 시각 승인으로 대신한다"]
+manual_review_required: true
+manual_review_reasons: ["Canva 대표사진 — 사용자 시각 승인 필요(공통 템플릿 아님)"]
+sample_check_due: false
+previews: ["_workspace/naver/thumb_lab/bg46/46_canva_v1_160.png", "_workspace/naver/thumb_lab/bg46/46_canva_v1_320.png"]
+fact_note: "자동 검사 통과는 사실 정확성 보장이 아니다. 의미 일치는 근거 문장과 사람이 본다"

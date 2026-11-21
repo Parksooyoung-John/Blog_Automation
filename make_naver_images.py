@@ -266,6 +266,12 @@ def canva_selftest():
     p30 = scene_prompt("- 썸네일 문구: 가 | 나\n- 썸네일 장면: a person\n", 30)
     assert "No text" in p30 and "Title at the top" not in p30 and '"가"' not in p30 and "piglet" not in p30.lower()
     assert 'Line 1' in scene_prompt("- 썸네일 문구: 가 | 나\n- 썸네일 장면: a person\n", 29)
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        (Path(d) / "77.yaml").write_text('renderer: "canva"\n', encoding="utf-8")
+        (Path(d) / "78.yaml").write_text('renderer: "code"\n', encoding="utf-8")
+        assert canva_made("77", Path(d)) and not canva_made("78", Path(d)) and not canva_made("79", Path(d))
+    assert canva_made("46"), "46편 manifest가 Canva 표시를 잃으면 --thumb 46이 Canva 대표사진을 덮어쓴다"
     print("selftest OK")
 
 
@@ -1623,6 +1629,16 @@ CARDS = {
         post_look(45), "결정세액 전후 (국세, 가상 계산)", "총급여 5천만원 + 성과급 1,000만원 · 다른 공제·세액공제 그대로",
         [("성과급 전", "258만원", 64), ("성과급 후", "400.5만원", 100)],
         "지방소득세·4대 보험료 제외. 실수령액이 아닙니다."),
+    "101_부모님_중복_순서": timeline_card(
+        post_look(46), "형제가 둘 다 올렸을 때 정하는 순서", "소득세법 시행령 제106조",
+        [("1", "신고서에 적은 사람", "형제 중 1명만 적는 것이 원칙"), ("2", "둘 다 적었다면", "직전 연도에 공제받은 사람"),
+         ("3", "직전 연도 기록이 없으면", "종합소득금액이 가장 많은 사람")],
+        "경로우대 추가공제도 기본공제를 받는 사람이 받습니다."),
+    "102_부모님_따라가는_공제": checklist_card(
+        post_look(46), "부모님을 올린 사람에게 같이 가는 것", "국세청 2026.1.23 안내 · 소득세법 제50·51조",
+        [("기본공제 150만원", "부모님 1명당"), ("경로우대 100만원", "70세 이상일 때"),
+         ("부모님 명의 카드 사용액", "소득 요건을 채울 때"), ("부모님 의료비", "다른 형제는 넣을 수 없음")],
+        "의료비를 동생이 냈어도 형이 기본공제를 받으면 동생은 공제받지 못합니다."),
 }
 
 # 34번(14편)부터는 글 색 + 글자 1.5배다. ACCENT를 습관대로 쓰면 작은 글자·다른 색 카드가 조용히 나온다.
@@ -1857,7 +1873,18 @@ def post_is_live(num: str, ledger=None) -> bool:
                for r in (ledger if ledger is not None else read_csv(LEDGER, LEDGER_COLS)))
 
 
+def canva_made(num: str, manifests: Path = None) -> bool:
+    """대표사진이 Canva로 만들어졌나(manifest `renderer: "canva"`). 코드 렌더러가 덮어쓰면 안 된다."""
+    p = (manifests or Path(__file__).parent / "content" / "naver" / "_thumb_manifests") / f"{num}.yaml"
+    return p.exists() and re.search(r'^renderer: "canva"', p.read_text(encoding="utf-8"), re.M) is not None
+
+
 def thumb_cmd(num: str) -> int:
+    if canva_made(num) and "--force" not in sys.argv:
+        # 46편: 돼지 판(headline_v2)을 습관대로 돌렸다가 사용자 지적으로 Canva 대표사진으로 바꿨다(2026-11-21).
+        # 다시 --thumb을 돌리면 Canva 판이 돼지 판으로 조용히 덮어써진다
+        print(f"{num}편 대표사진은 Canva로 만들었다(_thumb_manifests/{num}.yaml). 코드 판으로 바꿀 때만 --force")
+        return 1
     if post_is_live(num) and "--force" not in sys.argv:
         # 회귀 확인으로 `--thumb 31`을 돌렸다가 발행된 31편 대표사진이 지금 판(headline_v2)으로 덮어써졌다(2026-11-09)
         print(f"{num}편은 발행된 글이라 대표사진을 다시 그리지 않는다(라이브 이미지와 어긋난다). 고칠 때만 --force")

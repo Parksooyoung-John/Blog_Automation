@@ -31,11 +31,16 @@ GEO = ROOT / "content" / "naver" / "_geo.csv"
 MID_POSTS, MID_WEEKS, MID_VISITORS = 10, 4, 15        # 미달 → 경고
 FINAL_POSTS, FINAL_WEEKS, FINAL_VISITORS = 20, 8, 50  # 미달 → 전환권고
 METRICS_MAX_AGE = 7   # 방문자 수치가 이보다 오래되면 판정하지 않는다
+# 기한부 연장(2026-11-24 사용자 결정). 11.16~22 주간 순방문자 170명으로 최종 점검 '전환권고'가 나와
+# 중단·컨셉 전환·기한부 연장 중 연장을 골랐다. 기준(50명)은 그대로, 이 날까지는 '연장중'으로 내고
+# 이 날 이후에는 다시 원래 판정을 낸다. 또 연장하려면 ADSENSE_PROGRESS.md에 새 결정을 남기고 이 값을 바꾼다.
+EXTENSION_UNTIL = datetime.date(2026, 12, 22)
 GSC_STALE_DAYS = 60
 
 
-def judge(posts, weeks, avg7, metrics_age):
-    """→ (판정, 근거). avg7·metrics_age는 수치가 없으면 None."""
+def judge(posts, weeks, avg7, metrics_age, today=None):
+    """→ (판정, 근거). avg7·metrics_age는 수치가 없으면 None. today는 연장 기한 대조용(기본 오늘)."""
+    today = today or datetime.date.today()
     if posts >= FINAL_POSTS or weeks >= FINAL_WEEKS:
         stage, limit, fail = "최종 점검", FINAL_VISITORS, "전환권고"
     elif posts >= MID_POSTS or weeks >= MID_WEEKS:
@@ -46,6 +51,9 @@ def judge(posts, weeks, avg7, metrics_age):
     if avg7 is None or metrics_age is None or metrics_age > METRICS_MAX_AGE:
         return "판정보류", f"{stage} 시점인데 최근 {METRICS_MAX_AGE}일 방문자 수치가 없다"
     if avg7 < limit:
+        if fail == "전환권고" and today <= EXTENSION_UNTIL:
+            return "연장중", (f"{stage}: 7일 평균 일 방문 {avg7:.1f}명 < 기준 {limit}명 — "
+                           f"기한부 연장 중, {EXTENSION_UNTIL} 이후 같은 기준으로 다시 판정")
         return fail, f"{stage}: 7일 평균 일 방문 {avg7:.1f}명 < 기준 {limit}명"
     return "OK", f"{stage}: 7일 평균 일 방문 {avg7:.1f}명 ≥ 기준 {limit}명"
 
@@ -55,7 +63,9 @@ def forecast(posts, weeks, avg7, metrics_age):
     if posts >= FINAL_POSTS or weeks >= FINAL_WEEKS:
         return None
     at_mid = posts >= MID_POSTS or weeks >= MID_WEEKS
-    return judge(FINAL_POSTS if at_mid else MID_POSTS, weeks, avg7, metrics_age)
+    # 예고는 기준 자체의 결과를 보인다 — 연장 기한과 무관하게
+    return judge(FINAL_POSTS if at_mid else MID_POSTS, weeks, avg7, metrics_age,
+                 EXTENSION_UNTIL + datetime.timedelta(days=1))
 
 
 def parse_visitors(xml: str) -> dict:
@@ -108,7 +118,7 @@ def check_ranks(posts, today):
     last = max((r["date"] for r in old), default=None)
     prev = {r["keyword"]: r["rank"] for r in old if r["date"] == last}
 
-    rows = []
+    rows, failed = [], 0
     for path in sorted((ROOT / "content" / "naver").glob("[0-9][0-9]_*.md")):
         kw = target_keyword(path.read_text(encoding="utf-8"))
         if not kw:
@@ -118,10 +128,14 @@ def check_ranks(posts, today):
             mine, fresh, n = serp_stats(kw, verify_naver.BLOG, cutoff)
         except (RuntimeError, requests.RequestException) as e:
             print(f"    {path.name[:2]}편 {kw}: 조회 실패 — {e}")
+            failed += 1
             continue
         was = f" (지난번 {prev[kw] or '밖'})" if kw in prev else ""
         print(f"    {path.name[:2]}편 {kw:<16} {f'{mine}위' if mine else f'{n}위 밖':<7}{was}  상위 {SERP_TOP}개 중 최근 글 {fresh}")
         rows.append({"date": today.isoformat(), "keyword": kw, "rank": mine or "", "fresh": fresh})
+    # 2026-11-24 매니저 에이전트가 조회 실패 20여 편까지 '45편 모두 30위 밖'으로 보고했다 — 잰 것과 못 잰 것을 나눠 적는다
+    print(f"  [순위 요약] 측정 {len(rows)}편 · 30위 안 {sum(1 for r in rows if r['rank'])}편 · "
+          f"조회 실패 {failed}편(순위 밖으로 세지 않는다)")
     if rows:
         with RANKS.open("w", encoding="utf-8", newline="") as f:
             w = csv.DictWriter(f, fieldnames=["date", "keyword", "rank", "fresh"])
@@ -185,8 +199,14 @@ def selftest():
     assert judge(10, 1.0, 14.9, 1)[0] == "경고"
     assert judge(9, 4.0, 15.0, 1)[0] == "OK"
     assert judge(19, 7.9, 20.0, 1)[0] == "OK"          # 아직 중간 기준 적용
-    assert judge(20, 3.0, 49.9, 1)[0] == "전환권고"
-    assert judge(12, 8.0, 49.9, 1)[0] == "전환권고"    # 편수가 적어도 8주면 최종
+    after = EXTENSION_UNTIL + datetime.timedelta(days=1)
+    assert judge(20, 3.0, 49.9, 1, after)[0] == "전환권고"
+    assert judge(12, 8.0, 49.9, 1, after)[0] == "전환권고"    # 편수가 적어도 8주면 최종
+    # 기한부 연장: 기한까지는 '연장중', 다음 날부터 같은 기준으로 '전환권고'. 기준(50명)은 바꾸지 않는다
+    assert judge(47, 8.4, 24.3, 1, EXTENSION_UNTIL)[0] == "연장중"
+    assert judge(47, 12.0, 24.3, 1, after)[0] == "전환권고"
+    assert judge(47, 12.0, 50.0, 1, EXTENSION_UNTIL)[0] == "OK" and FINAL_VISITORS == 50
+    assert judge(10, 1.0, 14.9, 1, EXTENSION_UNTIL)[0] == "경고"   # 연장은 최종 점검에만
     assert judge(20, 8.0, 50.0, 1)[0] == "OK"
     assert judge(20, 8.0, 300.0, 8)[0] == "판정보류"   # 수치가 좋아도 오래됐으면 보류
     assert judge(20, 8.0, None, None)[0] == "판정보류"

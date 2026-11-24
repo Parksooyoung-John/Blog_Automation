@@ -22,11 +22,11 @@ canva_design_id: "DAHbvfpSszE"
 canva_edit_url: "https://www.canva.com/d/ajglasjbuIz9zGJ"
 canva_base: "46편 대표사진(DAHbgeV6j3U) 복제 후 배경·문구·글자 색 교체"
 background: "assets/photos/pm_01_ai_bg.png (AI 생성 1장, _licenses.csv). 최근 6장(크림 3·어두운 3)과 구분해 밝은 하늘색"
-font: "Source Han Sans KR (글꼴 ID YAFdJtB1Ppk)"
+font: "제목·질문 블랙슈트(글꼴 ID YAEv6M5dkDA, 2026-11-24 사용자가 Canva에서 변경 — 기존 코드 판 글꼴 여기어때 잘난체 2가 Canva에 없어 대신 고름) · 브랜드 줄도 블랙슈트"
 text_spec: "주제 140 #1f2937 · 질문 200 행간 1.12 #b4361a · 브랜드 26 #4b5563 (연결 도구 값, 단위 미확인)"
 contrast: "제목 10.9 · 질문 4.5 (배경 밝은 10% 기준) — 질문은 기준선"
 cost_time: "배경 1장 15초·$0.0132, 22:15:42 → PNG 22:17:27, 수정 1회(사진 자동 확대 해제)"
-output_sha256: "56b96f50dddb5f7fdc87a75d35369be3a70cf57c110aefc719fa44c7f1a6b187"
+output_sha256: "0c13d092e672befedddf21b89a3151abbac545e05cc7cd77abc81a0ea8392499"
 card_copy: ""
 mascot_area_ratio: 0
 mascot_position: "none"
@@ -35,7 +35,7 @@ auto_qc_passed: false
 auto_fact_checks_passed: false
 number_evidence: []
 output_original: "47_썸네일.png"
-output_mobile_preview: "_workspace/naver/thumb_lab/bg47/47_canva_v1_160.png"
+output_mobile_preview: "_workspace/naver/thumb_lab/bg47/47_canva_v3_160.png"
 requested_template: "headline"
 actual_template: "canva_r3"
 template_fallback_reason: "돼지 없는 Canva 대표사진 기준"
@@ -52,5 +52,5 @@ warnings: ["Canva 대표사진은 thumb_gate 자동 QC를 거치지 않았다 �
 manual_review_required: true
 manual_review_reasons: ["Canva 대표사진 — 사용자 시각 승인 필요"]
 sample_check_due: false
-previews: ["_workspace/naver/thumb_lab/bg47/47_canva_v1_160.png", "_workspace/naver/thumb_lab/bg47/47_canva_v1_320.png"]
+previews: ["_workspace/naver/thumb_lab/bg47/47_canva_v3_160.png", "_workspace/naver/thumb_lab/bg47/47_canva_v3_320.png"]
 fact_note: "자동 검사 통과는 사실 정확성 보장이 아니다. 의미 일치는 근거 문장과 사람이 본다"

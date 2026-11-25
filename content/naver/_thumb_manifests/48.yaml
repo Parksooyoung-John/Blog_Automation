@@ -1,0 +1,41 @@
+thumbnail_id: "TH-20261125-48"
+status: "OK"
+seo_title: "보일러 외출모드 켜고 나갈 때｜난방이 멈추는 기종, 4시간마다 도는 기종"
+template_type: "photo_editorial"
+main_copy: "보일러 외출모드 / 켜면 난방이 될까?"
+sub_copy: ""
+bottom_badge: ""
+copy_candidates: ["보일러 외출모드 / 켜면 난방이 될까?", "외출모드 / 켜고 나갈까?", "외출 버튼 / 기종마다 다르다"]
+selection_reason: "독자가 모르는 것(외출 중 난방이 되는지)을 묻고, 1절의 설명서 비교가 기종별로 답한다"
+verified_number: ""
+verified_rows: ""
+verified_source_url: "https://rhpa2.rinnai.co.kr/upload/explain/1698277047201_20231026083919573.pdf"
+verified_at: "2026-11-25 23:00"
+category: "warning"
+mascot_asset: ""
+mascot_pose: ""
+mascot_pose_reason: "돼지 없음 — Canva 질문형(위계·구도 고정, 배경·색은 주제별)"
+renderer: "canva"
+template_id: "canva_r3"
+canva_design_id: "DAHb7X27-AY"
+canva_edit_url: "https://www.canva.com/d/pZb9hmDECPKctM6"
+canva_base: "47편 대표사진(DAHbvfpSszE) 복제 후 배경·문구·글자 색 교체"
+background: "assets/photos/hs_01_ai_bg.png (AI 생성 1장, _licenses.csv). 최근(하늘색·크림·네이비)과 구분해 아이보리 벽·나무 바닥"
+font: "제목·질문·브랜드 줄 모두 블랙슈트(글꼴 ID YAEv6M5dkDA) — 47편 복제로 물려받음"
+text_spec: "주제 116 #1f2937 · 질문 160 행간 1.12 #1d4e89 · 브랜드 26 #4b5563 (연결 도구 값, 단위 미확인)"
+contrast: "제목 12.9 · 질문 7.4 · 브랜드 5.0 (배경 밝은 10% 기준)"
+cost_time: "배경 1장 12초·$0.0132, 22:46:25 → PNG 22:47:41, 수정 0회"
+output_sha256: "a79124939461d2df92d8cb217540a01002bf43fe7d18739b459ded928a2c3c12"
+output_original: "48_썸네일.png"
+requested_template: "photo_editorial"
+actual_template: "canva_r3"
+template_fallback_reason: "돼지 없는 Canva 대표사진 기준"
+layout_approved: false
+operating_layout: "headline_v2"
+highlight_phrase: "난방이 될까?"
+blocks: []
+warnings: ["Canva 대표사진은 thumb_gate 자동 QC를 거치지 않았다 — 160px 확인과 사용자 시각 승인으로 대신한다"]
+manual_review_required: true
+manual_review_reasons: ["Canva 대표사진 — 사용자 시각 승인 필요"]
+previews: ["_workspace/naver/thumb_lab/bg48/48_small.png"]
+fact_note: "자동 검사 통과는 사실 정확성 보장이 아니다. 의미 일치는 근거 문장과 사람이 본다"

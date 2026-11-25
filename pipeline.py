@@ -261,7 +261,11 @@ def required_issues(md: str, ledger: dict) -> list:
         for t in targets:
             row = ledger.get(int(t)) if t.isdigit() else None
             if not row or row["status"] not in LIVE:
-                issues.append(f"내부 링크 대상 {t}편이 발행된 글이 아니다 (미발행 글로 링크 금지)")
+                msg = f"내부 링크 대상 {t}편이 발행된 글이 아니다 (미발행 글로 링크 금지)"
+                if row and row.get("logno"):   # 46·42편: 라이브인데 장부만 뒤처져 막혔다(2026-11-23·25)
+                    msg += (f" — logNo {row['logno']}가 있어 라이브일 수 있다. 사용자가 터미널에서 "
+                            f"`status {t} APPROVED` → `status {t} PUBLISHED {row['logno']}`")
+                issues.append(msg)
         if any(r.get("cluster") == cluster and r["status"] in LIVE for r in ledger.values()) and                 not any(ledger.get(int(t), {}).get("cluster") == cluster for t in targets if t.isdigit()):
             issues.append("같은 클러스터의 발행된 글이 있는데 내부 링크 대상에 하나도 없다")
         if len(re.findall(r"\[내부 링크", md.split("## 작성 메모")[0])) < 2:
@@ -1053,6 +1057,8 @@ def selftest():
     got = " ".join(required_issues(bad, {12: {"status": "PUBLISHED"}, 15: {"status": "DRAFT"}}))
     for key in ("포트폴리오", "차별화", "출처 줄 형식", "15편이 발행된 글이 아니다"):
         assert key in got, key
+    lag = " ".join(required_issues(good_memo, {12: led2[12], 15: {"status": "HUMAN_REVIEW", "logno": "224479798833"}}))
+    assert "status 15 PUBLISHED 224479798833" in lag, lag
 
     # 성과 등급
     base = {"flag": "", "views": "0", "search_in": "0", "home_in": "0", "likes": "0", "comments": "0"}

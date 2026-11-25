@@ -368,7 +368,8 @@ FIRST_PERSON_RE = re.compile(r'(?<![가-힣])(저는|제가|저도|저희|나는
                              r'|실제로 환급받았|담당자에게 (확인|물어) ?보니|세무서에 문의해 ?보니')
 PRIMARY_DOMAINS = ("nts.go.kr", "hometax.go.kr", "law.go.kr", "korea.kr", "gov.kr", "bokjiro.go.kr", "nps.or.kr",
                    "nhis.or.kr", "ei.go.kr", "work24.go.kr", "moel.go.kr", "mohw.go.kr", "moef.go.kr", "comwel.or.kr",
-                   "kepco.co.kr")     # kepco: 전기요금표 원 기관(2026-11-16 시즌 eh-01)
+                   "kepco.co.kr",     # kepco: 전기요금표 원 기관(2026-11-16 시즌 eh-01)
+                   "seoul.go.kr")     # 서울시: 난방 안내 원 기관(2026-11-25 시즌 hs-01)
 GUARANTEE_RE = re.compile(r'무조건 (받|환급|돌려)|100% (환급|받|돌려)|반드시 (받|환급)을? 수|확실히 (받|환급)')
 CLICK_RE = re.compile(r'광고.{0,8}(클릭|눌러)|클릭해 주세요')
 HYPOTHETICAL_RE = re.compile(r'가상|예시|계산 예|가정')

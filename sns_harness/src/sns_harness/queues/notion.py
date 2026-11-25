@@ -316,8 +316,8 @@ class NotionQueue:
             pages and pages[0].get("properties", {}).get("블로그링크사용", {}).get("checkbox")
         )
         allow_link = not last_linked and recent_links < 3
-        # No link in the last 9 blog drafts: let the 블로그전환형 draft take the second slot.
-        return {"allow_link": allow_link, "prefer_link": allow_link and recent_links == 0}
+        # Under 2 links in the last 9 drafts: 블로그전환형 takes the second slot.
+        return {"allow_link": allow_link, "prefer_link": allow_link and recent_links < 2}
 
     def create(self, source: SourcePost, review: ReviewResult, variant: int = 0) -> QueueItem:
         status = QueueStatus.DRAFT if review.approved else QueueStatus.HOLD
@@ -447,6 +447,26 @@ class NotionQueue:
         if window_property:
             properties[window_property] = {"number": metrics.views}
         self._patch(page_id, properties)
+
+    def promote_approved_pending(self) -> int:
+        """Setting 상태=승인 is the operator's approval: lift 검토대기 so it gets scheduled.
+
+        수정필요 and 제외 stay blocked, and a draft still in 초안 is never touched.
+        """
+        pages = self._query(
+            {
+                "and": [
+                    {"property": "상태", "select": {"equals": QueueStatus.APPROVED.value}},
+                    {
+                        "property": "승인상태",
+                        "select": {"equals": ApprovalStatus.PENDING.value},
+                    },
+                ]
+            }
+        )
+        for page in pages:
+            self._patch(page["id"], {"승인상태": self._select(ApprovalStatus.APPROVED.value)})
+        return len(pages)
 
     def approved_without_schedule(self) -> list[QueueItem]:
         pages = self._query(

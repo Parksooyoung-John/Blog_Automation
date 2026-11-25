@@ -288,6 +288,9 @@ class HarnessOrchestrator:
         return {"candidates": len(items), "updated": 0 if dry_run else len(items), "items": results}
 
     def schedule_approved(self, now: datetime, slots: tuple[str, ...], timezone: object) -> int:
+        promote = getattr(self.queue, "promote_approved_pending", None)
+        if promote is not None:
+            promote()
         items = self.queue.approved_without_schedule()
         if not items:
             return 0

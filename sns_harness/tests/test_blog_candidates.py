@@ -228,3 +228,52 @@ def test_prefer_link_puts_blog_conversion_in_second_slot() -> None:
     assert pick_pair(reviews)[1].reviewed_draft.candidate_type is CandidateType.INFO_EMPATHY
     second = pick_pair(reviews, prefer_link=True)[1].reviewed_draft
     assert second.candidate_type is CandidateType.BLOG_CONVERSION and second.blog_link_used
+
+
+def test_approving_status_lifts_review_pending_and_schedules() -> None:
+    class Response:
+        def __init__(self, body):
+            self.body = body
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return self.body
+
+    class Session:
+        headers: dict = {}
+
+        def __init__(self):
+            self.filters, self.patches = [], []
+
+        def post(self, url, *, json, timeout):
+            self.filters.append(json["filter"])
+            return Response({"results": [{"id": "page-1"}], "has_more": False})
+
+        def patch(self, url, *, json, timeout):
+            self.patches.append((url, json))
+            return Response({})
+
+    session = Session()
+    queue = NotionQueue("key", "db", session=session)  # type: ignore[arg-type]
+    assert queue.promote_approved_pending() == 1
+    clauses = session.filters[0]["and"]
+    assert {"property": "상태", "select": {"equals": "승인"}} in clauses
+    assert {"property": "승인상태", "select": {"equals": "검토대기"}} in clauses
+    assert session.patches[0][1]["properties"]["승인상태"]["select"]["name"] == "승인"
+
+    class ScheduleQueue:
+        promoted = False
+
+        def promote_approved_pending(self):
+            self.promoted = True
+
+        def approved_without_schedule(self):
+            return []
+
+    schedule_queue = ScheduleQueue()
+    HarnessOrchestrator(Source(), None, None, schedule_queue).schedule_approved(
+        datetime.now(UTC), ("12:30",), UTC
+    )
+    assert schedule_queue.promoted
